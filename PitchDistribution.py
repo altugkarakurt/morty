@@ -55,5 +55,6 @@ class PitchDistribution:
 			return self
 
 	def plot(self):
+		pl.figure()
 		pl.plot(self.bins, self.vals)
 		pl.show()

@@ -17,7 +17,7 @@ def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5):
 	pd_bins = np.arange(min_bin, max_bin, cent_ss)
 	kde = stats.gaussian_kde(pitch_track, bw_method=smoothening)
 	pd_vals = kde.evaluate(pd_bins)
-	return p_d.PitchDistribution(pd_bins, pd_vals, kernel_width=smoothening, ref_freq=ref_freq), kde
+	return p_d.PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, ref_freq=ref_freq), kde
 
 def generate_pcd(pd):
 	### Initializations

@@ -135,8 +135,8 @@ class BozkurtEstimation:
 	def pd_zero_pad(self, pd, makam_pd):
 		"""---------------------------------------------------------------------------------------
 		This function is only used when working with pd as metric. It pads zeros from both sides 
-		of the vals array to avoid losing non-zero values when comparing and to make sure the two
-		pd's are of the same length 
+		of the values array to avoid losing non-zero values when comparing and to make sure the
+		two pd's are of the same length 
 		---------------------------------------------------------------------------------------"""
 		### Alignment of the left end-points
 		if((min(pd.bins) - min(makam_pd.bins)) > 0):
