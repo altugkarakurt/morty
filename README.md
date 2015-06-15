@@ -1,5 +1,5 @@
 # Mode & Tonic Recognition
-Python scripts for training and recognizing mods in a modal music piece. Given the predominant melody of a piece, it estimates the mode and tonic of a piece from the trained mods.
+Python scripts for training and recognizing modes in a modal music piece. Given the predominant melody of a piece, it estimates the mode and tonic of a piece from the trained mods.
 
 ### Description and Usage
 This project expects the pitch track, or predominant melody, as the input and generates pitch distributions (PD) and
