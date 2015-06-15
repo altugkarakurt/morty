@@ -1,5 +1,5 @@
 # Mode & Tonic Recognition
-Python scripts for training and recognizing modes in a modal music piece. Given the predominant melody of a piece, it estimates the mode and tonic of a piece from the trained mods.
+Python scripts for training and recognizing modes in a modal music piece. Given the predominant melody of a piece, it estimates its mode and tonic.
 
 ### Description and Usage
 This project expects the pitch track, or predominant melody, as the input and generates pitch distributions (PD) and
@@ -17,6 +17,8 @@ If the pitch track of a piece isn't available, the pitch.py script in [pycompmus
 project's pycompmusic-master/compmusic/extractors/makam directory can be used to generate it. The pitch track is expected
 to be in given as a .txt file, that consists of a single column of values of the pitch track in Hertz, time information
 isn't required.
+
+Since the training portion of the process is a supervised machine learning, a dataset for each mode, including pieces with known tonics, is a preliminary.
 
 ### Dependencies
 This project depends on NumPy, SciPy, Matplotlib and Essentia.
