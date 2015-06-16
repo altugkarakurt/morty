@@ -4,7 +4,7 @@ import math
 import matplotlib.pyplot as pl
 from scipy.spatial import distance
 
-import MakamFunctions as mf
+import ModeFunctions as mf
 import PitchDistribution as p_d
 
 class BozkurtEstimation:
@@ -13,24 +13,55 @@ class BozkurtEstimation:
 		self.smooth_factor = smooth_factor
 		self.cent_ss = cent_ss
 
-	def train(self, makam, txt_list, ref_freq_list, metric='pcd'):
-		makam_track = []
+	def train(self, mode_name, txt_list, ref_freq_list, metric='pcd'):
+		"""---------------------------------------------------------------------------------------
+		This function handles everything related to supervised learning portion of this system. 
+		It expects the list of text files containing the pitch tracks of the dataset, the array
+		of their known tonics and generates the joint distribution of the mode and saves it.
+		---------------------------------------------------------------------------------------"""
+		mode_track = []
 		for idx in range(len(txt_list)):
 			cur_track = np.loadtxt(txt_list[idx])
 			cur_cent_track = mf.hz_to_cent(cur_track, ref_freq=ref_freq_list[idx])
 			for i in cur_cent_track:
-				makam_track.append(i)
-		joint_pd = mf.generate_pd(makam_track, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss)[0]
+				mode_track.append(i)
+		joint_pd = mf.generate_pd(mode_track, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss)[0]
 		if(metric=='pcd'):
 			joint_pcd = mf.generate_pcd(joint_pd)
-			joint_pcd.save((makam + '_pcd.json'))
+			joint_pcd.save((mode_name + '_pcd.json'))
 			return joint_pcd
 		elif(metric=='pd'):
-			joint_pd.save((makam + '_pd.json'))
+			joint_pd.save((mode_name + '_pd.json'))
 			return joint_pd
 
-	def tonic_estimate(self, pitch_track, makam, distance_method="euclidean", metric='pcd', dummy_freq=440):
-		### Makam is known, tonic is estimated.
+	def estimate(self, pitch_track, modes=[], mode_name='', est_tonic=True, est_mode=True, distance_method="euclidean", metric='pcd', ref_freq=440):
+		"""---------------------------------------------------------------------------------------
+		This is the high level function that users are expected to interact with, for estimation
+		purposes. Using the est_* flags, it is possible to estimate tonic, mode or both.
+		---------------------------------------------------------------------------------------"""
+		if(est_tonic and est_mode):
+			# Joint estimation of tonic and mode
+			dist_mat = []
+			for mode in modes:
+				dist_mat.append(tonic_estimate(pitch_track, mode_name, distance_method="euclidean", metric='pcd', dummy_freq=440))
+			return 0 # TODO
+
+		elif(est_tonic or est_mode):
+			if(est_tonic):
+				return tonic_estimate(pitch_track, mode_name, distance_method="euclidean", metric='pcd', dummy_freq=440)
+			elif(est_mode):
+				return mode_estimate(pitch_track, modes, ref_freq, distance_method='euclidean', metric='pcd'):
+		
+		else:
+			# Nothing is expected to be estmated
+			return 0
+
+	def tonic_estimate(self, pitch_track, mode_name, distance_method="euclidean", metric='pcd', dummy_freq=440):
+		"""---------------------------------------------------------------------------------------
+		Given the mode (or candidate mode), compares the piece's distribution using the candidate
+		tonics and returns the resultant distance vector to higher level functions.
+		---------------------------------------------------------------------------------------"""
+		### Mode is known, tonic is estimated.
 		### Piece's distributon is generated
 		cent_track = mf.hz_to_cent(pitch_track, ref_freq=dummy_freq)
 		dist = mf.generate_pd(cent_track, ref_freq=dummy_freq, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss)[0]
@@ -44,9 +75,9 @@ class BozkurtEstimation:
 			anti_freq = mf.cent_to_hz([dist.bins[shift_factor]], ref_freq=dummy_freq)[0]
 			peak_idxs, peak_vals = dist.detect_peaks()
 
-			### Comparison of the piece's pcd with known makam's joint pcd
-			makam_pcd = p_d.load((makam + '_pcd.json'))
-			distance_vector = np.array(self.generate_distance_matrix(dist, peak_idxs, [makam_pcd], method=distance_method))[:,0]
+			### Comparison of the piece's pcd with known mode's joint pcd
+			mode_pcd = p_d.load((mode_name + '_pcd.json'))
+			distance_vector = np.array(self.generate_distance_matrix(dist, peak_idxs, [mode_pcd], method=distance_method))[:,0]
 
 			### The detected tonic is converted back to hertz from cent
 			return mf.cent_to_hz([dist.bins[peak_idxs[np.argmin(distance_vector)]]], anti_freq)[0]
@@ -56,54 +87,66 @@ class BozkurtEstimation:
 			origin =  np.where(dist.bins==0)[0][0]
 			shift_idxs = [(idx - origin) for idx in peak_idxs]
 			temp = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, ref_freq=dist.ref_freq)
-			makam_pd = p_d.load((makam + '_pd.json'))
+			mode_pd = p_d.load((mode + '_pd.json'))
 
-			temp, makam_pd = self.pd_zero_pad(temp, makam_pd)
+			temp, mode_pd = self.pd_zero_pad(temp, mode_pd)
 
     		### Filling both sides of vals with zeros, to make sure that the shifts won't drop any non-zero values
     		temp.vals = np.concatenate((np.zeros(abs(max(shift_idxs))), temp.vals, np.zeros(abs(min(shift_idxs)))))
-    		makam_pd.vals = np.concatenate((np.zeros(abs(max(shift_idxs))), makam_pd.vals, np.zeros(abs(min(shift_idxs)))))
+    		mode_pd.vals = np.concatenate((np.zeros(abs(max(shift_idxs))), mode_pd.vals, np.zeros(abs(min(shift_idxs)))))
     		
-    		distance_vector = np.array(self.generate_distance_matrix(temp, shift_idxs, [makam_pd], method=distance_method))[:,0]
+    		distance_vector = np.array(self.generate_distance_matrix(temp, shift_idxs, [mode_pd], method=distance_method))[:,0]
 
     		### The detected tonic is converted back to hertz from cent
     		return mf.cent_to_hz([shift_idxs[np.argmin(distance_vector)] * self.cent_ss], dummy_freq)[0]
 	
-	def makam_estimate(self, pitch_track, makams, tonic, distance_method='euclidean', metric='pcd'):
-		### Tonic is known, makam is estimated.
+	def mode_estimate(self, pitch_track, modes, tonic, distance_method='euclidean', metric='pcd'):
+		"""---------------------------------------------------------------------------------------
+		Given the tonic (or candidate tonic), compares the piece's distribution using the candidate
+		modes and returns the resultant distance vector to higher level functions.
+		---------------------------------------------------------------------------------------"""
+		### Tonic is known, mode is estimated.
 		### Piece's distribution is generated
 		cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic)
 		dist = mf.generate_pd(cent_track, ref_freq=tonic, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss)[0]
 		
-		### The candidate makam distributions are retrieved
-		makam_dists = []
-		for m in range(len(makams)):
-			makam_dists.append(p_d.load(makams[m]))
+		### The candidate mode distributions are retrieved
+		mode_dists = []
+		for m in range(len(modes)):
+			mode_dists.append(p_d.load(modes[m]))
 
 		if(metric=='pcd'):
 			dist = mf.generate_pcd(dist)
 			
 			### Distance vector generation
-			distance_vector = np.array(self.generate_distance_matrix(dist, [0], makam_dists, method=distance_method))
+			distance_vector = np.array(self.generate_distance_matrix(dist, [0], mode_dists, method=distance_method))
 
 		elif(metric=='pd'):
-			distance_vector = np.zeros(len(makam_dists))
-			for i in range(len(makam_dists)):
-				trial, makam_trial = self.pd_zero_pad(dist, makam_dists[i])
-				distance_vector[i] = self.distance(trial, makam_trial, method=distance_method)
+			distance_vector = np.zeros(len(mode_dists))
+			for i in range(len(mode_dists)):
+				trial, mode_trial = self.pd_zero_pad(dist, mode_dists[i])
+				distance_vector[i] = self.distance(trial, mode_trial, method=distance_method)
 		
-		return makams[np.argmin(distance_vector)]
+		return modes[np.argmin(distance_vector)]
 
-	def generate_distance_matrix(self, dist, peak_idxs, makam_dists, method='euclidean'):
-		result = np.zeros((len(peak_idxs), len(makam_dists)))
+	def generate_distance_matrix(self, dist, peak_idxs, mode_dists, method='euclidean'):
+		"""---------------------------------------------------------------------------------------
+		Iteratively calculates the distance for all candidate tonics and candidate modes of a piece.
+		The pair of candidates that give rise to the minimum value in this matrix is chosen as the
+		estimate by the higher level functions.
+		---------------------------------------------------------------------------------------"""
+		result = np.zeros((len(peak_idxs), len(mode_dists)))
 		for i in range(len(peak_idxs)):
 			trial = dist.shift(peak_idxs[i])
-			for j in range(len(makam_dists)):
-				result[i][j] = self.distance(trial, makam_dists[j], method=method)
+			for j in range(len(mode_dists)):
+				result[i][j] = self.distance(trial, mode_dists[j], method=method)
 		return np.array(result)
 
 	def distance(self, piece, trained, method='euclidan'):
-
+		"""---------------------------------------------------------------------------------------
+		Calculates the distance metric between two pitch distributions. This is called from
+		estimation functions.
+		---------------------------------------------------------------------------------------"""
 		if(method=='euclidean'):
 			self.minkowski_distance(2, piece, trained)
 
@@ -123,6 +166,12 @@ class BozkurtEstimation:
 			return 0
 
 	def minkowski_distance(self, degree, piece, trained):
+		"""---------------------------------------------------------------------------------------
+		Generic implementation of Minkowski distance. 
+		When degree=1: This is Manhattan/City Blocks Distance
+		When degree=2: This is Euclidean Distance
+		When degree=3: This is L3 Distance
+		---------------------------------------------------------------------------------------"""
 		degree = degree * 1.0
 		if(degree == 2.0):
 			return distance.euclidean(piece.vals, trained.vals)
@@ -139,19 +188,19 @@ class BozkurtEstimation:
 		two pd's are of the same length 
 		---------------------------------------------------------------------------------------"""
 		### Alignment of the left end-points
-		if((min(pd.bins) - min(makam_pd.bins)) > 0):
-			temp_left_shift = (min(pd.bins) - min(makam_pd.bins)) / self.cent_ss
+		if((min(pd.bins) - min(mode_pd.bins)) > 0):
+			temp_left_shift = (min(pd.bins) - min(mode_pd.bins)) / self.cent_ss
 			pd.vals = np.concatenate((np.zeros(temp_left_shift), pd.vals))
-		elif((min(pd.bins) - min(makam_pd.bins)) < 0):
-			makam_left_shift = (min(makam_pd.bins) - min(pd.bins)) / self.cent_ss
-			makam_pd.vals = np.concatenate((np.zeros(makam_left_shift), makam_pd.vals))
+		elif((min(pd.bins) - min(mode_pd.bins)) < 0):
+			mode_left_shift = (min(mode_pd.bins) - min(pd.bins)) / self.cent_ss
+			mode_pd.vals = np.concatenate((np.zeros(mode_left_shift), mode_pd.vals))
 
 		### Alignment of the right end-points
-		if((max(pd.bins) - max(makam_pd.bins)) > 0):
-			makam_right_shift = (max(pd.bins) - max(makam_pd.bins)) / self.cent_ss
-			makam_pd.vals = np.concatenate((makam_pd.vals, np.zeros(makam_right_shift)))
-		elif((max(makam_pd.bins) - max(pd.bins)) > 0):    
-			temp_right_shift = (max(makam_pd.bins) - max(pd.bins)) / self.cent_ss
+		if((max(pd.bins) - max(mode_pd.bins)) > 0):
+			mode_right_shift = (max(pd.bins) - max(mode_pd.bins)) / self.cent_ss
+			mode_pd.vals = np.concatenate((mode_pd.vals, np.zeros(mode_right_shift)))
+		elif((max(mode_pd.bins) - max(pd.bins)) > 0):    
+			temp_right_shift = (max(mode_pd.bins) - max(pd.bins)) / self.cent_ss
    			pd.vals = np.concatenate((pd.vals, (np.zeros(temp_right_shift))))
 
-   		return pd, makam_pd
+   		return pd, mode_pd

@@ -1,5 +1,5 @@
 import PitchDistribution as p_d
-import MakamFunctions as mf
+import ModeFunctions as mf
 import BozkurtEstimation as be
 import matplotlib.pyplot as pl
 import numpy as np
@@ -64,7 +64,7 @@ pl.show() # This is Figure 3
 ### am treating the PCDs of other pieces as joint PCDs of a different mode.
 
 ### Here, the tonic of the piece is known and fed into the function. We want to learn its mode.
-print b.makam_estimate(np.loadtxt((pt_dir + 'semahat.txt')), [(pcd_dir + 'ussak_pcd.json'), (pcd_dir + 'murat_derya_pcd.json'), (pcd_dir + 'gec_kalma_pcd.json')], 199.0, metric='pcd')
+print b.mode_estimate(np.loadtxt((pt_dir + 'semahat.txt')), [(pcd_dir + 'ussak_pcd.json'), (pcd_dir + 'murat_derya_pcd.json'), (pcd_dir + 'gec_kalma_pcd.json')], 199.0, metric='pcd')
 
 ### Here, the mode of the function is known and fed into the function. We want to learn its tonic.
 print b.tonic_estimate(np.loadtxt((pt_dir + 'semahat.txt')), (pcd_dir + 'ussak'), distance_method="euclidean", metric='pcd')
