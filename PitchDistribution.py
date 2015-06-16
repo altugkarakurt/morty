@@ -5,8 +5,8 @@ import matplotlib.pyplot as pl
 import numpy as np
 import json
 
-def load(fname):
-	with open(fname) as f:    
+def load(fname, dist_dir):
+	with open((dist_dir + fname)) as f:    
 		dist = json.load(f)
 	return PitchDistribution(np.array(dist[0]['bins']), np.array(dist[0]['vals']), kernel_width=dist[0]['kernel_width'], ref_freq=dist[0]['ref_freq'])
 
