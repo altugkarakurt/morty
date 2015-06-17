@@ -64,12 +64,13 @@ pl.show() # This is Figure 3
 ### am treating the PCDs of other pieces as joint PCDs of a different mode.
 
 ### Here, the tonic of the piece is known and fed into the function. We want to learn its mode.
-print b.estimate(pt1, mode_names=[], mode_name='semahat', est_tonic=True, est_mode=False, mode_dir=pd_dir, distance_method="euclidean", metric='pd')
+print b.estimate(pt1, mode_names=[], mode_name='semahat', mode_dir=pd_dir, est_tonic=True, est_mode=False, distance_method="l3", metric='pd')
 
 ### Here, the mode of the function is known and fed into the function. We want to learn its tonic.
-# print b.tonic_estimate(np.loadtxt((pt_dir + 'semahat.txt')), (pcd_dir + 'ussak'), distance_method="euclidean", metric='pcd')
-print b.estimate(pt1, mode_names=['semahat', 'gec_kalma', 'ussak', 'murat_derya'], mode_name='', est_tonic=False, est_mode=True, mode_dir=pcd_dir, distance_method="euclidean", metric='pcd', ref_freq=199)
-
+print b.estimate(pt1, mode_names=['semahat', 'murat_derya', 'ussak'], mode_name='', est_tonic=False, est_mode=True, mode_dir=pd_dir, distance_method="euclidean", metric='pd', ref_freq=199)
+m, t = b.estimate(pt1, mode_names=['gec_kalma', 'murat_derya', 'ussak'], mode_name='', est_tonic=True, est_mode=True, mode_dir=pd_dir, distance_method="euclidean", metric='pd')
+print m
+print t
 ### Soon the joint estimation function will be added. In that case neither the tonic nor the
 ### mode would be known and the function would estimate both.
 # TODO
@@ -81,7 +82,7 @@ print b.estimate(pt1, mode_names=['semahat', 'gec_kalma', 'ussak', 'murat_derya'
 The following part is for demonstrating the usage of low-level functions. Unless you want
 to change the algorithm or need the intermediate values or steps you might not need these.
 ---------------------------------------------------------------------------------------"""
-
+"""
 ###---------------------------------------------------------------------------------------
 
 ### Generation of pitch distributions (PD), using the known tonics. For kde*, see line 37.
@@ -101,4 +102,4 @@ pcd1.save('test_save.json')
 
 print 'Done!'
 
-###---------------------------------------------------------------------------------------
+###---------------------------------------------------------------------------------------"""

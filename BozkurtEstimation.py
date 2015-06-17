@@ -34,59 +34,62 @@ class BozkurtEstimation:
 			joint_pd.save((mode_name + '_pd.json'))
 			return joint_pd
 
-	def estimate(self, pitch_track, mode_names=[], mode_name='', est_tonic=True, est_mode=True, mode_dir='./', distance_method="euclidean", metric='pcd', ref_freq=440):
+	def estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, distance_method="euclidean", metric='pcd', ref_freq=440):
 		"""---------------------------------------------------------------------------------------
 		This is the high level function that users are expected to interact with, for estimation
 		purposes. Using the est_* flags, it is possible to estimate tonic, mode or both.
 		---------------------------------------------------------------------------------------"""
-		### The preliminaries to the *_estimate functions to be called later.
+		### Preliminaries before the estimations
 		cent_track = mf.hz_to_cent(pitch_track, ref_freq=ref_freq)
 		dist = mf.generate_pd(cent_track, ref_freq=ref_freq, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss)[0]
-		if(metric=='pcd'):
-			dist = mf.generate_pcd(dist)
+		dist = mf.generate_pcd(dist) if (metric=='pcd') else dist
+		mode_dists = [(p_d.load((m + '_' + metric + '.json'), mode_dir)) for m in mode_names]
+		mode_dist = p_d.load((mode_name + '_' + metric + '.json'), mode_dir) if (mode_name!='') else None
 
-		if(est_tonic and est_mode): # Joint estimation of tonic and mode
-			### TODO
-			return 0
-
-		elif(est_tonic): # Estimate tonic only, mode is known.
-			mode_dist = p_d.load((mode_name + '_' + metric + '.json'), mode_dir)
+		if(est_tonic):
 			if(metric=='pcd'):
-
 				### Shifting to the global minima to prevent wrong detection of peaks
 				shift_factor = dist.vals.tolist().index(min(dist.vals))
 				dist = dist.shift(shift_factor)
 				anti_freq = mf.cent_to_hz([dist.bins[shift_factor]], ref_freq=ref_freq)[0]
 				peak_idxs, peak_vals = dist.detect_peaks()
-				distance_vector = self.tonic_estimate(dist, mode_dist, peak_idxs, distance_method="euclidean", metric='pcd')
-
-				### The detected tonic is converted back to hertz from cent
-				return mf.cent_to_hz([dist.bins[peak_idxs[np.argmin(distance_vector)]]], anti_freq)[0]
-
 			elif(metric=='pd'):
 				peak_idxs, peak_vals = dist.detect_peaks()
-   				origin =  np.where(dist.bins==0)[0][0]
+				origin =  np.where(dist.bins==0)[0][0]
 				shift_idxs = [(idx - origin) for idx in peak_idxs]
-				
-				distance_vector = self.tonic_estimate(dist, mode_dist, shift_idxs, distance_method="euclidean", metric='pd')
 
-				### The detected tonic is converted back to hertz from cent
+		### Call to actual estimation functions
+		if(est_tonic and est_mode):
+			if(metric=='pcd'):
+				dist_mat = self.generate_distance_matrix(dist, peak_idxs, mode_dists, method=distance_method)
+				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
+				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
+				return mode_names[min_col], mf.cent_to_hz([dist.bins[peak_idxs[min_row]]], anti_freq)[0]
+			elif(metric=='pd'):
+				dist_mat = np.zeros((len(shift_idxs), len(mode_dists)))
+				for m in range(len(mode_dists)):
+					dist_mat[:,m] = self.tonic_estimate(dist, shift_idxs, mode_dists[m], distance_method=distance_method, metric=metric)
+				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
+				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
+				return mode_names[min_col], mf.cent_to_hz([shift_idxs[min_row] * self.cent_ss], ref_freq)[0]
+
+		elif(est_tonic):
+			if(metric=='pcd'):
+				distance_vector = self.tonic_estimate(dist, peak_idxs, mode_dist, distance_method=distance_method, metric=metric)
+				return mf.cent_to_hz([dist.bins[peak_idxs[np.argmin(distance_vector)]]], anti_freq)[0]
+			elif(metric=='pd'):
+				distance_vector = self.tonic_estimate(dist, shift_idxs, mode_dist, distance_method=distance_method, metric=metric)
 				return mf.cent_to_hz([shift_idxs[np.argmin(distance_vector)] * self.cent_ss], ref_freq)[0]
 
-		elif(est_mode): # Estimate mode only, tonic is known.
-					
-			### The candidate mode distributions are retrieved
-			mode_dists = []
-			for m in range(len(mode_names)):
-				mode_dists.append(p_d.load(mode_names[m] + '_' + metric + '.json', mode_dir))
-			distance_vector = self.mode_estimate(dist, mode_dists, ref_freq, distance_method='euclidean', metric=metric)
+		elif(est_mode):
+			distance_vector = self.mode_estimate(dist, mode_dists, distance_method=distance_method, metric=metric)
 			return mode_names[np.argmin(distance_vector)]
-		
+	
 		else:
 			# Nothing is expected to be estimated
 			return 0
 
-	def tonic_estimate(self, dist, mode_dist, peak_idxs, distance_method="euclidean", metric='pcd'):
+	def tonic_estimate(self, dist, peak_idxs, mode_dist, distance_method="euclidean", metric='pcd'):
 		"""---------------------------------------------------------------------------------------
 		Given the mode (or candidate mode), compares the piece's distribution using the candidate
 		tonics and returns the resultant distance vector to higher level functions.
@@ -95,36 +98,33 @@ class BozkurtEstimation:
 		### Piece's distributon is generated
 		
 		if(metric=='pcd'):
-
-			### Comparison of the piece's pcd with known mode's joint pcd
 			return np.array(self.generate_distance_matrix(dist, peak_idxs, [mode_dist], method=distance_method))[:,0]
 
 		elif(metric=='pd'):
-
 			temp = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, ref_freq=dist.ref_freq)
 			temp, mode_dist = self.pd_zero_pad(temp, mode_dist)
 
-    		### Filling both sides of vals with zeros, to make sure that the shifts won't drop any non-zero values
-    		temp.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), temp.vals, np.zeros(abs(min(peak_idxs)))))
-    		mode_dist.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), mode_dist.vals, np.zeros(abs(min(peak_idxs)))))
-    		return np.array(self.generate_distance_matrix(temp, peak_idxs, [mode_dist], method=distance_method))[:,0]
-
-	def mode_estimate(self, dist, mode_dists, tonic, distance_method='euclidean', metric='pcd'):
+			### Filling both sides of vals with zeros, to make sure that the shifts won't drop any non-zero values
+			temp.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), temp.vals, np.zeros(abs(min(peak_idxs)))))
+			mode_dist.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), mode_dist.vals, np.zeros(abs(min(peak_idxs)))))
+			
+			return np.array(self.generate_distance_matrix(temp, peak_idxs, [mode_dist], method=distance_method))[:,0]			
+	
+	def mode_estimate(self, dist, mode_dists, distance_method='euclidean', metric='pcd'):
 		"""---------------------------------------------------------------------------------------
 		Given the tonic (or candidate tonic), compares the piece's distribution using the candidate
 		modes and returns the resultant distance vector to higher level functions.
 		---------------------------------------------------------------------------------------"""
-		### Tonic is known, mode is estimated.
 
-		if(metric=='pcd'):	
-			return np.array(self.generate_distance_matrix(dist, [0], mode_dists, method=distance_method))
+		if(metric=='pcd'):
+			distance_vector = np.array(self.generate_distance_matrix(dist, [0], mode_dists, method=distance_method))
 
 		elif(metric=='pd'):
 			distance_vector = np.zeros(len(mode_dists))
 			for i in range(len(mode_dists)):
-				trial, mode_trial = self.pd_zero_pad(dist, mode_dists[i])
+				trial, mode_trial = self.pd_zero_pad(p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, ref_freq=dist.ref_freq), mode_dists[i])
 				distance_vector[i] = self.distance(trial, mode_trial, method=distance_method)
-			return distance_vector
+		return distance_vector
 
 	def generate_distance_matrix(self, dist, peak_idxs, mode_dists, method='euclidean'):
 		"""---------------------------------------------------------------------------------------
@@ -133,27 +133,27 @@ class BozkurtEstimation:
 		estimate by the higher level functions.
 		---------------------------------------------------------------------------------------"""
 		result = np.zeros((len(peak_idxs), len(mode_dists)))
-		for i in range(len(peak_idxs)):
+		for i in range(len(peak_idxs)): 
 			trial = dist.shift(peak_idxs[i])
 			for j in range(len(mode_dists)):
 				result[i][j] = self.distance(trial, mode_dists[j], method=method)
 		return np.array(result)
 
-	def distance(self, piece, trained, method='euclidean'):
+	def distance(self, piece, trained, method='euclidan'):
 		"""---------------------------------------------------------------------------------------
 		Calculates the distance metric between two pitch distributions. This is called from
 		estimation functions.
 		---------------------------------------------------------------------------------------"""
-		if(method=='euclidean'): # Euclidean Distance
-			self.minkowski_distance(2, piece, trained)
+		if(method=='euclidean'):
+			return self.minkowski_distance(2, piece, trained)
 
-		elif(method=='manhattan'): # Manhattan Distance
-			self.minkowski_distance(1, piece, trained)
+		elif(method=='manhattan'):
+			return self.minkowski_distance(1, piece, trained)
 
-		elif(method=='l3'): # L3 Distance
-			self.minkowski_distance(3, piece, trained)
+		elif(method=='l3'):
+			return self.minkowski_distance(3, piece, trained)
 			
-		elif(method=='bhat'): # Bhattacharyya Distance
+		elif(method=='bhat'):
 			d = 0
 			for i in range(len(piece.vals)):
 				d += math.sqrt(piece.vals[i] * trained.vals[i]);
