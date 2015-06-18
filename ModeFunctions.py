@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
-from scipy import stats
+import scipy as sp
 import pylab as pl
 import numpy as np
 import math
+
+from scipy import stats
+from scipy.spatial import distance
 
 import PitchDistribution as p_d
 
@@ -48,3 +51,55 @@ def cent_to_hz(cent_track, ref_freq):
 	for cent in cent_track:
 		hertz_track.append((2 ** (cent / 1200.0)) * ref_freq)
 	return hertz_track
+
+def generate_distance_matrix(dist, peak_idxs, mode_dists, method='euclidean'):
+	"""---------------------------------------------------------------------------------------
+	Iteratively calculates the distance for all candidate tonics and candidate modes of a piece.
+	The pair of candidates that give rise to the minimum value in this matrix is chosen as the
+	estimate by the higher level functions.
+	---------------------------------------------------------------------------------------"""
+	result = np.zeros((len(peak_idxs), len(mode_dists)))
+	for i in range(len(peak_idxs)): 
+		trial = dist.shift(peak_idxs[i])
+		for j in range(len(mode_dists)):
+			result[i][j] = distance(trial, mode_dists[j], method=method)
+	return np.array(result)
+
+def distance(piece, trained, method='euclidan'):
+	"""---------------------------------------------------------------------------------------
+	Calculates the distance metric between two pitch distributions. This is called from
+	estimation functions.
+	---------------------------------------------------------------------------------------"""
+	if(method=='euclidean'):
+		return minkowski_distance(2, piece, trained)
+
+	elif(method=='manhattan'):
+		return minkowski_distance(1, piece, trained)
+
+	elif(method=='l3'):
+		return minkowski_distance(3, piece, trained)
+			
+	elif(method=='bhat'):
+		d = 0
+		for i in range(len(piece.vals)):
+			d += math.sqrt(piece.vals[i] * trained.vals[i]);
+		return (-math.log(d));
+
+	else:
+		return 0
+
+def minkowski_distance(degree, piece, trained):
+	"""---------------------------------------------------------------------------------------
+	Generic implementation of Minkowski distance. 
+	When degree=1: This is Manhattan/City Blocks Distance
+	When degree=2: This is Euclidean Distance
+	When degree=3: This is L3 Distance
+	---------------------------------------------------------------------------------------"""
+	degree = degree * 1.0
+	if(degree == 2.0):
+		return sp.spatial.distance.euclidean(piece.vals, trained.vals)
+	else:
+		d = 0
+		for i in range(len(piece.vals)):
+			d += ((abs(piece.vals[i] - trained.vals[i])) ** degree)
+		return (d ** (1/degree))

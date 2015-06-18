@@ -2,8 +2,6 @@
 import numpy as np
 import math
 import matplotlib.pyplot as pl
-import scipy as sp
-from scipy.spatial import distance
 
 import ModeFunctions as mf
 import PitchDistribution as p_d
@@ -22,7 +20,7 @@ class BozkurtEstimation:
 		---------------------------------------------------------------------------------------"""
 		mode_track = []
 		for idx in range(len(txt_list)):
-			cur_track = np.loadtxt(txt_list[idx])
+			cur_track = np.loadtxt(txt_list[idx])[1]
 			cur_cent_track = mf.hz_to_cent(cur_track, ref_freq=ref_freq_list[idx])
 			for i in cur_cent_track:
 				mode_track.append(i)
@@ -64,7 +62,7 @@ class BozkurtEstimation:
 		### Call to actual estimation functions
 		if(est_tonic and est_mode):
 			if(metric=='pcd'):
-				dist_mat = self.generate_distance_matrix(dist, peak_idxs, mode_dists, method=distance_method)
+				dist_mat = mf.generate_distance_matrix(dist, peak_idxs, mode_dists, method=distance_method)
 				for r in range(rank):
 					min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
 					min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
@@ -122,7 +120,7 @@ class BozkurtEstimation:
 		### Piece's distributon is generated
 		
 		if(metric=='pcd'):
-			return np.array(self.generate_distance_matrix(dist, peak_idxs, [mode_dist], method=distance_method))[:,0]
+			return np.array(mf.generate_distance_matrix(dist, peak_idxs, [mode_dist], method=distance_method))[:,0]
 
 		elif(metric=='pd'):
 			temp = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, ref_freq=dist.ref_freq)
@@ -132,7 +130,7 @@ class BozkurtEstimation:
 			temp.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), temp.vals, np.zeros(abs(min(peak_idxs)))))
 			mode_dist.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), mode_dist.vals, np.zeros(abs(min(peak_idxs)))))
 			
-			return np.array(self.generate_distance_matrix(temp, peak_idxs, [mode_dist], method=distance_method))[:,0]			
+			return np.array(mf.generate_distance_matrix(temp, peak_idxs, [mode_dist], method=distance_method))[:,0]			
 	
 	def mode_estimate(self, dist, mode_dists, distance_method='euclidean', metric='pcd'):
 		"""---------------------------------------------------------------------------------------
@@ -141,66 +139,14 @@ class BozkurtEstimation:
 		---------------------------------------------------------------------------------------"""
 
 		if(metric=='pcd'):
-			distance_vector = np.array(self.generate_distance_matrix(dist, [0], mode_dists, method=distance_method))
+			distance_vector = np.array(mf.generate_distance_matrix(dist, [0], mode_dists, method=distance_method))
 
 		elif(metric=='pd'):
 			distance_vector = np.zeros(len(mode_dists))
 			for i in range(len(mode_dists)):
 				trial, mode_trial = self.pd_zero_pad(p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, ref_freq=dist.ref_freq), mode_dists[i])
-				distance_vector[i] = self.distance(trial, mode_trial, method=distance_method)
+				distance_vector[i] = mf.distance(trial, mode_trial, method=distance_method)
 		return distance_vector
-
-	def generate_distance_matrix(self, dist, peak_idxs, mode_dists, method='euclidean'):
-		"""---------------------------------------------------------------------------------------
-		Iteratively calculates the distance for all candidate tonics and candidate modes of a piece.
-		The pair of candidates that give rise to the minimum value in this matrix is chosen as the
-		estimate by the higher level functions.
-		---------------------------------------------------------------------------------------"""
-		result = np.zeros((len(peak_idxs), len(mode_dists)))
-		for i in range(len(peak_idxs)): 
-			trial = dist.shift(peak_idxs[i])
-			for j in range(len(mode_dists)):
-				result[i][j] = self.distance(trial, mode_dists[j], method=method)
-		return np.array(result)
-
-	def distance(self, piece, trained, method='euclidan'):
-		"""---------------------------------------------------------------------------------------
-		Calculates the distance metric between two pitch distributions. This is called from
-		estimation functions.
-		---------------------------------------------------------------------------------------"""
-		if(method=='euclidean'):
-			return self.minkowski_distance(2, piece, trained)
-
-		elif(method=='manhattan'):
-			return self.minkowski_distance(1, piece, trained)
-
-		elif(method=='l3'):
-			return self.minkowski_distance(3, piece, trained)
-			
-		elif(method=='bhat'):
-			d = 0
-			for i in range(len(piece.vals)):
-				d += math.sqrt(piece.vals[i] * trained.vals[i]);
-			return (-math.log(d));
-
-		else:
-			return 0
-
-	def minkowski_distance(self, degree, piece, trained):
-		"""---------------------------------------------------------------------------------------
-		Generic implementation of Minkowski distance. 
-		When degree=1: This is Manhattan/City Blocks Distance
-		When degree=2: This is Euclidean Distance
-		When degree=3: This is L3 Distance
-		---------------------------------------------------------------------------------------"""
-		degree = degree * 1.0
-		if(degree == 2.0):
-			return distance.euclidean(piece.vals, trained.vals)
-		else:
-			d = 0
-			for i in range(len(piece.vals)):
-				d += ((abs(piece.vals[i] - trained.vals[i])) ** degree)
-			return (d ** (1/degree))
 
 	def pd_zero_pad(self, pd, mode_pd):
 		"""---------------------------------------------------------------------------------------

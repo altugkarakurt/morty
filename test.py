@@ -63,7 +63,7 @@ pl.show() # This is Figure 3
 ### Training is completed. It's time to estimate. Since there aren't any candidate modes, I
 ### am treating the PCDs of other pieces as joint PCDs of a different mode.
 
-m = b.estimate(pt1, mode_names=[], mode_name='ussak', est_tonic=True, est_mode=False, rank = 3, mode_dir=pd_dir, distance_method="euclidean", metric='pd', ref_freq=199)
+m = b.estimate(pt1, mode_names=[], mode_name='semahat', est_tonic=True, est_mode=False, rank = 3, mode_dir=pcd_dir, distance_method="euclidean", metric='pcd', ref_freq=440)
 print m
 ### Soon the joint estimation function will be added. In that case neither the tonic nor the
 ### mode would be known and the function would estimate both.
