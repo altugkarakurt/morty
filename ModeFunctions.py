@@ -9,7 +9,14 @@ from scipy.spatial import distance
 
 import PitchDistribution as p_d
 
-def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5):		
+def load_track(txtname, txt_dir):
+	"""---------------------------------------------------------------------------------------
+	Loads the pitch track from a text file. The format for the examples is, such that, 0th
+	column is time-stamps and 1st column is the corresponding frequency values.
+	---------------------------------------------------------------------------------------"""
+	return np.loadtxt(txt_dir + txtname + '.txt')
+
+def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source='', segment='all'):		
 	### Some extra interval is added to the beginning and end since the 
 	### superposed Gaussian for smoothing would vanish after 3 sigmas.
 	### The limits are also quantized to be a multiple of chosen step-size
@@ -20,7 +27,7 @@ def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5):
 	pd_bins = np.arange(min_bin, max_bin, cent_ss)
 	kde = stats.gaussian_kde(pitch_track, bw_method=smoothening)
 	pd_vals = kde.evaluate(pd_bins)
-	return p_d.PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, ref_freq=ref_freq), kde
+	return p_d.PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, source=source, ref_freq=ref_freq, segment=segment)
 
 def generate_pcd(pd):
 	### Initializations
@@ -35,7 +42,7 @@ def generate_pcd(pd):
 		idx = int((pd_bins[k] % 1200) / step_size)
 		pcd_vals[idx] = pcd_vals[idx] + pd_vals[k]
 		
-	return p_d.PitchDistribution(pcd_bins, pcd_vals, kernel_width=pd.kernel_width, ref_freq = pd.ref_freq)
+	return p_d.PitchDistribution(pcd_bins, pcd_vals, kernel_width=pd.kernel_width, source=pd.source, ref_freq=pd.ref_freq, segment=pd.segmentation)
 
 def hz_to_cent(hertz_track, ref_freq):
 	### Hertz-to-Cent Conversion. Since the log of zeros are non_defined,
@@ -65,7 +72,7 @@ def generate_distance_matrix(dist, peak_idxs, mode_dists, method='euclidean'):
 			result[i][j] = distance(trial, mode_dists[j], method=method)
 	return np.array(result)
 
-def distance(piece, trained, method='euclidan'):
+def distance(piece, trained, method='euclidean'):
 	"""---------------------------------------------------------------------------------------
 	Calculates the distance metric between two pitch distributions. This is called from
 	estimation functions.

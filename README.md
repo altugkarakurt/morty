@@ -6,7 +6,7 @@ This project expects the pitch track, or predominant melody, as the input and ge
 pitch class distributions (PCD) from them. These distributions are used as the parameters for estimation and training
 processes.
 
-It can be used for **estimating tonic and/or mod of a piece**. However, if either is known and this information would be
+It can be used for **estimating tonic and/or mode of a piece**. However, if either is known and this information would be
 fed into the system, the estimation of other would be more accurate.
 
 For the estimation:

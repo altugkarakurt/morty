@@ -23,9 +23,8 @@ b = be.BozkurtEstimation()
 ###---------------------------------------------------------------------------------------
 
 ### Loading the pitch tracks
-pt1 = np.loadtxt((pt_dir + 'semahat.txt'))
-pt2 = np.loadtxt((pt_dir + 'gec_kalma.txt'))
-pt3 = np.loadtxt((pt_dir + 'murat_derya.txt'))
+pt1 = mf.load_track('semahat', pt_dir)[:,1]
+
 
 ###---------------------------------------------------------------------------------------
 

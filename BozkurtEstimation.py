@@ -12,26 +12,22 @@ class BozkurtEstimation:
 		self.smooth_factor = smooth_factor
 		self.cent_ss = cent_ss
 
-	def train(self, mode_name, txt_list, ref_freq_list, metric='pcd'):
+	def train(self, mode_name, pt_list, ref_freq_list, pt_dir='./', metric='pcd', save_dir='./'):
 		"""---------------------------------------------------------------------------------------
 		This function handles everything related to supervised learning portion of this system. 
 		It expects the list of text files containing the pitch tracks of the dataset, the array
 		of their known tonics and generates the joint distribution of the mode and saves it.
 		---------------------------------------------------------------------------------------"""
 		mode_track = []
-		for idx in range(len(txt_list)):
-			cur_track = np.loadtxt(txt_list[idx])[1]
+		for idx in range(len(pt_list)):
+			cur_track = mf.load_track(pt_list[idx], pt_dir)[:,1]
 			cur_cent_track = mf.hz_to_cent(cur_track, ref_freq=ref_freq_list[idx])
 			for i in cur_cent_track:
 				mode_track.append(i)
-		joint_pd = mf.generate_pd(mode_track, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss)[0]
+		joint_dist = mf.generate_pd(mode_track, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss, source=mode_name, segment='all')[0]
 		if(metric=='pcd'):
-			joint_pcd = mf.generate_pcd(joint_pd)
-			joint_pcd.save((mode_name + '_pcd.json'))
-			return joint_pcd
-		elif(metric=='pd'):
-			joint_pd.save((mode_name + '_pd.json'))
-			return joint_pd
+			joint_dist = mf.generate_pcd(joint_dist)
+		joint_dist.save((mode_name + '_' + metric + '.json'), save_dir=save_dir)
 
 	def estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440):
 		"""---------------------------------------------------------------------------------------
@@ -123,7 +119,7 @@ class BozkurtEstimation:
 			return np.array(mf.generate_distance_matrix(dist, peak_idxs, [mode_dist], method=distance_method))[:,0]
 
 		elif(metric=='pd'):
-			temp = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, ref_freq=dist.ref_freq)
+			temp = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
 			temp, mode_dist = self.pd_zero_pad(temp, mode_dist)
 
 			### Filling both sides of vals with zeros, to make sure that the shifts won't drop any non-zero values
@@ -144,7 +140,8 @@ class BozkurtEstimation:
 		elif(metric=='pd'):
 			distance_vector = np.zeros(len(mode_dists))
 			for i in range(len(mode_dists)):
-				trial, mode_trial = self.pd_zero_pad(p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, ref_freq=dist.ref_freq), mode_dists[i])
+				trial = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
+				trial, mode_trial = self.pd_zero_pad(trial, mode_dists[i])
 				distance_vector[i] = mf.distance(trial, mode_trial, method=distance_method)
 		return distance_vector
 
