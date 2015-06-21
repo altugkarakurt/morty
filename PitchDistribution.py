@@ -24,7 +24,7 @@ class PitchDistribution:
 	def save(self, fname, save_dir='./'):
 		dist_json = [{'bins':self.bins.tolist(), 'vals':self.vals.tolist(), 'kernel_width':self.kernel_width, 'source':self.source, 'ref_freq':self.ref_freq, 'segmentation':self.segmentation}]
 		with open((save_dir + fname), 'w') as f:
-			json.dump(dist_json, f, indent = 4)
+			json.dump(dist_json, f, indent=0)
 			f.close()
 
 	def get(self):
