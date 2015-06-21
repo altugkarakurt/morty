@@ -24,7 +24,7 @@ class BozkurtEstimation:
 			cur_cent_track = mf.hz_to_cent(cur_track, ref_freq=ref_freq_list[idx])
 			for i in cur_cent_track:
 				mode_track.append(i)
-		joint_dist = mf.generate_pd(mode_track, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss, source=mode_name, segment='all')[0]
+		joint_dist = mf.generate_pd(mode_track, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss, source=mode_name, segment='all')
 		if(metric=='pcd'):
 			joint_dist = mf.generate_pcd(joint_dist)
 		joint_dist.save((mode_name + '_' + metric + '.json'), save_dir=save_dir)
@@ -36,7 +36,7 @@ class BozkurtEstimation:
 		---------------------------------------------------------------------------------------"""
 		### Preliminaries before the estimations
 		cent_track = mf.hz_to_cent(pitch_track, ref_freq=ref_freq)
-		dist = mf.generate_pd(cent_track, ref_freq=ref_freq, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss)[0]
+		dist = mf.generate_pd(cent_track, ref_freq=ref_freq, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss)
 		dist = mf.generate_pcd(dist) if (metric=='pcd') else dist
 		mode_dists = [(p_d.load((m + '_' + metric + '.json'), mode_dir)) for m in mode_names]
 		mode_dist = p_d.load((mode_name + '_' + metric + '.json'), mode_dir) if (mode_name!='') else None

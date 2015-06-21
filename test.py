@@ -45,8 +45,8 @@ pd = p_d.load('gec_kalma_pd.json', pd_dir)
 
 ### Here comes the actual training part. After the following lines, the joint distributions
 ### of the modes should be saved in your working directory.
-# ussak_pcd = b.train('ussak_pcd', [(pt_dir + 'semahat.txt'), (pt_dir + 'gec_kalma.txt'), (pt_dir + 'murat_derya.txt')], [199, 396.3525, 334.9488], metric='pcd')
-# ussak_pd = b.train('ussak_pd', [(pt_dir + 'semahat.txt'), (pt_dir + 'gec_kalma.txt'), (pt_dir + 'murat_derya.txt')], [199, 396.3525, 334.9488], metric='pd')
+ussak_pcd = b.train('ussak_pcd', [(pt_dir + 'semahat'), (pt_dir + 'gec_kalma'), (pt_dir + 'murat_derya')], [199, 396.3525, 334.9488], metric='pcd')
+ussak_pd = b.train('ussak_pd', [(pt_dir + 'semahat'), (pt_dir + 'gec_kalma'), (pt_dir + 'murat_derya')], [199, 396.3525, 334.9488], metric='pd')
 
 ### Let's see if the joint PCD is similar to the marginal PCDs. Blue is the joint PCD. The
 ### yellow ones are the marginals. I am using matplotlib to modify the colors.
