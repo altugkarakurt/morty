@@ -110,3 +110,27 @@ def minkowski_distance(degree, piece, trained):
 		for i in range(len(piece.vals)):
 			d += ((abs(piece.vals[i] - trained.vals[i])) ** degree)
 		return (d ** (1/degree))
+
+def pd_zero_pad(pd, mode_pd, cent_ss=7.5):
+	"""---------------------------------------------------------------------------------------
+	This function is only used while detecting tonic and working with pd as metric. It pads
+	zeros from both sides of the values array to avoid losing non-zero values when comparing
+	and to make sure the two PDs are of the same length 
+	---------------------------------------------------------------------------------------"""
+	### Alignment of the left end-points
+	if((min(pd.bins) - min(mode_pd.bins)) > 0):
+		temp_left_shift = (min(pd.bins) - min(mode_pd.bins)) / cent_ss
+		pd.vals = np.concatenate((np.zeros(temp_left_shift), pd.vals))
+	elif((min(pd.bins) - min(mode_pd.bins)) < 0):
+		mode_left_shift = (min(mode_pd.bins) - min(pd.bins)) / cent_ss
+		mode_pd.vals = np.concatenate((np.zeros(mode_left_shift), mode_pd.vals))
+
+	### Alignment of the right end-points
+	if((max(pd.bins) - max(mode_pd.bins)) > 0):
+		mode_right_shift = (max(pd.bins) - max(mode_pd.bins)) / cent_ss
+		mode_pd.vals = np.concatenate((mode_pd.vals, np.zeros(mode_right_shift)))
+	elif((max(mode_pd.bins) - max(pd.bins)) > 0):    
+		temp_right_shift = (max(mode_pd.bins) - max(pd.bins)) / cent_ss
+		pd.vals = np.concatenate((pd.vals, (np.zeros(temp_right_shift))))
+
+	return pd, mode_pd

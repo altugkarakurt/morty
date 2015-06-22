@@ -120,14 +120,14 @@ class BozkurtEstimation:
 
 		elif(metric=='pd'):
 			temp = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
-			temp, mode_dist = self.pd_zero_pad(temp, mode_dist)
+			temp, mode_dist = mf.pd_zero_pad(temp, mode_dist, cent_ss=self.cent_ss)
 
 			### Filling both sides of vals with zeros, to make sure that the shifts won't drop any non-zero values
 			temp.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), temp.vals, np.zeros(abs(min(peak_idxs)))))
 			mode_dist.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), mode_dist.vals, np.zeros(abs(min(peak_idxs)))))
 			
-			return np.array(mf.generate_distance_matrix(temp, peak_idxs, [mode_dist], method=distance_method))[:,0]			
-	
+			return np.array(mf.generate_distance_matrix(temp, peak_idxs, [mode_dist], method=distance_method))[:,0]
+
 	def mode_estimate(self, dist, mode_dists, distance_method='euclidean', metric='pcd'):
 		"""---------------------------------------------------------------------------------------
 		Given the tonic (or candidate tonic), compares the piece's distribution using the candidate
@@ -141,30 +141,6 @@ class BozkurtEstimation:
 			distance_vector = np.zeros(len(mode_dists))
 			for i in range(len(mode_dists)):
 				trial = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
-				trial, mode_trial = self.pd_zero_pad(trial, mode_dists[i])
+				trial, mode_trial = mf.pd_zero_pad(trial, mode_dists[i], cent_ss=self.cent_ss)
 				distance_vector[i] = mf.distance(trial, mode_trial, method=distance_method)
 		return distance_vector
-
-	def pd_zero_pad(self, pd, mode_pd):
-		"""---------------------------------------------------------------------------------------
-		This function is only used while detecting tonic and working with pd as metric. It pads
-		zeros from both sides of the values array to avoid losing non-zero values when comparing
-		and to make sure the two PDs are of the same length 
-		---------------------------------------------------------------------------------------"""
-		### Alignment of the left end-points
-		if((min(pd.bins) - min(mode_pd.bins)) > 0):
-			temp_left_shift = (min(pd.bins) - min(mode_pd.bins)) / self.cent_ss
-			pd.vals = np.concatenate((np.zeros(temp_left_shift), pd.vals))
-		elif((min(pd.bins) - min(mode_pd.bins)) < 0):
-			mode_left_shift = (min(mode_pd.bins) - min(pd.bins)) / self.cent_ss
-			mode_pd.vals = np.concatenate((np.zeros(mode_left_shift), mode_pd.vals))
-
-		### Alignment of the right end-points
-		if((max(pd.bins) - max(mode_pd.bins)) > 0):
-			mode_right_shift = (max(pd.bins) - max(mode_pd.bins)) / self.cent_ss
-			mode_pd.vals = np.concatenate((mode_pd.vals, np.zeros(mode_right_shift)))
-		elif((max(mode_pd.bins) - max(pd.bins)) > 0):    
-			temp_right_shift = (max(mode_pd.bins) - max(pd.bins)) / self.cent_ss
-   			pd.vals = np.concatenate((pd.vals, (np.zeros(temp_right_shift))))
-
-   		return pd, mode_pd
