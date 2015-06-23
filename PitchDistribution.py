@@ -39,7 +39,11 @@ class PitchDistribution:
 	def detect_peaks(self):
 		detector = std.PeakDetection()
 		peak_bins, peak_vals = detector(essentia.array(self.vals))
+		# Essentia normalizes the positions to 1
 		peak_idxs = [round(bn * len(self.bins)) for bn in peak_bins]
+		lim = peak_idxs[len(peak_idxs) - 1]
+		lim = (lim-1) if (lim==len(peak_bins)) else lim
+		print peak_idxs
 		if(peak_idxs[0] == 0):
 			peak_idxs = np.delete(peak_idxs, [len(peak_idxs) - 1])
 			peak_vals = np.delete(peak_vals, [len(peak_vals) - 1])

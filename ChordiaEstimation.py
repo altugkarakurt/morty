@@ -22,6 +22,7 @@ class ChordiaEstimation:
 			time_track = cur[:,0]
 			pitch_track = cur[:,1]
 			pts, segs = self.slice(time_track, pitch_track, pt_list[pt])
+			pts = [mf.hz_to_cent(k, ref_freq=ref_freq_list[pt]) for k in pts]
 			temp_list = self.train_segments(pts, segs, ref_freq_list[pt], save_dir, save_name, metric)
 			for tmp in temp_list:
 				dist_list.append(tmp)
@@ -85,28 +86,26 @@ class ChordiaEstimation:
 		elif(est_tonic):
 			if(metric=='pcd'):
 				dist_mat = [(np.array(mf.generate_distance_matrix(dist, peak_idxs, [d], method=distance_method))[:,0]) for d in mode_dist]
-				for r in range(rank):
-					min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
-					min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
-					tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_row]]], anti_freq)[0]
-					dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
-				return tonic_list
 
 			elif(metric=='pd'):
+				peak_idxs = shift_idxs
 				temp = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
-				temp, mode_dist = mf.pd_zero_pad(temp, mode_dist, cent_ss=self.cent_ss)
+				dist_mat = []
+				for d in mode_dist:
+					temp, d = mf.pd_zero_pad(temp, d, cent_ss=self.cent_ss)
 
-				### Filling both sides of vals with zeros, to make sure that the shifts won't drop any non-zero values
-				temp.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), temp.vals, np.zeros(abs(min(peak_idxs)))))
-				mode_dist.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), mode_dist.vals, np.zeros(abs(min(peak_idxs)))))
-				
-				distance_vector = np.array(mf.generate_distance_matrix(temp, peak_idxs, [mode_dist], method=distance_method))[:,0]
-				self.tonic_estimate(dist, shift_idxs, mode_dist, distance_method=distance_method, metric=metric)
-				for r in range(rank):
-					idx = np.argmin(distance_vector)
-					tonic_list[r] = mf.cent_to_hz([shift_idxs[idx] * self.cent_ss], ref_freq)[0]
-					distance_vector[idx] = (np.amax(distance_vector) + 1)
-				return tonic_list
+					### Filling both sides of vals with zeros, to make sure that the shifts won't drop any non-zero values
+					temp.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), temp.vals, np.zeros(abs(min(peak_idxs)))))
+					d.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), d.vals, np.zeros(abs(min(peak_idxs)))))
+					cur_vector = np.array(mf.generate_distance_matrix(temp, peak_idxs, [d], method=distance_method))[:,0]
+					dist_mat.append(cur_vector)
+
+			for r in range(rank):
+				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
+				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
+				tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_row]]], anti_freq)[0]
+				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
+			return tonic_list
 
 		elif(est_mode):
 			distance_vector = self.mode_estimate(dist, mode_dists, distance_method=distance_method, metric=metric)

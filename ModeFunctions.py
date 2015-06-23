@@ -31,16 +31,13 @@ def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, sourc
 
 def generate_pcd(pd):
 	### Initializations
-	pd_vals = pd.vals
-	pd_bins = pd.bins
-	step_size = pd.step_size
-	pcd_bins = np.arange(0, 1200, step_size)
+	pcd_bins = np.arange(0, 1200, pd.step_size)
 	pcd_vals = np.zeros(len(pcd_bins))
 
 	###Octave wrapping
-	for k in range(len(pd_bins)):
-		idx = int((pd_bins[k] % 1200) / step_size)
-		pcd_vals[idx] = pcd_vals[idx] + pd_vals[k]
+	for k in range(len(pd.bins)):
+		idx = int((pd.bins[k] % 1200) / pd.step_size)
+		pcd_vals[idx] = pcd_vals[idx] + pd.vals[k]
 		
 	return p_d.PitchDistribution(pcd_bins, pcd_vals, kernel_width=pd.kernel_width, source=pd.source, ref_freq=pd.ref_freq, segment=pd.segmentation)
 
