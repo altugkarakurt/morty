@@ -103,7 +103,7 @@ class ChordiaEstimation:
 			for r in range(rank):
 				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
 				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
-				tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_row]]], anti_freq)[0]
+				tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_col]]], anti_freq)[0]
 				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
 			return tonic_list
 
