@@ -88,17 +88,17 @@ class ChordiaEstimation:
 				dist_mat = [(np.array(mf.generate_distance_matrix(dist, peak_idxs, [d], method=distance_method))[:,0]) for d in mode_dist]
 
 			elif(metric=='pd'):
-				peak_idxs = shift_idxs
-				temp = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
 				dist_mat = []
 				for d in mode_dist:
+					temp = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
 					temp, d = mf.pd_zero_pad(temp, d, cent_ss=self.cent_ss)
 
 					### Filling both sides of vals with zeros, to make sure that the shifts won't drop any non-zero values
-					temp.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), temp.vals, np.zeros(abs(min(peak_idxs)))))
-					d.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), d.vals, np.zeros(abs(min(peak_idxs)))))
-					cur_vector = np.array(mf.generate_distance_matrix(temp, peak_idxs, [d], method=distance_method))[:,0]
+					temp.vals = np.concatenate((np.zeros(abs(max(shift_idxs))), temp.vals, np.zeros(abs(min(shift_idxs)))))
+					d.vals = np.concatenate((np.zeros(abs(max(shift_idxs))), d.vals, np.zeros(abs(min(shift_idxs)))))
+					cur_vector = np.array(mf.generate_distance_matrix(temp, shift_idxs, [d], method=distance_method))[:,0]
 					dist_mat.append(cur_vector)
+				anti_freq = ref_freq
 
 			for r in range(rank):
 				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
