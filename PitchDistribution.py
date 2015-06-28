@@ -57,7 +57,7 @@ class PitchDistribution:
 					shifted_vals = np.concatenate((np.zeros(abs(shift_idx)), self.vals[:shift_idx]))
 			return PitchDistribution(self.bins, shifted_vals, kernel_width=self.kernel_width, source=self.source, ref_freq=self.ref_freq, segment=self.segmentation)
 		else:
-			return self
+			return PitchDistribution(self.bins, self.vals, kernel_width=self.kernel_width, source=self.source, ref_freq=self.ref_freq, segment=self.segmentation)
 
 	def plot(self):
 		pl.figure()

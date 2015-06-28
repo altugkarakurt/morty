@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-
 import ModeFunctions as mf
 import PitchDistribution as p_d
 import json
@@ -27,9 +26,8 @@ class ChordiaEstimation:
 			for tmp in temp_list:
 				dist_list.append(tmp)
 
-		for d in dist_list:
-			temp_json = {'bins':d.bins.tolist(), 'vals':d.vals.tolist(), 'kernel_width':d.kernel_width, 'source':d.source, 'ref_freq':d.ref_freq, 'segmentation':d.segmentation}
-			dist_json.append(temp_json)
+		dist_json = [{'bins':d.bins.tolist(), 'vals':d.vals.tolist(), 'kernel_width':d.kernel_width, 'source':d.source, 'ref_freq':d.ref_freq, 'segmentation':d.segmentation} for d in dist_list]
+
 
 		with open((save_dir + save_name), 'w') as f:
 			dist_json = {mode_name:dist_json}
@@ -42,11 +40,11 @@ class ChordiaEstimation:
 		dist = mf.generate_pd(cent_track, ref_freq=ref_freq, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss)
 		dist = mf.generate_pcd(dist) if (metric=='pcd') else dist
 		mode_collections = [self.load_collection(mode, metric, dist_dir=mode_dir) for mode in mode_names]
-		mode_dists = [dist for col in mode_collections for dist in col]
+		cum_lens = np.cumsum([len(col) for col in mode_collections])
+		mode_dists = [d for col in mode_collections for d in col]
 		mode_dist = self.load_collection(mode_name, metric, dist_dir=mode_dir) if (mode_name!='') else None
 		tonic_list = np.zeros(rank)
 		mode_list = ['' for x in range(rank)]
-
 		if(est_tonic):
 			if(metric=='pcd'):
 				### Shifting to the global minima to prevent wrong detection of peaks
@@ -108,11 +106,12 @@ class ChordiaEstimation:
 			return tonic_list
 
 		elif(est_mode):
-			distance_vector = self.mode_estimate(dist, mode_dists, distance_method=distance_method, metric=metric)
+			distance_vector = np.array(mf.generate_distance_matrix(dist, [0], mode_dists, method=distance_method))
+			return distance_vector
 			for r in range(rank):
 				idx = np.argmin(distance_vector)
-				mode_list[r] = (mode_dists[idx].source, mode_dists[idx].segmentation)
-				distance_vector[idx] = (np.amax(distance_vector) + 1)
+				mode_list[r] = mode_names[(min(np.where((cum_lens > idx))[0]) - 1)]
+				distance_vector[0][idx] = (np.amax(distance_vector) + 1)
 			return mode_list
 
 		else:
@@ -151,5 +150,3 @@ class ChordiaEstimation:
 		for d in dist_list:
 			obj_list.append(p_d.PitchDistribution(np.array(d['bins']), np.array(d['vals']), kernel_width=d['kernel_width'], source=d['source'], ref_freq=d['ref_freq'], segment=d['segmentation']))
 		return obj_list
-
-		
