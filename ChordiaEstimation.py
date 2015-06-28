@@ -106,12 +106,20 @@ class ChordiaEstimation:
 			return tonic_list
 
 		elif(est_mode):
-			distance_vector = np.array(mf.generate_distance_matrix(dist, [0], mode_dists, method=distance_method))
-			return distance_vector
+			if(metric=='pcd'):
+				distance_vector = np.array(mf.generate_distance_matrix(dist, [0], mode_dists, method=distance_method))[0]
+			
+			elif(metric=='pd'):
+				distance_vector = np.zeros(len(mode_dists))
+				for i in range(len(mode_dists)):
+					trial = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
+					trial, mode_trial = mf.pd_zero_pad(trial, mode_dists[i], cent_ss=self.cent_ss)
+					distance_vector[i] = mf.distance(trial, mode_trial, method=distance_method)
+
 			for r in range(rank):
 				idx = np.argmin(distance_vector)
-				mode_list[r] = mode_names[(min(np.where((cum_lens > idx))[0]) - 1)]
-				distance_vector[0][idx] = (np.amax(distance_vector) + 1)
+				mode_list[r] = mode_names[min(np.where((cum_lens > idx))[0])]
+				distance_vector[idx] = (np.amax(distance_vector) + 1) 
 			return mode_list
 
 		else:
