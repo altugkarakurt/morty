@@ -34,7 +34,22 @@ class ChordiaEstimation:
 			json.dump(dist_json, f, indent=2)
 			f.close()
 
-	def estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440):
+	def estimate(self, pitch_track, time_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440):
+		pts, segs = self.slice(time_track, pitch_track, 'input')
+		tonic_list = np.zeros(rank)
+		mode_list = ['' for x in range(rank)]
+		if(est_tonic and est_mode):
+			result = [ [mode_list, tonic_list] for i in range(len(segs)) ]
+		elif(est_tonic):
+			result = [ tonic_list for i in range(len(segs)) ]
+		elif(est_mode):
+			result = [ mode_list for i in range(len(segs)) ]
+
+		for p in range(len(pts)):
+			result[p] = self.segment_estimate(pts[p], mode_names=mode_names, mode_name=mode_name, mode_dir=mode_dir, est_tonic=est_tonic, est_mode=est_mode, rank=rank, distance_method=distance_method, metric=metric, ref_freq=ref_freq)
+		return result
+
+	def segment_estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440):
 		### Preliminaries before the estimations
 		cent_track = mf.hz_to_cent(pitch_track, ref_freq)
 		dist = mf.generate_pd(cent_track, ref_freq=ref_freq, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss)
@@ -68,7 +83,7 @@ class ChordiaEstimation:
 					tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_row]]], anti_freq)[0]
 					mode_list[r] = mode_names[min(np.where((cum_lens > min_col))[0])]
 					dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
-				return mode_list, tonic_list
+				return [mode_list, tonic_list]
 
 			elif(metric=='pd'):
 				dist_mat = np.zeros((len(shift_idxs), len(mode_dists)))
@@ -88,7 +103,7 @@ class ChordiaEstimation:
 					tonic_list[r] = mf.cent_to_hz([shift_idxs[min_row] * self.cent_ss], ref_freq)[0]
 					mode_list[r] = mode_names[min(np.where((cum_lens > min_col))[0])]
 					dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
-				return mode_list, tonic_list
+				return [mode_list, tonic_list]
 
 		elif(est_tonic):
 			if(metric=='pcd'):
