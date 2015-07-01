@@ -131,3 +131,41 @@ def pd_zero_pad(pd, mode_pd, cent_ss=7.5):
 		pd.vals = np.concatenate((pd.vals, (np.zeros(temp_right_shift))))
 
 	return pd, mode_pd
+
+def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean", metric='pcd', cent_ss=7.5):
+	"""---------------------------------------------------------------------------------------
+	Given the mode (or candidate mode), compares the piece's distribution using the candidate
+	tonics and returns the resultant distance vector to higher level functions.
+	---------------------------------------------------------------------------------------"""
+	### Mode is known, tonic is estimated.
+	### Piece's distributon is generated
+	
+	if(metric=='pcd'):
+		return np.array(generate_distance_matrix(dist, peak_idxs, [mode_dist], method=distance_method))[:,0]
+
+	elif(metric=='pd'):
+		temp = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
+		temp, mode_dist = pd_zero_pad(temp, mode_dist, cent_ss=cent_ss)
+
+		### Filling both sides of vals with zeros, to make sure that the shifts won't drop any non-zero values
+		temp.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), temp.vals, np.zeros(abs(min(peak_idxs)))))
+		mode_dist.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), mode_dist.vals, np.zeros(abs(min(peak_idxs)))))
+			
+		return np.array(generate_distance_matrix(temp, peak_idxs, [mode_dist], method=distance_method))[:,0]
+
+def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', cent_ss=7.5):
+	"""---------------------------------------------------------------------------------------
+	Given the tonic (or candidate tonic), compares the piece's distribution using the candidate
+	modes and returns the resultant distance vector to higher level functions.
+	---------------------------------------------------------------------------------------"""
+
+	if(metric=='pcd'):
+		distance_vector = np.array(generate_distance_matrix(dist, [0], mode_dists, method=distance_method))
+
+	elif(metric=='pd'):
+		distance_vector = np.zeros(len(mode_dists))
+		for i in range(len(mode_dists)):
+			trial = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
+			trial, mode_trial = pd_zero_pad(trial, mode_dists[i], cent_ss=cent_ss)
+			distance_vector[i] = distance(trial, mode_trial, method=distance_method)
+	return distance_vector

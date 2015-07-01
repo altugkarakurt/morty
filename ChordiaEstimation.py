@@ -77,50 +77,27 @@ class ChordiaEstimation:
 		if(est_tonic and est_mode):
 			if(metric=='pcd'):
 				dist_mat = mf.generate_distance_matrix(dist, peak_idxs, mode_dists, method=distance_method)
-				for r in range(rank):
-					min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
-					min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
-					tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_row]]], anti_freq)[0]
-					mode_list[r] = mode_names[min(np.where((cum_lens > min_col))[0])]
-					dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
-				return [mode_list, tonic_list]
 
 			elif(metric=='pd'):
 				dist_mat = np.zeros((len(shift_idxs), len(mode_dists)))
 				for m in range(len(mode_dists)):
-					cur_d = mode_dists[m]
-					temp = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
-					temp, cur_d = mf.pd_zero_pad(temp, cur_d, cent_ss=self.cent_ss)
-					
-					temp.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), temp.vals, np.zeros(abs(min(peak_idxs)))))
-					cur_d.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), cur_d.vals, np.zeros(abs(min(peak_idxs)))))
-
-					dist_mat[:,m] = np.array(mf.generate_distance_matrix(temp, peak_idxs, [cur_d], method=distance_method))[:,0]
+					dist_mat[:,m] = mf.tonic_estimate(dist, shift_idxs, mode_dists[m], distance_method=distance_method, metric=metric, cent_ss=self.cent_ss)
 				
-				for r in range(rank):
-					min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
-					min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
+			for r in range(rank):
+				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
+				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]	
+				if(metric=='pcd'):
+					tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_row]]], anti_freq)[0]
+				elif(metric=='pd'):
 					tonic_list[r] = mf.cent_to_hz([shift_idxs[min_row] * self.cent_ss], ref_freq)[0]
-					mode_list[r] = mode_names[min(np.where((cum_lens > min_col))[0])]
-					dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
-				return [mode_list, tonic_list]
+				mode_list[r] = mode_names[min(np.where((cum_lens > min_col))[0])]
+				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
+			return [mode_list, tonic_list]
 
 		elif(est_tonic):
-			if(metric=='pcd'):
-				dist_mat = [(np.array(mf.generate_distance_matrix(dist, peak_idxs, [d], method=distance_method))[:,0]) for d in mode_dist]
-
-			elif(metric=='pd'):
-				dist_mat = []
-				for d in mode_dist:
-					temp = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
-					temp, d = mf.pd_zero_pad(temp, d, cent_ss=self.cent_ss)
-
-					### Filling both sides of vals with zeros, to make sure that the shifts won't drop any non-zero values
-					temp.vals = np.concatenate((np.zeros(abs(max(shift_idxs))), temp.vals, np.zeros(abs(min(shift_idxs)))))
-					d.vals = np.concatenate((np.zeros(abs(max(shift_idxs))), d.vals, np.zeros(abs(min(shift_idxs)))))
-					cur_vector = np.array(mf.generate_distance_matrix(temp, shift_idxs, [d], method=distance_method))[:,0]
-					dist_mat.append(cur_vector)
-				anti_freq = ref_freq
+			peak_idxs = shift_idxs if metric=='pd' else peak_idxs
+			dist_mat = [mf.tonic_estimate(dist, peak_idxs, d, distance_method=distance_method, metric=metric, cent_ss=self.cent_ss) for d in mode_dist]
+			anti_freq = ref_freq if metric=='pd' else anti_freq
 
 			for r in range(rank):
 				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
@@ -130,16 +107,8 @@ class ChordiaEstimation:
 			return tonic_list
 
 		elif(est_mode):
-			if(metric=='pcd'):
-				distance_vector = np.array(mf.generate_distance_matrix(dist, [0], mode_dists, method=distance_method))[0]
-			
-			elif(metric=='pd'):
-				distance_vector = np.zeros(len(mode_dists))
-				for i in range(len(mode_dists)):
-					trial = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
-					trial, mode_trial = mf.pd_zero_pad(trial, mode_dists[i], cent_ss=self.cent_ss)
-					distance_vector[i] = mf.distance(trial, mode_trial, method=distance_method)
-
+			distance_vector = mf.mode_estimate(dist, mode_dists, distance_method=distance_method, metric=metric, cent_ss=self.cent_ss)
+			distance_vector = distance_vector[0] if metric=='pcd' else distance_vector
 			for r in range(rank):
 				idx = np.argmin(distance_vector)
 				mode_list[r] = mode_names[min(np.where((cum_lens > idx))[0])]
