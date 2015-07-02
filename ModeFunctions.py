@@ -78,10 +78,10 @@ def distance(piece, trained, method='euclidean'):
 		return sp.spatial.distance.euclidean(piece.vals, trained.vals)
 
 	elif(method=='manhattan'):
-		return minkowski_distance(1, piece, trained)
+		return sp.spatial.distance.minkowski(piece.vals, trained.vals, 1)
 
 	elif(method=='l3'):
-		return minkowski_distance(3, piece, trained)
+		return sp.spatial.distance.minkowski(piece.vals, trained.vals, 3)
 			
 	elif(method=='bhat'):
 		d = 0
@@ -94,19 +94,6 @@ def distance(piece, trained, method='euclidean'):
 
 	else:
 		return 0
-
-def minkowski_distance(degree, piece, trained):
-	"""---------------------------------------------------------------------------------------
-	Generic implementation of Minkowski distance. 
-	When degree=1: This is Manhattan/City Blocks Distance
-	When degree=2: This is Euclidean Distance
-	When degree=3: This is L3 Distance
-	---------------------------------------------------------------------------------------"""
-	degree = degree * 1.0
-	d = 0
-	for i in range(len(piece.vals)):
-		d += ((abs(piece.vals[i] - trained.vals[i])) ** degree)
-	return (d ** (1/degree))
 
 def pd_zero_pad(pd, mode_pd, cent_ss=7.5):
 	"""---------------------------------------------------------------------------------------
