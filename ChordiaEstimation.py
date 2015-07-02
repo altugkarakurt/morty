@@ -77,7 +77,7 @@ class ChordiaEstimation:
 		if(est_tonic and est_mode):
 			if(metric=='pcd'):
 				dist_mat = mf.generate_distance_matrix(dist, peak_idxs, mode_dists, method=distance_method)
-
+				print dist_mat
 			elif(metric=='pd'):
 				dist_mat = np.zeros((len(shift_idxs), len(mode_dists)))
 				for m in range(len(mode_dists)):

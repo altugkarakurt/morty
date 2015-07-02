@@ -75,7 +75,7 @@ def distance(piece, trained, method='euclidean'):
 	estimation functions.
 	---------------------------------------------------------------------------------------"""
 	if(method=='euclidean'):
-		return minkowski_distance(2, piece, trained)
+		return sp.spatial.distance.euclidean(piece.vals, trained.vals)
 
 	elif(method=='manhattan'):
 		return minkowski_distance(1, piece, trained)
@@ -87,7 +87,10 @@ def distance(piece, trained, method='euclidean'):
 		d = 0
 		for i in range(len(piece.vals)):
 			d += math.sqrt(piece.vals[i] * trained.vals[i]);
-		return (-math.log(d));
+		return (-math.log(d))
+
+	elif(method=='corr'):
+		return np.correlate(piece.vals, trained.vals)
 
 	else:
 		return 0
@@ -100,13 +103,10 @@ def minkowski_distance(degree, piece, trained):
 	When degree=3: This is L3 Distance
 	---------------------------------------------------------------------------------------"""
 	degree = degree * 1.0
-	if(degree == 2.0):
-		return sp.spatial.distance.euclidean(piece.vals, trained.vals)
-	else:
-		d = 0
-		for i in range(len(piece.vals)):
-			d += ((abs(piece.vals[i] - trained.vals[i])) ** degree)
-		return (d ** (1/degree))
+	d = 0
+	for i in range(len(piece.vals)):
+		d += ((abs(piece.vals[i] - trained.vals[i])) ** degree)
+	return (d ** (1/degree))
 
 def pd_zero_pad(pd, mode_pd, cent_ss=7.5):
 	"""---------------------------------------------------------------------------------------
