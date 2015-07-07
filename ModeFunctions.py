@@ -92,8 +92,8 @@ def distance(piece, trained, method='euclidean'):
 	elif(method=='intersection'):
 		d = 0
 		for j in range(len(piece.vals)):
-			d += ((piece.vals[i] - trained.vals[i]) ** 2)
-		return math.sqrt(d)
+			d += min(piece.vals[i], trained.vals[i])
+		return d / (len(piece.vals))
 
 	elif(method=='corr'):
 		return 1.0 / np.correlate(piece.vals, trained.vals)
