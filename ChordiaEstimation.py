@@ -15,7 +15,6 @@ class ChordiaEstimation:
 	def train(self, mode_name, pt_list, ref_freq_list, metric='pcd', save_dir='./', pt_dir='./'):
 		save_name = mode_name + '_' + metric + '.json'
 		dist_list = []
-		dist_json = []
 		for pt in range(len(pt_list)):
 			cur = mf.load_track(pt_list[pt], pt_dir)
 			time_track = cur[:,0]

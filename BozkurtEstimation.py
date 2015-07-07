@@ -86,7 +86,7 @@ class BozkurtEstimation:
 				if(metric=='pcd'):
 					tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[idx]]], anti_freq)[0]
 				elif(metric=='pd'):
-					tonic_list[r] = mf.cent_to_hz([shift_idxs[idx] * self.cent_ss], anti_freq)[0]
+					tonic_list[r] = mf.cent_to_hz([shift_idxs[idx] * self.cent_ss], ref_freq)[0]
 				distance_vector[idx] = (np.amax(distance_vector) + 1)
 			return tonic_list
 
