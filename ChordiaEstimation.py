@@ -49,6 +49,8 @@ class ChordiaEstimation:
 		return result
 
 	def segment_estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440):
+		if(rank > 1):
+			print 'Warning: Due to the KNN update, there is only single rank implementation. This will be fixed in the future.'
 		### Preliminaries before the estimations
 		cent_track = mf.hz_to_cent(pitch_track, ref_freq)
 		dist = mf.generate_pd(cent_track, ref_freq=ref_freq, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss)
