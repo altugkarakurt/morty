@@ -33,7 +33,7 @@ class ChordiaEstimation:
 			json.dump(dist_json, f, indent=2)
 			f.close()
 
-	def estimate(self, pitch_track, time_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440):
+	def estimate(self, pitch_track, time_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440, k_param=1):
 		pts, segs = self.slice(time_track, pitch_track, 'input')
 		tonic_list = np.zeros(rank)
 		mode_list = ['' for x in range(rank)]
@@ -45,10 +45,10 @@ class ChordiaEstimation:
 			result = [ mode_list for i in range(len(segs)) ]
 
 		for p in range(len(pts)):
-			result[p] = self.segment_estimate(pts[p], mode_names=mode_names, mode_name=mode_name, mode_dir=mode_dir, est_tonic=est_tonic, est_mode=est_mode, rank=rank, distance_method=distance_method, metric=metric, ref_freq=ref_freq)
+			result[p] = self.segment_estimate(pts[p], mode_names=mode_names, mode_name=mode_name, mode_dir=mode_dir, est_tonic=est_tonic, est_mode=est_mode, rank=rank, distance_method=distance_method, metric=metric, ref_freq=ref_freq, k_param=k_param)
 		return result
 
-	def segment_estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440):
+	def segment_estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440, k_param=1):
 		if(rank > 1):
 			print 'Warning: Due to the KNN update, there is only single rank implementation. This will be fixed in the future.'
 		### Preliminaries before the estimations
@@ -59,8 +59,8 @@ class ChordiaEstimation:
 		cum_lens = np.cumsum([len(col) for col in mode_collections])
 		mode_dists = [d for col in mode_collections for d in col]
 		mode_dist = self.load_collection(mode_name, metric, dist_dir=mode_dir) if (mode_name!='') else None
-		tonic_list = np.zeros(rank)
-		mode_list = ['' for x in range(rank)]
+		tonic_list = np.zeros(k_param)
+		mode_list = ['' for x in range(k_param)]
 
 		if(est_tonic):
 			if(metric=='pcd'):
@@ -82,8 +82,7 @@ class ChordiaEstimation:
 				dist_mat = np.zeros((len(shift_idxs), len(mode_dists)))
 				for m in range(len(mode_dists)):
 					dist_mat[:,m] = mf.tonic_estimate(dist, shift_idxs, mode_dists[m], distance_method=distance_method, metric=metric, cent_ss=self.cent_ss)
-				
-			for r in range(rank):
+			for r in range(k_param):
 				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
 				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]	
 				if(metric=='pcd'):
@@ -92,7 +91,9 @@ class ChordiaEstimation:
 					tonic_list[r] = mf.cent_to_hz([shift_idxs[min_row] * self.cent_ss], ref_freq)[0]
 				mode_list[r] = mode_names[min(np.where((cum_lens > min_col))[0])]
 				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
-			return [mode_list, tonic_list]
+			mode_occur = [mode_list.count(m) for m in mode_list]
+			tonic_occur = [tonic_list.tolist().count(t) for t in tonic_list]
+			return [mode_list[np.argmax(mode_occur)], tonic_list[np.argmax(tonic_occur)]]
 
 		elif(est_tonic):
 			peak_idxs = shift_idxs if metric=='pd' else peak_idxs
