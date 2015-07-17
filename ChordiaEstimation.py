@@ -138,6 +138,9 @@ class ChordiaEstimation:
 		if((max(time_track) - time_track[last]) >= (self.chunk_size * self.threshold)):
 			segments.append(pitch_track[last:])
 			seg_lims.append((pt_source, int(round(time_track[last])), int(round(time_track[len(time_track) - 1]))))
+		elif(last=0):	#If the runtime of the track is below the threshold, keep it as it is
+			segments.append(pitch_track)
+			seg_lims.append((pt_source, 0, int(round(time_track[len(time_track) - 1]))))
 		return segments, seg_lims
 
 	def train_segments(self, pts, seg_tuples, ref_freq, save_dir, save_name, metric='pcd'):
