@@ -6,13 +6,14 @@ import json
 
 class ChordiaEstimation:
 
-	def __init__(self, cent_ss=7.5, smooth_factor=7.5, chunk_size=60, threshold=0.5):
+	def __init__(self, cent_ss=7.5, smooth_factor=7.5, chunk_size=60, threshold=0.5, overlap=0):
 		self.cent_ss = cent_ss
+		self.overlap = overlap
 		self.smooth_factor = smooth_factor
 		self.chunk_size = chunk_size
 		self.threshold = threshold
 
-	def train(self, mode_name, pt_list, ref_freq_list, metric='pcd', save_dir='./', pt_dir='./'):
+	def train(self, mode_name, pt_list, ref_freq_list, metric='pcd', save_dir='./', pt_dir='./', ):
 		save_name = mode_name + '_' + metric + '.json'
 		dist_list = []
 		for pt in range(len(pt_list)):
@@ -133,7 +134,7 @@ class ChordiaEstimation:
 			cur = 1 + max(np.where(time_track < self.chunk_size * k)[0])
 			segments.append(pitch_track[last:(cur-1)])
 			seg_lims.append((pt_source, int(round(time_track[last])), int(round(time_track[cur-1])))) #0 - source, 1 - init, 2 - final
-			last = cur
+			last = 1 + max(np.where(time_track < self.chunk_size * k * (1 - self.overlap))[0]) if (overlap > 0) else cur
 		if((max(time_track) - time_track[last]) >= (self.chunk_size * self.threshold)):
 			segments.append(pitch_track[last:])
 			seg_lims.append((pt_source, int(round(time_track[last])), int(round(time_track[len(time_track) - 1]))))
@@ -144,7 +145,7 @@ class ChordiaEstimation:
 		for idx in range(len(pts)):
 			src = seg_tuples[idx][0]
 			interval = (seg_tuples[idx][1], seg_tuples[idx][2])
-			dist = mf.generate_pd(pts[idx], ref_freq=ref_freq, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss, source=src, segment=interval)
+			dist = mf.generate_pd(pts[idx], ref_freq=ref_freq, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss, source=src, segment=interval, overlap=self.overlap)
 			if(metric=='pcd'):
 				dist = mf.generate_pcd(dist)
 			dist_list.append(dist)
@@ -156,5 +157,5 @@ class ChordiaEstimation:
 		with open((dist_dir + fname)) as f:
 			dist_list = json.load(f)[mode_name]
 		for d in dist_list:
-			obj_list.append(p_d.PitchDistribution(np.array(d['bins']), np.array(d['vals']), kernel_width=d['kernel_width'], source=d['source'], ref_freq=d['ref_freq'], segment=d['segmentation']))
+			obj_list.append(p_d.PitchDistribution(np.array(d['bins']), np.array(d['vals']), kernel_width=d['kernel_width'], source=d['source'], ref_freq=d['ref_freq'], segment=d['segmentation'], overlap=d['overlap']))
 		return obj_list

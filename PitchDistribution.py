@@ -9,10 +9,10 @@ def load(fname, dist_dir='./'):
 	with open((dist_dir + fname)) as f:    
 		dist = json.load(f)
 		f.close()
-	return PitchDistribution(np.array(dist[0]['bins']), np.array(dist[0]['vals']), kernel_width=dist[0]['kernel_width'], source=dist[0]['source'], ref_freq=dist[0]['ref_freq'], segment=dist[0]['segmentation'])
+	return PitchDistribution(np.array(dist[0]['bins']), np.array(dist[0]['vals']), kernel_width=dist[0]['kernel_width'], source=dist[0]['source'], ref_freq=dist[0]['ref_freq'], segment=dist[0]['segmentation'], overlap=dist[0]['overlap'])
 
 class PitchDistribution:
-	def __init__(self, pd_bins, pd_vals, kernel_width=7.5, source='', ref_freq=440, segment='all'):
+	def __init__(self, pd_bins, pd_vals, kernel_width=7.5, source='', ref_freq=440, segment='all', overlap='-'):
 		self.bins = pd_bins
 		self.vals = pd_vals
 		self.ref_freq = ref_freq
@@ -20,15 +20,13 @@ class PitchDistribution:
 		self.step_size = self.bins[1] - self.bins[0]
 		self.segmentation = segment
 		self.source = source
+		self.overlap = overlap
 
 	def save(self, fname, save_dir='./'):
-		dist_json = [{'bins':self.bins.tolist(), 'vals':self.vals.tolist(), 'kernel_width':self.kernel_width, 'source':self.source, 'ref_freq':self.ref_freq, 'segmentation':self.segmentation}]
+		dist_json = [{'bins':self.bins.tolist(), 'vals':self.vals.tolist(), 'kernel_width':self.kernel_width, 'source':self.source, 'ref_freq':self.ref_freq, 'segmentation':self.segmentation, 'overlap':self.overlap}]
 		with open((save_dir + fname), 'w') as f:
 			json.dump(dist_json, f, indent=0)
 			f.close()
-
-	def get(self):
-		return self.bins, self.vals
 
 	def is_pcd(self):
 		"""---------------------------------------------------------------------------------------
@@ -55,9 +53,9 @@ class PitchDistribution:
 					shifted_vals = np.concatenate((self.vals[shift_idx:], np.zeros(shift_idx)))
 				else: ### Shift towards right
 					shifted_vals = np.concatenate((np.zeros(abs(shift_idx)), self.vals[:shift_idx]))
-			return PitchDistribution(self.bins, shifted_vals, kernel_width=self.kernel_width, source=self.source, ref_freq=self.ref_freq, segment=self.segmentation)
+			return PitchDistribution(self.bins, shifted_vals, kernel_width=self.kernel_width, source=self.source, ref_freq=self.ref_freq, segment=self.segmentation, overlap=self.overlap)
 		else:
-			return PitchDistribution(self.bins, self.vals, kernel_width=self.kernel_width, source=self.source, ref_freq=self.ref_freq, segment=self.segmentation)
+			return PitchDistribution(self.bins, self.vals, kernel_width=self.kernel_width, source=self.source, ref_freq=self.ref_freq, segment=self.segmentation, overlap=self.overlap)
 
 	def plot(self):
 		pl.figure()
