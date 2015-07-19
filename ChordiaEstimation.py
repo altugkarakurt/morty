@@ -20,7 +20,7 @@ class ChordiaEstimation:
 			cur = mf.load_track(pt_list[pt], pt_dir)
 			time_track = cur[:,0]
 			pitch_track = cur[:,1]
-			pts, segs = self.slice(time_track, pitch_track, pt_list[pt])
+			pts, segs = mf.slice(time_track, pitch_track, pt_list[pt], self.chunk_size, self.threshold, self.overlap)
 			pts = [mf.hz_to_cent(k, ref_freq=ref_freq_list[pt]) for k in pts]
 			temp_list = self.train_segments(pts, segs, ref_freq_list[pt], save_dir, save_name, metric)
 			for tmp in temp_list:
@@ -35,7 +35,7 @@ class ChordiaEstimation:
 			f.close()
 
 	def estimate(self, pitch_track, time_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440, k_param=1):
-		pts, segs = self.slice(time_track, pitch_track, 'input')
+		pts, segs = mf.slice(time_track, pitch_track, 'input', self.chunk_size, self.threshold, self.overlap)
 		tonic_list = np.zeros(rank)
 		mode_list = ['' for x in range(rank)]
 		if(est_tonic and est_mode):
@@ -125,23 +125,6 @@ class ChordiaEstimation:
 
 		else:
 			return 0
-		
-	def slice(self, time_track, pitch_track, pt_source):
-		segments = []
-		seg_lims = []
-		last = 0
-		for k in np.arange(1, (int(max(time_track) / self.chunk_size) + 1)):
-			cur = 1 + max(np.where(time_track < self.chunk_size * k)[0])
-			segments.append(pitch_track[last:(cur-1)])
-			seg_lims.append((pt_source, int(round(time_track[last])), int(round(time_track[cur-1])))) #0 - source, 1 - init, 2 - final
-			last = 1 + max(np.where(time_track < self.chunk_size * k * (1 - self.overlap))[0]) if (overlap > 0) else cur
-		if((max(time_track) - time_track[last]) >= (self.chunk_size * self.threshold)):
-			segments.append(pitch_track[last:])
-			seg_lims.append((pt_source, int(round(time_track[last])), int(round(time_track[len(time_track) - 1]))))
-		elif(last=0):	#If the runtime of the track is below the threshold, keep it as it is
-			segments.append(pitch_track)
-			seg_lims.append((pt_source, 0, int(round(time_track[len(time_track) - 1]))))
-		return segments, seg_lims
 
 	def train_segments(self, pts, seg_tuples, ref_freq, save_dir, save_name, metric='pcd'):
 		dist_list = []

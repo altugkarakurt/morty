@@ -8,9 +8,10 @@ import PitchDistribution as p_d
 
 class BozkurtEstimation:
 
-	def __init__(self, cent_ss=7.5, smooth_factor=7.5):
+	def __init__(self, cent_ss=7.5, smooth_factor=7.5, chunk_size=0):
 		self.smooth_factor = smooth_factor
 		self.cent_ss = cent_ss
+		self.chunk_size = chunk_size
 
 	def train(self, mode_name, pt_list, ref_freq_list, pt_dir='./', metric='pcd', save_dir='./'):
 		"""---------------------------------------------------------------------------------------
@@ -20,11 +21,19 @@ class BozkurtEstimation:
 		---------------------------------------------------------------------------------------"""
 		mode_track = []
 		for idx in range(len(pt_list)):
-			cur_track = mf.load_track(pt_list[idx], pt_dir)[:,1]
-			cur_cent_track = mf.hz_to_cent(cur_track, ref_freq=ref_freq_list[idx])
+			if (chunk_size == 0):
+				cur_track = mf.load_track(pt_list[idx], pt_dir)[:,1]
+				cur_cent_track = mf.hz_to_cent(cur_track, ref_freq=ref_freq_list[idx])
+				joint_seg = 'all'
+			else:
+				tmp_track = mf.load_track(pt_list[idx], pt_dir)[:,1]
+				time_track = mf.load_track(pt_list[idx], pt_dir)[:,0]
+				cur_track, segs = mf.slice(time_track, tmp_track, pt_source, self.chunk_size)
+				cur_cent_track = mf.hz_to_cent(cur_track[0], ref_freq=ref_freq_list[idx])
+				joint_seg = (segs[0][1], segs[0][2])
 			for i in cur_cent_track:
 				mode_track.append(i)
-		joint_dist = mf.generate_pd(mode_track, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss, source=mode_name, segment='all')
+		joint_dist = mf.generate_pd(mode_track, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss, source=mode_name, segment=joint_seg)
 		if(metric=='pcd'):
 			joint_dist = mf.generate_pcd(joint_dist)
 		joint_dist.save((mode_name + '_' + metric + '.json'), save_dir=save_dir)

@@ -16,10 +16,11 @@ def load_track(txtname, txt_dir):
 	---------------------------------------------------------------------------------------"""
 	return np.loadtxt(txt_dir + txtname + '.txt')
 
-def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source='', segment='all'):		
+def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source='', segment='all', overlap='-'):		
 	### Some extra interval is added to the beginning and end since the 
 	### superposed Gaussian for smoothing would vanish after 3 sigmas.
 	### The limits are also quantized to be a multiple of chosen step-size
+	### smooth_factor = standard deviation fo the gaussian kernel
 	smoothening = (smooth_factor * np.sqrt(1/np.cov(pitch_track)))
 	min_bin = (min(pitch_track) - (min(pitch_track) % smooth_factor)) - (5 * smooth_factor)  
 	max_bin = (max(pitch_track) + (smooth_factor - (max(pitch_track) % smooth_factor))) + (5 * smooth_factor)
@@ -27,7 +28,7 @@ def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, sourc
 	pd_bins = np.arange(min_bin, max_bin, cent_ss)
 	kde = stats.gaussian_kde(pitch_track, bw_method=smoothening)
 	pd_vals = kde.evaluate(pd_bins)
-	return p_d.PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, source=source, ref_freq=ref_freq, segment=segment)
+	return p_d.PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, source=source, ref_freq=ref_freq, segment=segment, overlap=overlap)
 
 def generate_pcd(pd):
 	### Initializations
@@ -39,7 +40,7 @@ def generate_pcd(pd):
 		idx = int((pd.bins[k] % 1200) / pd.step_size)
 		pcd_vals[idx] = pcd_vals[idx] + pd.vals[k]
 		
-	return p_d.PitchDistribution(pcd_bins, pcd_vals, kernel_width=pd.kernel_width, source=pd.source, ref_freq=pd.ref_freq, segment=pd.segmentation)
+	return p_d.PitchDistribution(pcd_bins, pcd_vals, kernel_width=pd.kernel_width, source=pd.source, ref_freq=pd.ref_freq, segment=pd.segmentation, overlap=pd.overlap)
 
 def hz_to_cent(hertz_track, ref_freq):
 	### Hertz-to-Cent Conversion. Since the log of zeros are non_defined,
@@ -162,3 +163,20 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', c
 			trial, mode_trial = pd_zero_pad(trial, mode_dists[i], cent_ss=cent_ss)
 			distance_vector[i] = distance(trial, mode_trial, method=distance_method)
 	return distance_vector
+
+def slice(time_track, pitch_track, pt_source, chunk_size, threshold=0.5, overlap=0):
+	segments = []
+	seg_lims = []
+	last = 0
+	for k in np.arange(1, (int(max(time_track) / chunk_size) + 1)):
+		cur = 1 + max(np.where(time_track < chunk_size * k)[0])
+		segments.append(pitch_track[last:(cur-1)])
+		seg_lims.append((pt_source, int(round(time_track[last])), int(round(time_track[cur-1])))) #0 - source, 1 - init, 2 - final
+		last = 1 + max(np.where(time_track < chunk_size * k * (1 - overlap))[0]) if (overlap > 0) else cur
+	if((max(time_track) - time_track[last]) >= (chunk_size * threshold)):
+		segments.append(pitch_track[last:])
+		seg_lims.append((pt_source, int(round(time_track[last])), int(round(time_track[len(time_track) - 1]))))
+	elif(last==0):	#If the runtime of the track is below the threshold, keep it as it is
+		segments.append(pitch_track)
+		seg_lims.append((pt_source, 0, int(round(time_track[len(time_track) - 1]))))
+	return segments, seg_lims
