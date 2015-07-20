@@ -25,7 +25,7 @@ class PitchDistribution:
 	def save(self, fname, save_dir='./'):
 		dist_json = [{'bins':self.bins.tolist(), 'vals':self.vals.tolist(), 'kernel_width':self.kernel_width, 'source':self.source, 'ref_freq':self.ref_freq, 'segmentation':self.segmentation, 'overlap':self.overlap}]
 		with open((save_dir + fname), 'w') as f:
-			json.dump(dist_json, f, indent=0)
+			json.dump(dist_json, f, indent=2)
 			f.close()
 
 	def is_pcd(self):

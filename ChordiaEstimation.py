@@ -77,28 +77,35 @@ class ChordiaEstimation:
 
 		### Call to actual estimation functions
 		if(est_tonic and est_mode):
+			result = [[0,''] for r in range(rank)]
+			idxs = [[0, 0] for k in range(k_param)]
 			if(metric=='pcd'):
 				dist_mat = mf.generate_distance_matrix(dist, peak_idxs, mode_dists, method=distance_method)
 			elif(metric=='pd'):
 				dist_mat = np.zeros((len(shift_idxs), len(mode_dists)))
 				for m in range(len(mode_dists)):
 					dist_mat[:,m] = mf.tonic_estimate(dist, shift_idxs, mode_dists[m], distance_method=distance_method, metric=metric, cent_ss=self.cent_ss)
-			for r in range(k_param):
-				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
-				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]	
-				if(metric=='pcd'):
-					tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_row]]], anti_freq)[0]
-				elif(metric=='pd'):
-					tonic_list[r] = mf.cent_to_hz([shift_idxs[min_row] * self.cent_ss], ref_freq)[0]
-				mode_list[r] = mode_names[min(np.where((cum_lens > min_col))[0])]
-				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
-			print mode_list
-			print tonic_list
-			mode_occur = [mode_list.count(m) for m in mode_list]
-			tonic_occur = [tonic_list.tolist().count(t) for t in tonic_list]
-			return [mode_list[np.argmax(mode_occur)], tonic_list[np.argmax(tonic_occur)]]
+			for r in range(rank):
+				for k in range(k_param):
+					min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
+					min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
+					idxs[r] = [min_row, min_col]
+					if(metric=='pcd'):
+						tonic_list[k] = mf.cent_to_hz([dist.bins[peak_idxs[min_row]]], anti_freq)[0]
+					elif(metric=='pd'):
+						tonic_list[k] = mf.cent_to_hz([shift_idxs[min_row] * self.cent_ss], ref_freq)[0]
+					mode_list[r] = mode_names[min(np.where((cum_lens > min_col))[0])]
+					dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1) #bunu kaldir, yeni min. cekme yontemi bulmam lazim
+				mode_occur = [mode_list.count(m) for m in mode_list]
+				tonic_occur = [tonic_list.tolist().count(t) for t in tonic_list]
+				cur_res = [mode_list[np.argmax(mode_occur)], tonic_list[np.argmax(tonic_occur)]]
+				result.append()
+
+			return result
 
 		elif(est_tonic):
+			result = [0 for r in rank]
+
 			peak_idxs = shift_idxs if metric=='pd' else peak_idxs
 			dist_mat = [mf.tonic_estimate(dist, peak_idxs, d, distance_method=distance_method, metric=metric, cent_ss=self.cent_ss) for d in mode_dist]
 			anti_freq = ref_freq if metric=='pd' else anti_freq
@@ -108,18 +115,18 @@ class ChordiaEstimation:
 				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
 				tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_col]]], anti_freq)[0]
 				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
-			print tonic_list
 			tonic_occur = [tonic_list.tolist().count(t) for t in tonic_list]
 			return tonic_list[np.argmax(tonic_occur)]
 
 		elif(est_mode):
+			result = [0 for r in rank]
 			distance_vector = mf.mode_estimate(dist, mode_dists, distance_method=distance_method, metric=metric, cent_ss=self.cent_ss)
 			distance_vector = distance_vector[0] if metric=='pcd' else distance_vector
-			for r in range(k_param):
+			
+			for k in range(k_param):
 				idx = np.argmin(distance_vector)
-				mode_list[r] = mode_names[min(np.where((cum_lens > idx))[0])]
-				distance_vector[idx] = (np.amax(distance_vector) + 1) 
-			print mode_list
+				mode_list[k] = mode_names[min(np.where((cum_lens > idx))[0])]
+				distance_vector[idx] = (np.amax(distance_vector) + 1) #kaldir
 			mode_occur = [mode_list.count(m) for m in mode_list]
 			return mode_list[np.argmax(mode_occur)]
 
