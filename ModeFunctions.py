@@ -14,7 +14,7 @@ def load_track(txtname, txt_dir):
 	Loads the pitch track from a text file. The format for the examples is, such that, 0th
 	column is time-stamps and 1st column is the corresponding frequency values.
 	---------------------------------------------------------------------------------------"""
-	return np.loadtxt(txt_dir + txtname + '.txt')
+	return np.loadtxt(txt_dir + txtname)
 
 def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source='', segment='all', overlap='-'):		
 	### Some extra interval is added to the beginning and end since the 

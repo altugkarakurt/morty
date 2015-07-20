@@ -9,7 +9,7 @@ Example script for extracting predominant melody using CompMusic's pitch.py. Any
 pitch extraction can also be used, as long as their output are of the same format.
 ---------------------------------------------------------------------------------------"""
 extractor = pitch.PitchExtractMakam()
-test_songs = ['semahat', 'murat_derya', 'gec_kalma']
+test_songs = ['2-03_Ussak_Sazsemaisi']
 
 for song in test_songs:
 	results = extractor.run(song + '.mp3')
