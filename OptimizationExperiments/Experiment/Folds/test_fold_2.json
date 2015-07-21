@@ -1,0 +1,502 @@
+[
+  {
+    "mbid": "452eaf98-3b0b-4660-a87e-c703f1a31ef7", 
+    "tonic": 388.6, 
+    "makam": "Acemasiran"
+  }, 
+  {
+    "mbid": "51b07b0a-efeb-4acc-99f9-02294e88101b", 
+    "tonic": 271.9, 
+    "makam": "Acemasiran"
+  }, 
+  {
+    "mbid": "5f6ede8c-8447-4746-8cfe-0cb602b8951e", 
+    "tonic": 439.6, 
+    "makam": "Acemasiran"
+  }, 
+  {
+    "mbid": "788b802a-4212-4ec5-9494-abdbde9409a6", 
+    "tonic": 232.7, 
+    "makam": "Acemasiran"
+  }, 
+  {
+    "mbid": "90538d7b-a4b2-415e-b419-a6fb78e24893", 
+    "tonic": 395.1, 
+    "makam": "Acemasiran"
+  }, 
+  {
+    "mbid": "afc94a77-f511-4aae-b91a-4639d8211ec3", 
+    "tonic": 247.0, 
+    "makam": "Acemkurdi"
+  }, 
+  {
+    "mbid": "bde6a612-c11c-435f-8825-81ecd36e381f", 
+    "tonic": 121.2, 
+    "makam": "Acemkurdi"
+  }, 
+  {
+    "mbid": "dce94bb4-447a-439c-a1d6-20e8551aa85f", 
+    "tonic": 248.6, 
+    "makam": "Acemkurdi"
+  }, 
+  {
+    "mbid": "df593ea4-f714-4f59-8b36-0246d49c8085", 
+    "tonic": 249.7, 
+    "makam": "Acemkurdi"
+  }, 
+  {
+    "mbid": "dfc16e22-0aae-4bd0-a32c-5c000130e96a", 
+    "tonic": 379.3, 
+    "makam": "Acemkurdi"
+  }, 
+  {
+    "mbid": "447aeaee-0f26-42e8-b704-8563f067e6bf", 
+    "tonic": 142.9, 
+    "makam": "Bestenigar"
+  }, 
+  {
+    "mbid": "558a6be4-1de4-4486-bc8f-f348c2d02c82", 
+    "tonic": 120.7, 
+    "makam": "Bestenigar"
+  }, 
+  {
+    "mbid": "5933bb05-e4af-4615-aa66-b343b142f0be", 
+    "tonic": 354.0, 
+    "makam": "Bestenigar"
+  }, 
+  {
+    "mbid": "73237e18-6db1-460c-b755-cbe9b000eb48", 
+    "tonic": 137.8, 
+    "makam": "Bestenigar"
+  }, 
+  {
+    "mbid": "9416f3f9-4fb2-4480-ae39-04a33217a5b5", 
+    "tonic": 237.8, 
+    "makam": "Bestenigar"
+  }, 
+  {
+    "mbid": "1f656948-0fcf-4aca-92cf-af4aa6a3cf4d", 
+    "tonic": 139.4, 
+    "makam": "Beyati"
+  }, 
+  {
+    "mbid": "1f722d2f-d67a-4ce3-84b9-d8228238e559", 
+    "tonic": 249.2, 
+    "makam": "Beyati"
+  }, 
+  {
+    "mbid": "2c011692-dc1c-433d-ac3e-9aafe9fed8d4", 
+    "tonic": 336.6, 
+    "makam": "Beyati"
+  }, 
+  {
+    "mbid": "4d132313-aaa2-43f3-a929-ef25e89c5fbe", 
+    "tonic": 147.0, 
+    "makam": "Beyati"
+  }, 
+  {
+    "mbid": "555f09c6-07d6-43aa-a948-3bd0b41b7074", 
+    "tonic": 147.0, 
+    "makam": "Beyati"
+  }, 
+  {
+    "mbid": "184886ba-9e1b-41c8-8c0f-fdd351f08817", 
+    "tonic": 130.6, 
+    "makam": "Hicaz"
+  }, 
+  {
+    "mbid": "24e2d3b6-070d-418a-8dac-5cac66976eff", 
+    "tonic": 190.0, 
+    "makam": "Hicaz"
+  }, 
+  {
+    "mbid": "2c88acdf-685d-42c7-913d-1a9f2005587e", 
+    "tonic": 292.5, 
+    "makam": "Hicaz"
+  }, 
+  {
+    "mbid": "3577ef76-fe42-41f0-9ce5-205071a0523a", 
+    "tonic": 167.9, 
+    "makam": "Hicaz"
+  }, 
+  {
+    "mbid": "3c25f0d8-a6df-4bde-87ef-e4af708b861d", 
+    "tonic": 150.0, 
+    "makam": "Hicaz"
+  }, 
+  {
+    "mbid": "227624b3-dc15-4e21-837a-76df8bf27923", 
+    "tonic": 225.3, 
+    "makam": "Hicazkar"
+  }, 
+  {
+    "mbid": "234095d5-29a9-4580-a1bc-2987f5de173e", 
+    "tonic": 294.2, 
+    "makam": "Hicazkar"
+  }, 
+  {
+    "mbid": "2b59c021-5d02-4627-afae-d8558771f760", 
+    "tonic": 198.7, 
+    "makam": "Hicazkar"
+  }, 
+  {
+    "mbid": "3161fa35-b680-4421-b26f-063a9d236115", 
+    "tonic": 265.3, 
+    "makam": "Hicazkar"
+  }, 
+  {
+    "mbid": "33044a50-b2a4-409f-82ae-5f214fb32889", 
+    "tonic": 225.1, 
+    "makam": "Hicazkar"
+  }, 
+  {
+    "mbid": "294d2739-676b-4199-980d-0a9282562f46", 
+    "tonic": 294.8, 
+    "makam": "Huseyni"
+  }, 
+  {
+    "mbid": "3169d091-28e2-439f-96d5-54f54ae372b7", 
+    "tonic": 147.1, 
+    "makam": "Huseyni"
+  }, 
+  {
+    "mbid": "36944934-556a-42d9-9360-690a306c5d1f", 
+    "tonic": 497.1, 
+    "makam": "Huseyni"
+  }, 
+  {
+    "mbid": "3886ae81-8863-483a-bbef-69af1e3d098e", 
+    "tonic": 264.5, 
+    "makam": "Huseyni"
+  }, 
+  {
+    "mbid": "39a20910-302e-4f6a-86f2-7d8ec1e64eb9", 
+    "tonic": 224.8, 
+    "makam": "Huseyni"
+  }, 
+  {
+    "mbid": "2c2b51b3-150b-4693-9383-9c467cbbdadd", 
+    "tonic": 253.3, 
+    "makam": "Huzzam"
+  }, 
+  {
+    "mbid": "32c3522a-e325-4e58-8a0a-0876a800823a", 
+    "tonic": 282.1, 
+    "makam": "Huzzam"
+  }, 
+  {
+    "mbid": "3799145c-529c-41d2-998a-948a9292f4d8", 
+    "tonic": 164.2, 
+    "makam": "Huzzam"
+  }, 
+  {
+    "mbid": "3b6879d4-7838-4f4e-8ebd-dce5d830fbe7", 
+    "tonic": 275.0, 
+    "makam": "Huzzam"
+  }, 
+  {
+    "mbid": "4df2f27a-fca8-4166-9674-250855492187", 
+    "tonic": 293.9, 
+    "makam": "Huzzam"
+  }, 
+  {
+    "mbid": "4371d5e2-42d0-4ec8-b150-e0db0539c750", 
+    "tonic": 145.5, 
+    "makam": "Karcigar"
+  }, 
+  {
+    "mbid": "4a11ebf5-2e0a-412d-a1ac-72d15cdec354", 
+    "tonic": 372.1, 
+    "makam": "Karcigar"
+  }, 
+  {
+    "mbid": "4b31c6ab-c401-42d7-af85-a330aef806d3", 
+    "tonic": 149.0, 
+    "makam": "Karcigar"
+  }, 
+  {
+    "mbid": "4ce4b2cb-7edc-42d4-90df-022e708ecb91", 
+    "tonic": 266.4, 
+    "makam": "Karcigar"
+  }, 
+  {
+    "mbid": "560f88b8-cb37-47f1-813f-d9a90bf35962", 
+    "tonic": 144.2, 
+    "makam": "Karcigar"
+  }, 
+  {
+    "mbid": "192521b7-fd1c-4761-82d9-65a1b349a8f5", 
+    "tonic": 197.0, 
+    "makam": "Kurdilihicazkar"
+  }, 
+  {
+    "mbid": "20c47822-6ce3-4c49-b882-344f187cafd5", 
+    "tonic": 129.2, 
+    "makam": "Kurdilihicazkar"
+  }, 
+  {
+    "mbid": "266f2206-004e-416b-b2b4-20cf59cec09a", 
+    "tonic": 220.4, 
+    "makam": "Kurdilihicazkar"
+  }, 
+  {
+    "mbid": "3c334962-91e1-4766-8a3b-12b2e2fb48f3", 
+    "tonic": 142.5, 
+    "makam": "Kurdilihicazkar"
+  }, 
+  {
+    "mbid": "3ebd89e1-08de-433d-b3f5-0f6a9bfdab8f", 
+    "tonic": 409.6, 
+    "makam": "Kurdilihicazkar"
+  }, 
+  {
+    "mbid": "34d1f88b-f3a1-4ed3-b0aa-8462ef2ba48f", 
+    "tonic": 194.0, 
+    "makam": "Mahur"
+  }, 
+  {
+    "mbid": "3c0f63ff-95a3-45eb-9be8-6ef811760ab3", 
+    "tonic": 194.1, 
+    "makam": "Mahur"
+  }, 
+  {
+    "mbid": "3d5f82c9-de1f-4d72-9734-e610995ec1d8", 
+    "tonic": 407.9, 
+    "makam": "Mahur"
+  }, 
+  {
+    "mbid": "4bcb78bf-1ac1-4f90-b573-91262f3f06a1", 
+    "tonic": 293.0, 
+    "makam": "Mahur"
+  }, 
+  {
+    "mbid": "4befe61b-94c6-4c82-88d1-c9695b36891d", 
+    "tonic": 296.0, 
+    "makam": "Mahur"
+  }, 
+  {
+    "mbid": "2dcb32e3-b34b-4719-b6fa-2dccf12dd62d", 
+    "tonic": 222.4, 
+    "makam": "Muhayyer"
+  }, 
+  {
+    "mbid": "3405d488-1bd7-42aa-90c7-67446b1dddc6", 
+    "tonic": 443.0, 
+    "makam": "Muhayyer"
+  }, 
+  {
+    "mbid": "3f214267-bd88-4bf7-8f03-c824131bda57", 
+    "tonic": 249.0, 
+    "makam": "Muhayyer"
+  }, 
+  {
+    "mbid": "45e75a63-37f5-4ab7-810f-0b8213cf8fef", 
+    "tonic": 296.5, 
+    "makam": "Muhayyer"
+  }, 
+  {
+    "mbid": "4859c4b7-4b02-4429-9413-c316ff488465", 
+    "tonic": 221.1, 
+    "makam": "Muhayyer"
+  }, 
+  {
+    "mbid": "411a69c1-c016-45cd-bdbf-5bbe3dfa6d3c", 
+    "tonic": 150.2, 
+    "makam": "Neva"
+  }, 
+  {
+    "mbid": "62d9fd59-d4fa-4e44-bf37-7187f3e75ecd", 
+    "tonic": 195.1, 
+    "makam": "Neva"
+  }, 
+  {
+    "mbid": "706021f9-668f-4206-848b-beaa38652406", 
+    "tonic": 596.7, 
+    "makam": "Neva"
+  }, 
+  {
+    "mbid": "7a65df95-b305-45c4-bcc6-7c87cffe2bdd", 
+    "tonic": 274.9, 
+    "makam": "Neva"
+  }, 
+  {
+    "mbid": "7be686ef-913a-4352-bf4b-10446c6f10fb", 
+    "tonic": 255.0, 
+    "makam": "Neva"
+  }, 
+  {
+    "mbid": "2ff025cf-a6af-470e-80fc-7ed058b6fc0f", 
+    "tonic": 521.8, 
+    "makam": "Nihavent"
+  }, 
+  {
+    "mbid": "42f0ae68-f207-4d1d-8163-9e392cc15741", 
+    "tonic": 110.0, 
+    "makam": "Nihavent"
+  }, 
+  {
+    "mbid": "43220d3a-3ca5-429d-a217-6ef996abdd72", 
+    "tonic": 216.4, 
+    "makam": "Nihavent"
+  }, 
+  {
+    "mbid": "461a5280-bfd9-4db5-a3eb-df1a6bc64f63", 
+    "tonic": 261.9, 
+    "makam": "Nihavent"
+  }, 
+  {
+    "mbid": "47c665ad-12dc-4173-b42c-2819b61462a3", 
+    "tonic": 129.8, 
+    "makam": "Nihavent"
+  }, 
+  {
+    "mbid": "0c39e75b-d9c7-4cd1-9ac8-db49ca130cfe", 
+    "tonic": 260.2, 
+    "makam": "Rast"
+  }, 
+  {
+    "mbid": "0c7c2527-143c-4b37-b031-4b35843c756f", 
+    "tonic": 198.4, 
+    "makam": "Rast"
+  }, 
+  {
+    "mbid": "149d651a-616e-49a9-8c76-036baa62ad9d", 
+    "tonic": 192.8, 
+    "makam": "Rast"
+  }, 
+  {
+    "mbid": "1701ceba-bd5a-477e-b883-5dacac67da43", 
+    "tonic": 255.5, 
+    "makam": "Rast"
+  }, 
+  {
+    "mbid": "179a80ad-d2e1-42ab-8e2a-b5307322925e", 
+    "tonic": 131.5, 
+    "makam": "Rast"
+  }, 
+  {
+    "mbid": "1e14ece7-f5cd-4a58-aa15-b82253b1b858", 
+    "tonic": 394.0, 
+    "makam": "Saba"
+  }, 
+  {
+    "mbid": "1f6af8f0-9c70-4afe-99ab-40720fb2f26f", 
+    "tonic": 147.0, 
+    "makam": "Saba"
+  }, 
+  {
+    "mbid": "2ff5b6e0-7616-4b49-8fb6-c423d676d9a6", 
+    "tonic": 248.8, 
+    "makam": "Saba"
+  }, 
+  {
+    "mbid": "338337b7-6f73-4bb3-be34-d59621eb4b02", 
+    "tonic": 330.3, 
+    "makam": "Saba"
+  }, 
+  {
+    "mbid": "35ae2c0b-fd48-41ef-a9b2-f439daf636e4", 
+    "tonic": 440.9, 
+    "makam": "Saba"
+  }, 
+  {
+    "mbid": "3aeff39e-4dde-447e-895d-df37b341afea", 
+    "tonic": 152.4, 
+    "makam": "Segah"
+  }, 
+  {
+    "mbid": "5c3218e4-79d4-424e-a169-3d4cd156dc1a", 
+    "tonic": 164.8, 
+    "makam": "Segah"
+  }, 
+  {
+    "mbid": "5c9bd32c-f6b4-498b-99af-e8ede17c8a70", 
+    "tonic": 312.0, 
+    "makam": "Segah"
+  }, 
+  {
+    "mbid": "616ba3b9-c329-4b0e-8f0e-9a0531f55c2e", 
+    "tonic": 248.0, 
+    "makam": "Segah"
+  }, 
+  {
+    "mbid": "6636dede-4870-4076-a2b1-3e1e0786e6c2", 
+    "tonic": 319.4, 
+    "makam": "Segah"
+  }, 
+  {
+    "mbid": "497b5698-8a36-4a0b-85d1-eb0fa770b934", 
+    "tonic": 331.0, 
+    "makam": "Sultaniyegah"
+  }, 
+  {
+    "mbid": "6a49edd4-b8f2-4c58-af20-d440920b1624", 
+    "tonic": 360.2, 
+    "makam": "Sultaniyegah"
+  }, 
+  {
+    "mbid": "8322f771-9443-4810-bafc-54cdd084bd3a", 
+    "tonic": 166.0, 
+    "makam": "Sultaniyegah"
+  }, 
+  {
+    "mbid": "9965f926-5da8-4b80-85f7-0dc363c79bdf", 
+    "tonic": 164.9, 
+    "makam": "Sultaniyegah"
+  }, 
+  {
+    "mbid": "b16e9b66-57b2-4a5e-8456-6cb014c74768", 
+    "tonic": 169.0, 
+    "makam": "Sultaniyegah"
+  }, 
+  {
+    "mbid": "4c7e88a9-1674-4cf3-95e5-da7932cb4a2d", 
+    "tonic": 220.0, 
+    "makam": "Suzinak"
+  }, 
+  {
+    "mbid": "516b99cd-060c-4212-83f1-5693012c5d2b", 
+    "tonic": 239.3, 
+    "makam": "Suzinak"
+  }, 
+  {
+    "mbid": "5b4294e7-6515-4beb-a707-e92216a0ff3c", 
+    "tonic": 227.8, 
+    "makam": "Suzinak"
+  }, 
+  {
+    "mbid": "650471e3-f7b2-4747-abc3-12dac64d6e24", 
+    "tonic": 271.0, 
+    "makam": "Suzinak"
+  }, 
+  {
+    "mbid": "665b61c1-b631-4053-a765-05477a947ed6", 
+    "tonic": 147.5, 
+    "makam": "Suzinak"
+  }, 
+  {
+    "mbid": "2a3e5de9-b1c6-439b-b1b8-6d5902601824", 
+    "tonic": 219.7, 
+    "makam": "Ussak"
+  }, 
+  {
+    "mbid": "367fa893-1ae2-4aa1-8b1a-0774b424e628", 
+    "tonic": 149.0, 
+    "makam": "Ussak"
+  }, 
+  {
+    "mbid": "37b27316-3858-4e7f-8403-82c106dff33b", 
+    "tonic": 253.2, 
+    "makam": "Ussak"
+  }, 
+  {
+    "mbid": "3b934a39-1d6d-4f9d-9a2c-9a6e064b68cb", 
+    "tonic": 221.3, 
+    "makam": "Ussak"
+  }, 
+  {
+    "mbid": "3dc2a235-3f39-4dcc-929e-8d3ab56d181b", 
+    "tonic": 248.1, 
+    "makam": "Ussak"
+  }
+]
