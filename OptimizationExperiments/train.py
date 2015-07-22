@@ -5,11 +5,10 @@ import sys
 import json
 import os
 from os import path
-import generate_ten_fold as fold
+from generate_ten_fold import load_fold
 sys.path.insert(0, './../')
 import BozkurtEstimation as be
 import ChordiaEstimation as che
-import FileOperations as fo
 
 def train(makam_name, pt_list, tonic_list, cent_ss, smooth_factor, metric, method, pt_dir='./', save_dir='./', chunk_size=60, threshold=0.5, overlap=0):
 
@@ -25,7 +24,7 @@ def train(makam_name, pt_list, tonic_list, cent_ss, smooth_factor, metric, metho
 
 ###Experiment Parameters-------------------------------------------------------------------------
 cent_ss_list = [7.5, 15, 25, 50, 100]
-smooth_factor_list = [7.5, 10, 15, 20, 2.5]
+smooth_factor_list = [0, 2.5, 5, 7.5, 10, 15, 20]
 metric_list = ['pcd', 'pd']
 overlap_list = [0, 0.25, 0.50, 0.75]
 chunk_size_list = [30, 60, 90, 120]
@@ -35,6 +34,9 @@ cnt = 0
 max_fld=10
 min_fld=1
 print 'Here we go! ' + str(datetime.now())
+with open('annotations.json', 'r') as f:
+	annot = json.load(f)
+	f.close()
 ###Experiment------------------------------------------------------------------------------------
 for cent_ss in cent_ss_list:						#Bozkurt
 	for smooth_factor in smooth_factor_list:
@@ -53,12 +55,19 @@ for cent_ss in cent_ss_list:						#Bozkurt
 					print 'Trial ' + str(cnt) + ' Started\tMetric: ' + metric + ', Smooth_Factor: ' + str(smooth_factor) + ', Cent_SS: ' + str(cent_ss) + ', Chunk Size: ' + str(chunk_size)
 					os.makedirs('./Experiments/' + 'Experiment' + str(cnt) + '/')
 				for fld in np.arange((min_fld),(max_fld+1)):
-					cur_fold = fold.load_fold('./Experiments/Folds/train_fold_' + str(fld) + '.json')
+					cur_fold = load_fold('./Folds/fold_' + str(fld) + '.json')['train']
 					save_dir = './Experiments/' + 'Experiment' + str(cnt) + '/Fold' + str(fld) + '/'
 					os.makedirs(save_dir)
 					for makam_name in makam_list:
-						makam_annot = [k for k in cur_fold if (k['makam']==makam_name)]
-						pt_dir = '../../../Makam_Dataset/Pitch_Tracks/' + makam_name + '/'			
+						makam_annot = []
+						tmp_annot = [k for k in cur_fold if (k.values()[0]==makam_name)]
+						for i in tmp_annot:
+							for j in annot:
+								if(i.keys()[0] == j['mbid']):
+									makam_annot.append(j)
+									break
+						print len(tmp_annot) == len(makam_annot)
+						pt_dir = '../../../test_datasets/turkish_makam_recognition_dataset/data/' + makam_name + '/'			
 						pt_list = [(tmp['mbid'] + '.pitch') for tmp in makam_annot]
 						tonic_list = [tmp['tonic'] for tmp in makam_annot]
 						train(makam_name, pt_list, tonic_list, cent_ss, smooth_factor, metric, 'bozkurt', pt_dir=pt_dir, save_dir=save_dir, chunk_size=chunk_size)
