@@ -66,7 +66,6 @@ for cent_ss in cent_ss_list:						#Bozkurt
 								if(i.keys()[0] == j['mbid']):
 									makam_annot.append(j)
 									break
-						print len(tmp_annot) == len(makam_annot)
 						pt_dir = '../../../test_datasets/turkish_makam_recognition_dataset/data/' + makam_name + '/'			
 						pt_list = [(tmp['mbid'] + '.pitch') for tmp in makam_annot]
 						tonic_list = [tmp['tonic'] for tmp in makam_annot]
