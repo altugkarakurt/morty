@@ -20,14 +20,19 @@ def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, sourc
 	### superposed Gaussian for smoothing would vanish after 3 sigmas.
 	### The limits are also quantized to be a multiple of chosen step-size
 	### smooth_factor = standard deviation fo the gaussian kernel
-	smoothening = (smooth_factor * np.sqrt(1/np.cov(pitch_track)))
-	min_bin = (min(pitch_track) - (min(pitch_track) % smooth_factor)) - (5 * smooth_factor)  
-	max_bin = (max(pitch_track) + (smooth_factor - (max(pitch_track) % smooth_factor))) + (5 * smooth_factor)
+	if(self.smooth_factor > 0):
+		smoothening = (smooth_factor * np.sqrt(1/np.cov(pitch_track)))
+		min_bin = (min(pitch_track) - (min(pitch_track) % smooth_factor)) - (5 * smooth_factor)  
+		max_bin = (max(pitch_track) + (smooth_factor - (max(pitch_track) % smooth_factor))) + (5 * smooth_factor)
 
-	pd_bins = np.arange(min_bin, max_bin, cent_ss)
-	kde = stats.gaussian_kde(pitch_track, bw_method=smoothening)
-	pd_vals = kde.evaluate(pd_bins)
-	return p_d.PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, source=source, ref_freq=ref_freq, segment=segment, overlap=overlap)
+		pd_bins = np.arange(min_bin, max_bin, cent_ss)
+		kde = stats.gaussian_kde(pitch_track, bw_method=smoothening)
+		pd_vals = kde.evaluate(pd_bins)
+	else:
+		pd_bins = np.arange((min(pitch_track)), max(pitch_track), cent_ss)
+		pd_vals = np.histogram(pitch_track, bins=np.arange((min(pitch_track) - (cent_ss/2)), (max(pitch_track) + (cent_ss/2)), cent_ss), density=True)[0]
+		pd_vals[0] = 0 #filter out the pitch extraction errors
+	return p_d.PitchDistribution(pd_bins[1:], pd_vals, kernel_width=smooth_factor, source=source, ref_freq=ref_freq, segment=segment, overlap=overlap)
 
 def generate_pcd(pd):
 	### Initializations
