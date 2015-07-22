@@ -20,7 +20,7 @@ def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, sourc
 	### superposed Gaussian for smoothing would vanish after 3 sigmas.
 	### The limits are also quantized to be a multiple of chosen step-size
 	### smooth_factor = standard deviation fo the gaussian kernel
-	if(self.smooth_factor > 0):
+	if(smooth_factor > 0):
 		smoothening = (smooth_factor * np.sqrt(1/np.cov(pitch_track)))
 		min_bin = (min(pitch_track) - (min(pitch_track) % smooth_factor)) - (5 * smooth_factor)  
 		max_bin = (max(pitch_track) + (smooth_factor - (max(pitch_track) % smooth_factor))) + (5 * smooth_factor)
