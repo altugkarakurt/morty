@@ -23,7 +23,7 @@ class PitchDistribution:
 		self.overlap = overlap
 
 	def save(self, fname, save_dir='./'):
-		dist_json = [{'bins':self.bins.tolist(), 'vals':self.vals.tolist(), 'kernel_width':self.kernel_width, 'source':self.source, 'ref_freq':self.ref_freq, 'segmentation':self.segmentation, 'overlap':self.overlap}]
+		dist_json = [{'bins':self.bins.tolist(), 'vals':self.vals.tolist(), 'kernel_width':self.kernel_width, 'source':self.source, 'ref_freq':self.ref_freq, 'segmentation':self.segmentation, 'overlap':self.overlap, 'cent_ss':self.step_size}]
 		with open((save_dir + fname), 'w') as f:
 			json.dump(dist_json, f, indent=2)
 			f.close()

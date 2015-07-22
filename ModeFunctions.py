@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import scipy as sp
-import pylab as pl
 import numpy as np
 import math
 
