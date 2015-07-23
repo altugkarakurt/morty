@@ -32,7 +32,7 @@ class BozkurtEstimation:
 				joint_seg = (segs[0][1], segs[0][2])
 			for i in cur_cent_track:
 				mode_track.append(i)
-		joint_dist = mf.generate_pd(mode_track, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss, source=mode_name, segment=joint_seg)
+		joint_dist = mf.generate_pd(mode_track, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss, source=pt_list, segment=joint_seg)
 		if(metric=='pcd'):
 			joint_dist = mf.generate_pcd(joint_dist)
 		joint_dist.save((mode_name + '.json'), save_dir=save_dir)
