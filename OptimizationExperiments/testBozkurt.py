@@ -16,8 +16,6 @@ distribution_type_list = ['pcd', 'pd']
 chunk_size_list = [30, 60, 90, 120, 0]
 distance_list = ['manhattan', 'euclidan', 'l3', 'bhat', 'intersection', 'corr']
 
-#Should the est_tonic/est_mode be iterated over a list or done separately?
-
 makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 
 			  'Hicazkar', 'Huseyni', 'Huzzam', 'Karcigar', 'Kurdilihicazkar', 
 			  'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 
@@ -44,6 +42,8 @@ experiment_info = {'cent_ss': cent_ss, 'smooth_factor':smooth_factor, 'distribut
 
 # folder structure
 experiment_master_dir = './Experiments' # assumes it is already created
+training_idx = ((idx[1] + 1) * (idx[2]+1) * (idx[3]+1) * (idx[4]+1))
+training_dir = './Trainings' + training_idx
 
 experiment_dir = os.path.join(experiment_master_dir, 'Experiment' + sys.argv[1])
 if not os.path.exists(experiment_dir):
