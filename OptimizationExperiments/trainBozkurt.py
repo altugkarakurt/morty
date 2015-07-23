@@ -24,7 +24,7 @@ data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
 #data_folder = os.path.joın('..', '..', '..', experiments, 'turkish_makam_recognition_dataset', 'data') # hpc cluster
 
 # get the training experient/fold parameters 
-idx = np.unravel_index(int(x)), (len(fold_list), len(cent_ss_list), len(smooth_factor_list), len(metric_list), len(chunk_size_list)))
+idx = np.unravel_index(int(x), (len(fold_list), len(cent_ss_list), len(smooth_factor_list), len(metric_list), len(chunk_size_list)))
 fold = fold_list[idx[0]]
 cent_ss = cent_ss_list[idx[1]]
 smooth_factor = smooth_factor_list[idx[2]]
@@ -48,6 +48,8 @@ if not os.path.exists(experiment_dir):
 with open(os.path.join(experiment_dir, 'parameters.json'), 'w') as f:
 	json.dump(experiment_info, f, indent=2)
 	f.close()
+
+
 
 # create the training folder
 fold_dir = os.path.join(experiment_dir, 'Fold' + str(fold))
