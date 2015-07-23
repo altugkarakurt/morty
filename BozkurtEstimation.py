@@ -37,7 +37,7 @@ class BozkurtEstimation:
 			joint_dist = mf.generate_pcd(joint_dist)
 		joint_dist.save((mode_name + '.json'), save_dir=save_dir)
 
-	def estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440):
+	def estimate(self, pitch_track, mode_names=[], mode_name='', pt_dir='./', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440):
 		"""---------------------------------------------------------------------------------------
 		This is the high level function that users are expected to interact with, for estimation
 		purposes. Using the est_* flags, it is possible to estimate tonic, mode or both.
@@ -48,8 +48,8 @@ class BozkurtEstimation:
 		dist = mf.generate_pcd(dist) if (metric=='pcd') else dist
 		mode_dists = [(p_d.load((m + '.json'), mode_dir)) for m in mode_names]
 		mode_dist = p_d.load((mode_name + '_' + metric + '.json'), mode_dir) if (mode_name!='') else None
-		tonic_list = np.zeros(rank)
-		mode_list = ['' for x in range(rank)]
+		tonic_list = np.zeros(min(rank, len(peak_idxs)))
+		mode_list = ['' for x in range(min(rank, len(peak_idxs)))]
 
 		if(est_tonic):
 			if(metric=='pcd'):
@@ -73,7 +73,7 @@ class BozkurtEstimation:
 				for m in range(len(mode_dists)):
 					dist_mat[:,m] = mf.tonic_estimate(dist, shift_idxs, mode_dists[m], distance_method=distance_method, metric=metric, cent_ss=self.cent_ss)
 			
-			for r in range(rank):
+			for r in range(min(rank, len(peak_idxs))):
 				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
 				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
 				if(metric=='pcd'):
@@ -89,7 +89,7 @@ class BozkurtEstimation:
 			ref_freq = anti_freq if (metric=='pcd') else ref_freq
 			distance_vector = mf.tonic_estimate(dist, peak_idxs, mode_dist, distance_method=distance_method, metric=metric, cent_ss=self.cent_ss)
 			
-			for r in range(rank):
+			for r in range(min(rank, len(peak_idxs))):
 				idx = np.argmin(distance_vector)
 				if(metric=='pcd'):
 					tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[idx]]], anti_freq)[0]
@@ -100,7 +100,7 @@ class BozkurtEstimation:
 
 		elif(est_mode):
 			distance_vector = mf.mode_estimate(dist, mode_dists, distance_method=distance_method, metric=metric, cent_ss=self.cent_ss)
-			for r in range(rank):
+			for r in range(min(rank, len(peak_idxs))):
 				idx = np.argmin(distance_vector)
 				mode_list[r] = mode_names[idx]
 				distance_vector[idx] = (np.amax(distance_vector) + 1)
