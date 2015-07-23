@@ -21,18 +21,20 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz',
 			  'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 
 			  'Segah', 'Sultaniyegah', 'Suzinak', 'Ussak']
 
+output = dict()
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
 #data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' sertan desktop local
 #data_folder = os.path.join('..', '..', '..', experiments, 'turkish_makam_recognition_dataset', 'data') # hpc cluster
 
 # get the training experient/fold parameters 
-idx = np.unravel_index(int(sys.argv[1]), (len(fold_list), len(cent_ss_list), len(smooth_factor_list), len(distribution_type_list), len(chunk_size_list), len(distance_list)))
-fold = fold_list[idx[0]]
-cent_ss = cent_ss_list[idx[1]]
-smooth_factor = smooth_factor_list[idx[2]]
-distribution_type = distribution_type_list[idx[3]]
-chunk_size = chunk_size_list[idx[4]]
-distance = distance_list[idx[5]]
+idx = np.unravel_index(int(sys.argv[1]), (len(cent_ss_list), len(smooth_factor_list), len(distribution_type_list), len(chunk_size_list), len(distance_list)))
+cent_ss = cent_ss_list[idx[0]]
+smooth_factor = smooth_factor_list[idx[1]]
+distribution_type = distribution_type_list[idx[2]]
+chunk_size = chunk_size_list[idx[3]]
+distance = distance_list[idx[4]]
 
 # instantiate makam estimator for training
 estimator = be.BozkurtEstimation(cent_ss=cent_ss, smooth_factor=smooth_factor, chunk_size=chunk_size)
@@ -42,58 +44,45 @@ experiment_info = {'cent_ss': cent_ss, 'smooth_factor':smooth_factor, 'distribut
 
 # folder structure
 experiment_master_dir = './Experiments' # assumes it is already created
-training_idx = ((idx[1] + 1) * (idx[2]+1) * (idx[3]+1) * (idx[4]+1))
-training_dir = './Trainings' + training_idx
 
-experiment_dir = os.path.join(experiment_master_dir, 'Experiment' + sys.argv[1])
-if not os.path.exists(experiment_dir):
-	os.makedirs(experiment_dir)
-
-# save the experiment info
-with open(os.path.join(experiment_dir, 'parameters.json'), 'w') as f:
-	json.dump(experiment_info, f, indent=2)
-	f.close()
-
-# create the training folder
-fold_dir = os.path.join(experiment_dir, 'Fold' + str(fold))
-if not os.path.exists(fold_dir):
-	os.makedirs(fold_dir)
-
-# check if the training has already been done by comparing the names of the json
-# files in the fold directory. If finished, skip training
-training_filenames = next(os.walk(fold_dir))[2]
-makam_names = [os.path.splitext(os.path.split(f)[1])[0] for f in training_filenames]
-if (set(makam_list) - set(makam_names) == set()):
-	sys.exit()
+#chooses which training to use 
+training_idx = (int(sys.argv[1]) / (len(cent_ss_list) * len(smooth_factor_list) * len(distribution_type_list) * len(chunk_size_list)))
+training_dir = os.path.join('./Trainings', training_idx)
 
 # load annotations; the tonic values will be read from here
 with open('annotations.json', 'r') as f:
 	annot = json.load(f)
 	f.close()
 
-# load the fold to get the training recordings
-with open((os.path.join('./Folds', 'fold_' + str(fold) + '.json')), 'r') as f:
-	cur_fold = json.load(f)['test']
+for fold in fold_list:
+	output[('Fold' + fold)] = []
+	fold_dir = os.path.join(experiment_dir, 'Fold' + str(fold))
+	
+	#ADD Check IF DONE
+	
+	# load the current fold to get the training recordings
+	with open((os.path.join('./Folds', 'fold_' + str(fold) + '.json')), 'r') as f:
+		cur_fold = json.load(f)['test']
+		f.close()
+	# retrieve annotations of the training recordings
+	for makam_name in makam_list:
+		# divide the training data into makams
+		makam_annot = [k for k in cur_fold if k['makam']==makam_name]
+		pitch_track_dir = os.path.join(data_folder, makam_name)
+		for i in makam_annot:
+			for j in annot:
+				# append the tonic of the recordıng from the relevant annotation
+				if(i['mbid'] == j['mbid']):
+					i['tonic'] = j['tonic'] 
+					break
+		#actual estimation
+		for piece in makam_annot:
+			pitch_track = mf.load_track(txt_name=(piece['mbid'] + '.pitch'), txt_dir=pitch_track_dir)
+			#estimate makam
+			cur_out = estimator.estimate(pitch_track, mode_names=makam_list, est_tonic=False, est_mode=True, rank=rank, distance_method=distance, metric=distribution_type)
+			output[('Fold' + fold)].append({piece['mbid']:cur_out})
+with open(os.path.join(training_dir, distance), 'w') as f:
+	json.dump(output, f, indent=2)
 	f.close()
-
-print 'Vamos ! ' + 'training: ' + sys.argv[1]
-
-# retrieve annotations of the training recordings
-for makam_name in makam_list:
-	# dıvıde the traınıng data into makams
-	makam_annot = [k for k in cur_fold if k['makam']==makam_name]
-	for i in makam_annot:
-		for j in annot:
-			# append the tonic of the recordıng from the relevant annotation
-			if(i['mbid'] == j['mbid']):
-				i['tonic'] = j['tonic'] 
-				break
-
-	#actual estimation
-	for piece in makam_annot:
-		pitch_track = mf.load_track
-		#estimate makam
-		estimator.estimate(self, pitch_track, mode_names=makam_list, mode_name='', pt_dir='./', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440)
-
 print '   Finished! ' + 'training: ' + sys.argv[1]
 
