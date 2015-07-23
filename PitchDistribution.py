@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import essentia
 import essentia.standard as std
-import matplotlib.pyplot as pl
 import numpy as np
 import json
+import os
 
 def load(fname, dist_dir='./'):
-	with open((dist_dir + fname)) as f:    
+	with open(os.path.join(dist_dir, fname)) as f:    
 		dist = json.load(f)
 		f.close()
 	return PitchDistribution(np.array(dist[0]['bins']), np.array(dist[0]['vals']), kernel_width=dist[0]['kernel_width'], source=dist[0]['source'], ref_freq=dist[0]['ref_freq'], segment=dist[0]['segmentation'], overlap=dist[0]['overlap'])
@@ -24,7 +24,7 @@ class PitchDistribution:
 
 	def save(self, fname, save_dir='./'):
 		dist_json = [{'bins':self.bins.tolist(), 'vals':self.vals.tolist(), 'kernel_width':self.kernel_width, 'source':self.source, 'ref_freq':self.ref_freq, 'segmentation':self.segmentation, 'overlap':self.overlap, 'cent_ss':self.step_size}]
-		with open((save_dir + fname), 'w') as f:
+		with open(os.path.join(save_dir, fname), 'w') as f:
 			json.dump(dist_json, f, indent=2)
 			f.close()
 
@@ -56,8 +56,3 @@ class PitchDistribution:
 			return PitchDistribution(self.bins, shifted_vals, kernel_width=self.kernel_width, source=self.source, ref_freq=self.ref_freq, segment=self.segmentation, overlap=self.overlap)
 		else:
 			return PitchDistribution(self.bins, self.vals, kernel_width=self.kernel_width, source=self.source, ref_freq=self.ref_freq, segment=self.segmentation, overlap=self.overlap)
-
-	def plot(self):
-		pl.figure()
-		pl.plot(self.bins, self.vals)
-		pl.show()

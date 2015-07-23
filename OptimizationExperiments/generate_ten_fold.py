@@ -16,11 +16,10 @@ def get_ten_fold():
 		train_set = []
 		test_set = []
 		for tr in train_idx:
-			train_set.append(all_annots[tr])
-			save_fold(train_set, ('train_fold_' + str(fold_cnt)))
+			train_set.append({'mbid':all_annots[tr]['mbid'], 'makam':all_annots[tr]['makam']})
 		for te in test_idx:
-			test_set.append(all_annots[te])
-			save_fold(test_set, ('test_fold_' + str(fold_cnt)))
+			test_set.append({'mbid':all_annots[te]['mbid'], 'makam':all_annots[te]['makam']})
+		save_fold({'train':train_set , 'test':test_set}, ('fold_' + str(fold_cnt)))
 		fold_cnt+=1
 
 def save_fold(fold, save_name, save_dir='./'):

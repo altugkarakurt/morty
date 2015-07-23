@@ -1,18 +1,11 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
 import numpy as np
 import sys
 import json
 import os
 from os import path
-from generate_ten_fold import load_fold
 sys.path.insert(0, './../')
 import BozkurtEstimation as be
-
-def train(makam_name, pt_list, tonic_list, cent_ss, smooth_factor, metric, method, pt_dir='./', fold_dir='./', chunk_size=60):
-	### Bozkurt Estimation
-	b = be.BozkurtEstimation(cent_ss=cent_ss, smooth_factor=smooth_factor, chunk_size=chunk_size)
-	b.train(makam_name, pt_list, tonic_list, metric=metric, pt_dir=pt_dir, save_dir=fold_dir)
 
 ###Experiment Parameters-------------------------------------------------------------------------
 fold_list = np.arange(1,11)
@@ -25,6 +18,10 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz',
 			  'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 
 			  'Segah', 'Sultaniyegah', 'Suzinak', 'Ussak']
 
+data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
+#data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' sertan desktop local
+#data_folder = os.path.joın('..', '..', '..', experiments, 'turkish_makam_recognition_dataset', 'data') # hpc cluster
+
 # get the training experient/fold parameters 
 idx = np.unravel_index(int(sys.argv[1]), (len(fold_list), len(cent_ss_list), len(smooth_factor_list), len(metric_list), len(chunk_size_list)))
 fold = fold_list[idx[0]]
@@ -32,6 +29,9 @@ cent_ss = cent_ss_list[idx[1]]
 smooth_factor = smooth_factor_list[idx[2]]
 metric = metric_list[idx[3]]
 chunk_size = chunk_size_list[idx[4]]
+
+# instantiate makam estimator for training
+estimator = be.BozkurtEstimation(cent_ss=cent_ss, smooth_factor=smooth_factor, chunk_size=chunk_size)
 
 # experiment info
 experiment_info = {'cent_ss': cent_ss, 'smooth_factor':smooth_factor, 'metric':metric, 'chunk_size':chunk_size, 'method':'bozkurt'}
@@ -43,55 +43,53 @@ experiment_dir = os.path.join(experiment_master_dir, 'Experiment' + sys.argv[1])
 if not os.path.exists(experiment_dir):
 	os.makedirs(experiment_dir)
 
+# save the experiment info
+with open(os.path.join(experiment_dir, 'parameters.json'), 'w') as f:
+	json.dump(experiment_info, f, indent=2)
+	f.close()
+
+# create the training folder
 fold_dir = os.path.join(experiment_dir, 'Fold' + str(fold))
 if not os.path.exists(fold_dir):
 	os.makedirs(fold_dir)
 
+# check if the training has already been done by comparing the names of the json
+# files in the fold directory. If finished, skip training
+training_filenames = next(os.walk(fold_dir))[2]
+makam_names = [os.path.splitext(os.path.split(f)[1])[0] for f in training_filenames]
+if (set(makam_list) - set(makam_names) == set()):
+	sys.exit()
 
-'''
-print 'Here we go! ' + str(datetime.now())
-
+# load annotations; the tonic values will be read from here
 with open('annotations.json', 'r') as f:
 	annot = json.load(f)
 	f.close()
 
-###Experiment------------------------------------------------------------------------------------
-for cent_ss in cent_ss_list:						#Bozkurt
-	for smooth_factor in smooth_factor_list:
-		for metric in metric_list:
-			for chunk_size in chunk_size_list:
-				cnt += 1
-				if(os.path.isdir('./Experiments/Experiment' + str(cnt+1))):	#The trial is completed
-					continue
-				elif(os.path.isdir('./Experiments/Experiment' + str(cnt))): 
-					if(os.path.isdir('./Experiments/Experiment' + str(cnt) + '/Fold10')):
-						continue
-					else:
-						min_fld = 1 + len(os.listdir('./Experiments/Experiment' + str(cnt)))
-				else:
-					min_fld = 1
-					print 'Experiment ' + str(cnt) + ' Started\tMetric: ' + metric + ', Smooth_Factor: ' + str(smooth_factor) + ', Cent_SS: ' + str(cent_ss) + ', Chunk Size: ' + str(chunk_size)
-					os.makedirs('./Experiments/' + 'Experiment' + str(cnt) + '/')
-				for fld in np.arange((min_fld),(max_fld+1)):
-					cur_fold = load_fold('./Folds/fold_' + str(fld) + '.json')['train']
-					fold_dir = './Experiments/' + 'Experiment' + str(cnt) + '/Fold' + str(fld) + '/'
-					os.makedirs(fold_dir)
-					for makam_name in makam_list:
-						makam_annot = []
-						tmp_annot = [k for k in cur_fold if (k.values()[0]==makam_name)]
-						for i in tmp_annot:
-							for j in annot:
-								if(i.keys()[0] == j['mbid']):
-									makam_annot.append(j)
-									break
-						pt_dir = '../../../test_datasets/turkish_makam_recognition_dataset/data/' + makam_name + '/'			
-						pt_list = [(tmp['mbid'] + '.pitch') for tmp in makam_annot]
-						tonic_list = [tmp['tonic'] for tmp in makam_annot]
-						train(makam_name, pt_list, tonic_list, cent_ss, smooth_factor, metric, 'bozkurt', pt_dir=pt_dir, fold_dir=fold_dir, chunk_size=chunk_size)
-					experiment_info = {'cent_ss': cent_ss, 'smooth_factor':smooth_factor, 'metric':metric, 'chunk_size':chunk_size, 'method':'bozkurt'}
-					with open('experiment_info.json', 'a') as f:
-						json.dump(experiment_info, f, indent=2)
-						f.close()
-					print 'Fold ' + str(fld) + ' Done! ' + str(datetime.now())
-				print 'Experiment ' + str(cnt) + ' Done\tMetric: ' + metric + ', Smooth_Factor: ' + str(smooth_factor) + ', Cent_SS: ' + str(cent_ss) + ', Chunk Size: ' + str(chunk_size) + ' \n'
-'''
+# load the fold to get the training recordings
+with open((os.path.join('./Folds', 'fold_' + str(fold) + '.json')), 'r') as f:
+	cur_fold = json.load(f)['test']
+	f.close()
+
+print 'Vamos ! ' + 'training: ' + str(sys.argv[1])
+
+# retrieve annotations of the training recordings
+for makam_name in makam_list:
+	# dıvıde the traınıng data into makams
+	makam_annot = [k for k in cur_fold if k['makam']==makam_name]
+	for i in makam_annot:
+		for j in annot:
+			# append the tonic of the recordıng from the relevant annotation
+			if(i['mbid'] == j['mbid']):
+				i['tonic'] = j['tonic'] 
+				break
+
+	# get pitch tracks and tonic frequencies
+	pitch_track_dir = os.path.join(data_folder, makam_name)
+	pitch_track_list = [(ma['mbid'] + '.pitch') for ma in makam_annot]
+	tonic_list = [ma['tonic'] for ma in makam_annot]
+
+	# train
+	estimator.train(makam_name, pitch_track_list, tonic_list, metric=metric, 
+		pt_dir=pitch_track_dir, save_dir=fold_dir)
+
+print '   Finished! ' + 'training: ' + str(sys.argv[1])

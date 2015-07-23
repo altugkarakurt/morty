@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import math
-import matplotlib.pyplot as pl
 
 import ModeFunctions as mf
 import PitchDistribution as p_d
