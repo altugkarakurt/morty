@@ -21,11 +21,11 @@ arr = [1, 12, 45, 49, 50, 129, 133, 134, 145, 221, 225, 226, 237, 262, 265, 266,
 x = arr[int(sys.argv[1])]
 
 #data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
-#data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' sertan desktop local
-data_folder = os.path.join('..', '..', '..', experiments, 'turkish_makam_recognition_dataset', 'data') # hpc cluster
+#data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
+data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
 
 # get the training experient/fold parameters 
-idx = np.unravel_index(int(x), (len(fold_list), len(cent_ss_list), len(smooth_factor_list), len(metric_list), len(chunk_size_list)))
+idx = np.unravel_index(int(x), (len(fold_list), len(cent_ss_list), len(smooth_factor_list), len(distribution_type_list), len(chunk_size_list)))
 fold = fold_list[idx[0]]
 cent_ss = cent_ss_list[idx[1]]
 smooth_factor = smooth_factor_list[idx[2]]
@@ -92,7 +92,7 @@ for makam_name in makam_list:
 	tonic_list = [ma['tonic'] for ma in makam_annot]
 
 	# train
-	estimator.train(makam_name, pitch_track_list, tonic_list, metric=metric, 
+	estimator.train(makam_name, pitch_track_list, tonic_list, metric=distribution_type_list, 
 		pt_dir=pitch_track_dir, save_dir=fold_dir)
 
 print '   Finished training: ' + str(x)
