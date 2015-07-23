@@ -23,7 +23,7 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz',
 data_folder = "../../../experiments/turkish_makam_recognition_dataset/data/" # hpc cluster
 
 # get the training experient/fold parameters 
-idx = np.unravel_index(int(sys.argv[1]), (len(fold_list), len(cent_ss_list), len(smooth_factor_list), len(metric_list), len(chunk_size_list)))
+idx = np.unravel_index(int(sys.argv[1]-1), (len(fold_list), len(cent_ss_list), len(smooth_factor_list), len(metric_list), len(chunk_size_list)))
 fold = fold_list[idx[0]]
 cent_ss = cent_ss_list[idx[1]]
 smooth_factor = smooth_factor_list[idx[2]]
@@ -58,7 +58,7 @@ if not os.path.exists(fold_dir):
 training_filenames = next(os.walk(fold_dir))[2]
 makam_names = [os.path.splitext(os.path.split(f)[1])[0] for f in training_filenames]
 if (set(makam_list) - set(makam_names) == set()):
-	print '   Already computed training: ' + str(sys.argv[1])
+	print '   Already computed training: ' + str(sys.argv[1]-1)
 	sys.exit()
 
 # load annotations; the tonic values will be read from here
@@ -71,7 +71,7 @@ with open((os.path.join('./Folds', 'fold_' + str(fold) + '.json')), 'r') as f:
 	cur_fold = json.load(f)['train']
 	f.close()
 
-print 'Starting training: ' + str(sys.argv[1])
+print 'Starting training: ' + str(sys.argv[1]-1)
 
 # retrieve annotations of the training recordings
 for makam_name in makam_list:
@@ -93,4 +93,4 @@ for makam_name in makam_list:
 	estimator.train(makam_name, pitch_track_list, tonic_list, metric=metric, 
 		pt_dir=pitch_track_dir, save_dir=fold_dir)
 
-print '   Finished! ' + 'training: ' + str(sys.argv[1])
+print '   Finished! ' + 'training: ' + str(sys.argv[1]-1)
