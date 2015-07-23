@@ -18,9 +18,9 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz',
 			  'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 
 			  'Segah', 'Sultaniyegah', 'Suzinak', 'Ussak']
 
-data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
+#data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
 #data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' sertan desktop local
-#data_folder = os.path.joın('..', '..', '..', experiments, 'turkish_makam_recognition_dataset', 'data') # hpc cluster
+data_folder = "../../../experiments/turkish_makam_recognition_dataset/data/" # hpc cluster
 
 # get the training experient/fold parameters 
 idx = np.unravel_index(int(sys.argv[1]), (len(fold_list), len(cent_ss_list), len(smooth_factor_list), len(metric_list), len(chunk_size_list)))
@@ -34,7 +34,7 @@ chunk_size = chunk_size_list[idx[4]]
 estimator = be.BozkurtEstimation(cent_ss=cent_ss, smooth_factor=smooth_factor, chunk_size=chunk_size)
 
 # experiment info
-experiment_info = {'cent_ss': cent_ss, 'smooth_factor':smooth_factor, 'metric':metric, 'chunk_size':chunk_size, 'method':'bozkurt'}
+experiment_info = {'cent_ss': cent_ss, 'smooth_factor':smooth_factor, 'distribution_type':metric, 'chunk_size':chunk_size, 'method':'bozkurt'}
 
 # folder structure
 experiment_master_dir = './Experiments' # assumes it is already created
@@ -58,6 +58,7 @@ if not os.path.exists(fold_dir):
 training_filenames = next(os.walk(fold_dir))[2]
 makam_names = [os.path.splitext(os.path.split(f)[1])[0] for f in training_filenames]
 if (set(makam_list) - set(makam_names) == set()):
+	print '   Already computed training: ' + str(sys.argv[1])
 	sys.exit()
 
 # load annotations; the tonic values will be read from here
@@ -67,10 +68,10 @@ with open('annotations.json', 'r') as f:
 
 # load the fold to get the training recordings
 with open((os.path.join('./Folds', 'fold_' + str(fold) + '.json')), 'r') as f:
-	cur_fold = json.load(f)['test']
+	cur_fold = json.load(f)['train']
 	f.close()
 
-print 'Vamos ! ' + 'training: ' + str(sys.argv[1])
+print 'Starting training: ' + str(sys.argv[1])
 
 # retrieve annotations of the training recordings
 for makam_name in makam_list:
