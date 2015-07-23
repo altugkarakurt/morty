@@ -37,7 +37,7 @@ class BozkurtEstimation:
 			joint_dist = mf.generate_pcd(joint_dist)
 		joint_dist.save((mode_name + '.json'), save_dir=save_dir)
 
-	def estimate(self, pitch_track, mode_names=[], mode_name='', pt_dir='./', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440):
+	def estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440):
 		"""---------------------------------------------------------------------------------------
 		This is the high level function that users are expected to interact with, for estimation
 		purposes. Using the est_* flags, it is possible to estimate tonic, mode or both.
