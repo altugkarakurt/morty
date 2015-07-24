@@ -6,7 +6,7 @@
 # Call from the current working directory; no need to cd
 # ------------------------------------------------------
 #$ -cwd
-# -q default.q
+#$ -q default.q
 #
 # Max time limits
 # ---------------
