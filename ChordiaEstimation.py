@@ -34,7 +34,7 @@ class ChordiaEstimation:
 			json.dump(dist_json, f, indent=2)
 			f.close()
 
-	def estimate(self, pitch_track, time_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440, k_param=1):
+	def estimate(self, pitch_track, time_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440):
 		pts, segs = mf.slice(time_track, pitch_track, 'input', self.chunk_size, self.threshold, self.overlap)
 		tonic_list = np.zeros(rank)
 		mode_list = ['' for x in range(rank)]
@@ -46,10 +46,10 @@ class ChordiaEstimation:
 			result = [ mode_list for i in range(len(segs)) ]
 
 		for p in range(len(pts)):
-			result[p] = self.segment_estimate(pts[p], mode_names=mode_names, mode_name=mode_name, mode_dir=mode_dir, est_tonic=est_tonic, est_mode=est_mode, rank=rank, distance_method=distance_method, metric=metric, ref_freq=ref_freq, k_param=k_param)
+			result[p] = self.segment_estimate(pts[p], mode_names=mode_names, mode_name=mode_name, mode_dir=mode_dir, est_tonic=est_tonic, est_mode=est_mode, rank=rank, distance_method=distance_method, metric=metric, ref_freq=ref_freq)
 		return result
 
-	def segment_estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440, k_param=1):
+	def segment_estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=440):
 		if(rank > 1):
 			print 'Warning: Due to the KNN update, there is only single rank implementation. This will be fixed in the future.'
 		### Preliminaries before the estimations
@@ -132,7 +132,7 @@ class ChordiaEstimation:
 
 	def load_collection(self, mode_name, metric, dist_dir='./'):
 		obj_list = []
-		fname = mode_name + '_' + metric + '.json'
+		fname = mode_name + '.json'
 		with open((dist_dir + fname)) as f:
 			dist_list = json.load(f)[mode_name]
 		for d in dist_list:
