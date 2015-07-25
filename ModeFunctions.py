@@ -8,12 +8,12 @@ from scipy.spatial import distance
 
 import PitchDistribution as p_d
 
-def load_track(txtname, txt_dir):
+def load_track(txt_name, txt_dir):
 	"""---------------------------------------------------------------------------------------
 	Loads the pitch track from a text file. The format for the examples is, such that, 0th
 	column is time-stamps and 1st column is the corresponding frequency values.
 	---------------------------------------------------------------------------------------"""
-	return np.loadtxt(os.path.join(txt_dir, txtname))
+	return np.loadtxt(os.path.join(txt_dir, txt_name))
 
 def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source='', segment='all', overlap='-'):		
 	### Some extra interval is added to the beginning and end since the 

@@ -44,7 +44,7 @@ class BozkurtEstimation:
 		---------------------------------------------------------------------------------------"""
 		### Preliminaries before the estimations
 		if (self.chunk_size > 0):
-			cur_track, segs = mf.slice(time_track, tmp_track, mode_name, self.chunk_size)
+			cur_track, segs = mf.slice(time_track, pitch_track, mode_name, self.chunk_size)
 			cent_track = mf.hz_to_cent(cur_track[0], ref_freq=ref_freq)
 		else:
 			cent_track = mf.hz_to_cent(pitch_track, ref_freq=ref_freq)
@@ -52,8 +52,8 @@ class BozkurtEstimation:
 		dist = mf.generate_pcd(dist) if (metric=='pcd') else dist
 		mode_dists = [(p_d.load((m + '.json'), mode_dir)) for m in mode_names]
 		mode_dist = p_d.load((mode_name + '_' + metric + '.json'), mode_dir) if (mode_name!='') else None
-		tonic_list = np.zeros(min(rank, len(peak_idxs)))
-		mode_list = ['' for x in range(min(rank, len(peak_idxs)))]
+		tonic_list = np.zeros(rank)
+		mode_list = ['' for x in range(rank)]
 
 		if(est_tonic):
 			if(metric=='pcd'):
