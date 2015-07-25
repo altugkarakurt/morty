@@ -18,7 +18,7 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz',
 			  'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 
 			  'Segah', 'Sultaniyegah', 'Suzinak', 'Ussak']
 
-x = int(sys.argv[1])
+x = int(sys.argv[1])-1
 
 #data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
 #data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
@@ -50,7 +50,7 @@ experiment_info = {'cent_ss': cent_ss, 'smooth_factor':smooth_factor,
 # folder structure
 experiment_dir = './Experiments' # assumes it is already created
 
-training_dir_idx = x%total_num_train if (x%total_num_train != 0) else str(250) 
+training_dir_idx = (x+1)%total_num_train if ((x+1)%total_num_train != 0) else str(250) 
 training_dir = os.path.join(experiment_dir, 'Training' + str(training_dir_idx))
 if not os.path.exists(training_dir):
 	os.makedirs(training_dir)
