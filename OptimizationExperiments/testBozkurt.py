@@ -10,7 +10,7 @@ import BozkurtEstimation as be
 ###Experiment Parameters-------------------------------------------------------------------------
 rank = 10
 fold_list = np.arange(1,11)
-distance_list = ['manhattan', 'euclidan', 'l3', 'bhat', 'intersection', 'corr']
+distance_list = ['manhattan', 'euclidean', 'l3', 'bhat', 'intersection', 'corr']
 
 makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 
 			  'Hicazkar', 'Huseyni', 'Huzzam', 'Karcigar', 'Kurdilihicazkar', 
@@ -19,8 +19,8 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz',
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
-#data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' sertan desktop local
-#data_folder = os.path.join('..', '..', '..', experiments, 'turkish_makam_recognition_dataset', 'data') # hpc cluster
+#data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
+data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
 
 # folder structure
 experiment_dir = './Experiments' # assumes it is already created
@@ -52,17 +52,18 @@ for distance in distance_list:
 	output = dict()
 	for fold in fold_list:
 		output['Fold' + str(fold)] = []
-		fold_dir = os.path.join(experiment_dir, 'Fold' + str(fold))
+		fold_dir = os.path.join(training_dir, 'Fold' + str(fold))
 		
 		# load the current fold to get the test recordings
 		with open((os.path.join('./Folds', 'fold_' + str(fold) + '.json')), 'r') as f:
 			cur_fold = json.load(f)['test']
 			f.close()
+
 		# retrieve annotations of the training recordings
 		for makam_name in makam_list:
 
 			# just for checking the uniqueness of test recordings
-			with open(mode_dir + makam_name + '.json') as f:
+			with open(fold_dir + makam_name + '.json') as f:
 				makam_recordings = json.load(f)['source']
 				f.close()
 
@@ -70,30 +71,33 @@ for distance in distance_list:
 			makam_annot = [k for k in cur_fold if k['makam']==makam_name]
 			pitch_track_dir = os.path.join(data_folder, makam_name)
 
+			# load the annotations for testing data; it will be only used for 
+			# makam recognition (with annotated tonic)
 			for i in makam_annot:
 				for j in annot:
 					# append the tonic of the recordıng from the relevant annotation
 					if(i['mbid'] == j['mbid']):
-						i['tonic'] = j['tonic'] 
+					   i['tonic'] = j['tonic'] 
 						break
 
 			#actual estimation
 			for recording in makam_annot:
 
 				#check if test recording was use in training
-				if (recording['mbid'] + '.pitch' in makam_recordings:
+				if (recording['mbid'] + '.pitch' in makam_recordings):
 					raise ValueError(('Unique-check Failure. ' + recording['mbid']))
 
 				pitch_track = mf.load_track(txt_name=(recording['mbid'] + '.pitch'), 
-					                        txt_dir=pitch_track_dir)[:,1]
+					                        txt_dir=pitch_track_dir)
 				#estimate makam
-				cur_out = estimator.estimate(pitch_track, mode_names=makam_list, 
-					         est_tonic=False, est_mode=True, rank=rank, 
-					         distance_method=distance, metric=distribution_type, 
-					         ref_freq = recording["tonic"], mode_dir=training_dir)
+				cur_out = estimator.estimate(pitch_track[:,1], pitch_track[:,0], 
+							mode_names=makam_list, est_tonic=True, est_mode=True, 
+							rank=rank, distance_method=distance, 
+							metric=distribution_type, mode_dir=fold_dir)
 				output[('Fold' + fold)].append({recording['mbid']:cur_out})
+
 	with open(os.path.join(training_dir, distance), 'w') as f:
 		json.dump(output, f, indent=2)
 		f.close()
-	print '   Finished! ' + 'training: ' + training_idx
 
+	print '   Finished! ' + 'training: ' + training_idx
