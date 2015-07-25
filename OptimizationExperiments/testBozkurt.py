@@ -6,6 +6,7 @@ import os
 from os import path
 sys.path.insert(0, './../')
 import BozkurtEstimation as be
+import ModeFunctions as mf
 
 ###Experiment Parameters-------------------------------------------------------------------------
 rank = 10
@@ -19,8 +20,8 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz',
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
-#data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
-data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
+data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
+#data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
 
 # folder structure
 experiment_dir = './Experiments' # assumes it is already created
@@ -38,7 +39,7 @@ for distance in distance_list:
 	cent_ss = cur_params['cent_ss']
 	smooth_factor = cur_params['smooth_factor']
 	distribution_type = cur_params['distribution_type']
-	chunk_size = chunk_size_list['chunk_size']
+	chunk_size = cur_params['chunk_size']
 
 	# instantiate makam estimator for training
 	estimator = be.BozkurtEstimation(cent_ss=cent_ss, smooth_factor=smooth_factor, 
@@ -63,8 +64,8 @@ for distance in distance_list:
 		for makam_name in makam_list:
 
 			# just for checking the uniqueness of test recordings
-			with open(fold_dir + makam_name + '.json') as f:
-				makam_recordings = json.load(f)['source']
+			with open(os.path.join(fold_dir, makam_name + '.json')) as f:
+				makam_recordings = json.load(f)[0]['source']
 				f.close()
 
 			# divide the training data into makams
@@ -77,7 +78,7 @@ for distance in distance_list:
 				for j in annot:
 					# append the tonic of the recordıng from the relevant annotation
 					if(i['mbid'] == j['mbid']):
-					   i['tonic'] = j['tonic'] 
+						i['tonic'] = j['tonic'] 
 						break
 
 			#actual estimation
