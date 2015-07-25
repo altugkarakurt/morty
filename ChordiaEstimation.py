@@ -84,7 +84,7 @@ class ChordiaEstimation:
 				for m in range(len(mode_dists)):
 					dist_mat[:,m] = mf.tonic_estimate(dist, shift_idxs, mode_dists[m], distance_method=distance_method, metric=metric, cent_ss=self.cent_ss)
 
-			for r in range(rank):
+			for r in range(min(rank, len(peak_idxs))):
 				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
 				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]	
 				if(metric=='pcd'):
