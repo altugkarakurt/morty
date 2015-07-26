@@ -56,6 +56,7 @@ def generate_pcd(pd):
 	###Octave wrapping
 	for k in range(len(pd.bins)):
 		idx = int((pd.bins[k] % 1200) / pd.step_size)
+		idx = idx if idx != 160 else 0
 		pcd_vals[idx] = pcd_vals[idx] + pd.vals[k]
 
 	return p_d.PitchDistribution(pcd_bins, pcd_vals, kernel_width=pd.kernel_width, source=pd.source,
