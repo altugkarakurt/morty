@@ -30,6 +30,11 @@ def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, sourc
 		# generate the pitch distribution bins; make sure it crosses 0
 		pd_bins = np.concatenate([np.arange(0, min_bin, -cent_ss)[::-1], np.arange(cent_ss, max_bin, cent_ss)])
 
+		# a rare case is when min_bin and max_bin are both greater than 0 in this case the first array will be empty
+		# resulting in pd_bins in the range of cent_ss to max_bin. If it occurs we should put a 0 to the start of the
+		# array
+		pd_bins = pd_bins if 0 in pd_bins else np.insert(pd_bins, 0, 0)
+
 		# generate the kernel density estimate and evaluate at the given bins
 		kde = stats.gaussian_kde(pitch_track, bw_method=smoothening)
 		pd_vals = kde.evaluate(pd_bins)
