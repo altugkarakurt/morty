@@ -44,7 +44,7 @@ def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, sourc
 		                       bins=np.arange((min(pitch_track) - (cent_ss / 2)), (max(pitch_track) + (cent_ss / 2)),
 		                                      cent_ss), density=True)[0]
 		pd_vals[0] = 0  # filter out the pitch extraction errors
-	return p_d.PitchDistribution(pd_bins[1:], pd_vals, kernel_width=smooth_factor, source=source, ref_freq=ref_freq,
+	return p_d.PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, source=source, ref_freq=ref_freq,
 	                             segment=segment, overlap=overlap)
 
 
@@ -128,25 +128,28 @@ def distance(piece, trained, method='euclidean'):
 
 def pd_zero_pad(pd, mode_pd, cent_ss=7.5):
 	"""---------------------------------------------------------------------------------------
-    This function is only used while detecting tonic and working with pd as metric. It pads
-    zeros from both sides of the values array to avoid losing non-zero values when comparing
-    and to make sure the two PDs are of the same length
-    ---------------------------------------------------------------------------------------"""
-	### Alignment of the left end-points
-	if ((min(pd.bins) - min(mode_pd.bins)) > 0):
-		temp_left_shift = (min(pd.bins) - min(mode_pd.bins)) / cent_ss
-		pd.vals = np.concatenate((np.zeros(temp_left_shift), pd.vals))
-	elif ((min(pd.bins) - min(mode_pd.bins)) < 0):
-		mode_left_shift = (min(mode_pd.bins) - min(pd.bins)) / cent_ss
-		mode_pd.vals = np.concatenate((np.zeros(mode_left_shift), mode_pd.vals))
+	This function is only used while detecting tonic and working with pd as metric. It pads
+	zeros from both sides of the values array to avoid losing non-zero values when comparing
+	and to make sure the two PDs are of the same length
+	---------------------------------------------------------------------------------------"""
+	### In the following procedure, the padding process requires the two bin lists to have
+	### an intersection. This is ensured by the generate_pd function.
 
-	### Alignment of the right end-points
-	if ((max(pd.bins) - max(mode_pd.bins)) > 0):
-		mode_right_shift = (max(pd.bins) - max(mode_pd.bins)) / cent_ss
-		mode_pd.vals = np.concatenate((mode_pd.vals, np.zeros(mode_right_shift)))
-	elif ((max(mode_pd.bins) - max(pd.bins)) > 0):
-		temp_right_shift = (max(mode_pd.bins) - max(pd.bins)) / cent_ss
-		pd.vals = np.concatenate((pd.vals, (np.zeros(temp_right_shift))))
+	#find the number of missing bins in the left and right sides of pd 
+	diff_bins = set(mode_pd.bins) - set(pd.bins)
+	num_left_missing = len([x for x in diff_bins if x < min(pd.bins)]) 
+	num_right_missing = len([x for x in diff_bins if x > max(pd.bins)])
+	pd.vals = np.concatenate((np.zeros(num_left_missing), pd.vals, np.zeros(num_right_missing)))
+
+	#find the number of missing bins in the left and right sides of mode_pd 
+	#this code is identical to the previous block. TODO: make them modular later
+	diff_bins = set(pd.bins) - set(mode_pd.bins)
+	num_left_missing = len([x for x in diff_bins if x < min(mode_pd.bins)]) 
+	num_right_missing = len([x for x in diff_bins if x > max(mode_pd.bins)])
+	mode_pd.vals = np.concatenate((np.zeros(num_left_missing), mode_pd.vals, np.zeros(num_right_missing)))
+
+	print len(pd.vals)
+	print len(mode_pd.vals)
 
 	return pd, mode_pd
 

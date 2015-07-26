@@ -51,7 +51,7 @@ class BozkurtEstimation:
 		dist = mf.generate_pd(cent_track, ref_freq=ref_freq, smooth_factor=self.smooth_factor, cent_ss=self.cent_ss)
 		dist = mf.generate_pcd(dist) if (metric=='pcd') else dist
 		mode_dists = [(p_d.load((m + '.json'), mode_dir)) for m in mode_names]
-		mode_dist = p_d.load((mode_name + '_' + metric + '.json'), mode_dir) if (mode_name!='') else None
+		mode_dist = p_d.load((mode_name + '.json'), mode_dir) if (mode_name!='') else None
 		tonic_list = np.zeros(rank)
 		mode_list = ['' for x in range(rank)]
 
