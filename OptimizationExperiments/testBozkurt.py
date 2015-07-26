@@ -3,6 +3,7 @@ import numpy as np
 import sys
 import json
 import os
+import pdb
 from os import path
 sys.path.insert(0, './../')
 import BozkurtEstimation as be
@@ -10,6 +11,7 @@ import ModeFunctions as mf
 
 ###Experiment Parameters-------------------------------------------------------------------------
 rank = 10
+cnt = 0
 fold_list = np.arange(1,11)
 distance_list = ['manhattan', 'euclidean', 'l3', 'bhat', 'intersection', 'corr']
 
@@ -19,9 +21,10 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz',
 			  'Segah', 'Sultaniyegah', 'Suzinak', 'Ussak']
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
-data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
+data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
+#data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
 #data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
+
 
 # folder structure
 experiment_dir = './Experiments' # assumes it is already created
@@ -40,6 +43,8 @@ for distance in distance_list:
 	smooth_factor = cur_params['smooth_factor']
 	distribution_type = cur_params['distribution_type']
 	chunk_size = cur_params['chunk_size']
+	if distribution_type == 'pd':
+		sys.exit()
 
 	# instantiate makam estimator for training
 	estimator = be.BozkurtEstimation(cent_ss=cent_ss, smooth_factor=smooth_factor, 
@@ -91,11 +96,15 @@ for distance in distance_list:
 				pitch_track = mf.load_track(txt_name=(recording['mbid'] + '.pitch'), 
 					                        txt_dir=pitch_track_dir)
 				#estimate makam
+				#if cnt == 352:
+				#	pdb.set_trace()
 				cur_out = estimator.estimate(pitch_track[:,1], pitch_track[:,0], 
 							mode_names=makam_list, est_tonic=True, est_mode=True, 
-							rank=rank, distance_method=distance, 
+							rank=1, distance_method=distance, 
 							metric=distribution_type, mode_dir=fold_dir)
-				output[('Fold' + fold)].append({recording['mbid']:cur_out})
+				cnt += 1
+				print cnt
+				output[('Fold' + str(fold))].append({recording['mbid']:cur_out})
 
 	with open(os.path.join(training_dir, distance), 'w') as f:
 		json.dump(output, f, indent=2)

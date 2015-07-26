@@ -2,6 +2,7 @@
 import scipy as sp
 import numpy as np
 import math
+import pdb
 import os
 from scipy import stats
 from scipy.spatial import distance
@@ -58,6 +59,11 @@ def generate_pcd(pd):
 		idx = int((pd.bins[k] % 1200) / pd.step_size)
 		idx = idx if idx != 160 else 0
 		pcd_vals[idx] = pcd_vals[idx] + pd.vals[k]
+	
+	#Due to the floating point issues in Python, the step_size of Pitch Distributions might
+	#not be exactly equal to 7.5, but 7.4999... etc. In these cases 1200 cents is also
+	#generated. Since we are working in a single octave, these are folded into 0 cents.
+
 
 	return p_d.PitchDistribution(pcd_bins, pcd_vals, kernel_width=pd.kernel_width, source=pd.source,
 	                             ref_freq=pd.ref_freq, segment=pd.segmentation, overlap=pd.overlap)
@@ -148,9 +154,6 @@ def pd_zero_pad(pd, mode_pd, cent_ss=7.5):
 	num_left_missing = len([x for x in diff_bins if x < min(mode_pd.bins)]) 
 	num_right_missing = len([x for x in diff_bins if x > max(mode_pd.bins)])
 	mode_pd.vals = np.concatenate((np.zeros(num_left_missing), mode_pd.vals, np.zeros(num_right_missing)))
-
-	print len(pd.vals)
-	print len(mode_pd.vals)
 
 	return pd, mode_pd
 
