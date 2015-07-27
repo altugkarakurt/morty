@@ -86,7 +86,7 @@ class BozkurtEstimation:
 					tonic_list[r] = mf.cent_to_hz([shift_idxs[min_row] * self.cent_ss], ref_freq)[0]
 				mode_list[r] = mode_names[min_col]
 				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
-			return mode_list, tonic_list
+			return mode_list, tonic_list.tolist()
 
 		elif(est_tonic):
 			peak_idxs = shift_idxs if (metric=='pd') else peak_idxs
@@ -100,7 +100,7 @@ class BozkurtEstimation:
 				elif(metric=='pd'):
 					tonic_list[r] = mf.cent_to_hz([shift_idxs[idx] * self.cent_ss], ref_freq)[0]
 				distance_vector[idx] = (np.amax(distance_vector) + 1)
-			return tonic_list
+			return tonic_list.tolist()
 
 		elif(est_mode):
 			distance_vector = mf.mode_estimate(dist, mode_dists, distance_method=distance_method, metric=metric, cent_ss=self.cent_ss)

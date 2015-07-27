@@ -3,7 +3,7 @@ import numpy as np
 import sys
 import json
 import os
-import pdb
+from datetime import datetime
 from os import path
 sys.path.insert(0, './../')
 import BozkurtEstimation as be
@@ -11,9 +11,8 @@ import ModeFunctions as mf
 
 ###Experiment Parameters-------------------------------------------------------------------------
 rank = 10
-cnt = 0
 fold_list = np.arange(1,11)
-distance_list = ['manhattan', 'euclidean', 'l3', 'bhat', 'intersection', 'corr']
+distance_list = ['intersection', 'corr', 'manhattan', 'euclidean', 'l3', 'bhat']
 
 makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 
 			  'Hicazkar', 'Huseyni', 'Huzzam', 'Karcigar', 'Kurdilihicazkar', 
@@ -39,6 +38,7 @@ with open(os.path.join(training_dir, 'parameters.json'), 'r') as f:
 	f.close()
 
 for distance in distance_list:
+	print distance + ' started at ' + str(datetime.now())
 	cent_ss = cur_params['cent_ss']
 	smooth_factor = cur_params['smooth_factor']
 	distribution_type = cur_params['distribution_type']
@@ -95,19 +95,20 @@ for distance in distance_list:
 
 				pitch_track = mf.load_track(txt_name=(recording['mbid'] + '.pitch'), 
 					                        txt_dir=pitch_track_dir)
-				#estimate makam
-				#if cnt == 352:
-				#	pdb.set_trace()
-				cur_out = estimator.estimate(pitch_track[:,1], pitch_track[:,0], 
+				tmp_out = estimator.estimate(pitch_track[:,1], pitch_track[:,0], 
 							mode_names=makam_list, est_tonic=True, est_mode=True, 
-							rank=1, distance_method=distance, 
+							rank=rank, distance_method=distance, 
 							metric=distribution_type, mode_dir=fold_dir)
-				cnt += 1
-				print cnt
-				output[('Fold' + str(fold))].append({recording['mbid']:cur_out})
+				cur_out = []
+				for i in range(len(tmp_out[0])):
+					cur_out.append((tmp_out[0][i], tmp_out[1][i]))
+
+				output[('Fold' + str(fold))].append({'mbid':recording['mbid'], 'estimation':cur_out})
 
 	with open(os.path.join(training_dir, distance), 'w') as f:
 		json.dump(output, f, indent=2)
 		f.close()
 
-	print '   Finished! ' + 'training: ' + training_idx
+	print distance + ' finished at ' + str(datetime.now())
+
+print '   Finished! ' + 'testing: ' + str(training_idx)
