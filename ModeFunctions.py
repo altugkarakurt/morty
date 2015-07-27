@@ -60,6 +60,7 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source
 		# resulting in pd_bins in the range of cent_ss to max_bin. If it occurs we should put a -cent_ss/2 to the start of the
 		# array
 		pd_edges = pd_edges if -cent_ss/2 in pd_edges else np.insert(pd_edges, 0, (-cent_ss/2))
+		pd_edges = pd_edges if cent_ss/2 in pd_edges else np.append(pd_edges, (cent_ss/2))
 
 		pd_vals, pd_edges = np.histogram(cent_track, bins=pd_edges, density=True)
 		pd_bins = np.convolve(pd_edges, [0.5,0.5])[1:-1]
