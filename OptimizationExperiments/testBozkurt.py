@@ -3,7 +3,7 @@ import numpy as np
 import sys
 import json
 import os
-from datetime import datetime
+
 from os import path
 sys.path.insert(0, './../')
 import BozkurtEstimation as be
@@ -13,7 +13,6 @@ import ModeFunctions as mf
 rank = 10
 fold_list = np.arange(1,11)
 distance_list = ['intersection', 'corr', 'manhattan', 'euclidean', 'l3', 'bhat']
-
 makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 
 			  'Hicazkar', 'Huseyni', 'Huzzam', 'Karcigar', 'Kurdilihicazkar', 
 			  'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 
@@ -38,13 +37,10 @@ with open(os.path.join(training_dir, 'parameters.json'), 'r') as f:
 	f.close()
 
 for distance in distance_list:
-	print distance + ' started at ' + str(datetime.now())
 	cent_ss = cur_params['cent_ss']
 	smooth_factor = cur_params['smooth_factor']
 	distribution_type = cur_params['distribution_type']
 	chunk_size = cur_params['chunk_size']
-	if distribution_type == 'pd':
-		sys.exit()
 
 	# instantiate makam estimator for training
 	estimator = be.BozkurtEstimation(cent_ss=cent_ss, smooth_factor=smooth_factor, 
@@ -88,7 +84,7 @@ for distance in distance_list:
 
 			#actual estimation
 			for recording in makam_annot:
-
+				
 				#check if test recording was use in training
 				if (recording['mbid'] + '.pitch' in makam_recordings):
 					raise ValueError(('Unique-check Failure. ' + recording['mbid']))
@@ -103,12 +99,7 @@ for distance in distance_list:
 				for i in range(len(tmp_out[0])):
 					cur_out.append((tmp_out[0][i], tmp_out[1][i]))
 
-				output[('Fold' + str(fold))].append({'mbid':recording['mbid'], 'estimation':cur_out})
-
+				output[('Fold' + str(fold))].append({'mbid':recording['mbid'], 'joint_estimation':cur_out})
 	with open(os.path.join(training_dir, distance), 'w') as f:
 		json.dump(output, f, indent=2)
 		f.close()
-
-	print distance + ' finished at ' + str(datetime.now())
-
-print '   Finished! ' + 'testing: ' + str(training_idx)
