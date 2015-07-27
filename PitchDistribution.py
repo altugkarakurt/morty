@@ -17,7 +17,8 @@ class PitchDistribution:
 		self.vals = pd_vals
 		self.ref_freq = ref_freq
 		self.kernel_width = kernel_width
-		self.step_size = self.bins[1] - self.bins[0]
+		temp_ss = self.bins[1] - self.bins[0]
+		self.step_size = temp_ss if (temp_ss == (round(temp_ss * 10) / 10)) else (round(temp_ss * 10) / 10)
 		self.segmentation = segment
 		self.source = source
 		self.overlap = overlap

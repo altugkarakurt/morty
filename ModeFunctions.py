@@ -2,7 +2,7 @@
 import scipy as sp
 import numpy as np
 import math
-import pdb
+
 import os
 from scipy import stats
 from scipy.spatial import distance
@@ -54,9 +54,15 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source
 		max_edge = max(cent_track) + (cent_ss / 2)
 
 		# generate the pitch distribution bins; make 0 is the center of a bin
-		pd_bins = np.concatenate([np.arange(-cent_ss/2, min_edge, -cent_ss)[::-1], np.arange(cent_ss/2, max_edge, cent_ss)])
+		pd_edges = np.concatenate([np.arange(-cent_ss/2, min_edge, -cent_ss)[::-1], np.arange(cent_ss/2, max_edge, cent_ss)])
 
-		pd_vals = np.histogram(cent_track, bins=pd_bins, density=True)[0]
+		# a rare case is when min_bin and max_bin are both greater than 0 in this case the first array will be empty
+		# resulting in pd_bins in the range of cent_ss to max_bin. If it occurs we should put a -cent_ss/2 to the start of the
+		# array
+		pd_edges = pd_edges if -cent_ss/2 in pd_edges else np.insert(pd_edges, 0, (-cent_ss/2))
+
+		pd_vals, pd_edges = np.histogram(cent_track, bins=pd_edges, density=True)
+		pd_bins = np.convolve(pd_edges, [0.5,0.5])[1:-1]
 
 	return p_d.PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, source=source, ref_freq=ref_freq,
 	                             segment=segment, overlap=overlap)
