@@ -18,15 +18,23 @@ def load_track(txt_name, txt_dir):
 	return np.loadtxt(os.path.join(txt_dir, txt_name))
 
 
-def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source='', segment='all', overlap='-'):
+def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source='', segment='all', overlap='-'):
 	### Some extra interval is added to the beginning and end since the
 	### superposed Gaussian for smoothing would vanish after 3 sigmas.
 	### The limits are also quantized to be a multiple of chosen step-size
 	### smooth_factor = standard deviation fo the gaussian kernel
-	if (smooth_factor > 0):
-		smoothening = (smooth_factor * np.sqrt(1 / np.cov(pitch_track)))
-		min_bin = (min(pitch_track) - (min(pitch_track) % smooth_factor)) - (5 * smooth_factor)
-		max_bin = (max(pitch_track) + (smooth_factor - (max(pitch_track) % smooth_factor))) + (5 * smooth_factor)
+
+	# filter out the Nan, -infinity and +infinity from the pitch track, if exists
+	# TODO
+
+	# get the pitch values
+	if (smooth_factor > 0): # KDE
+		# convert the standard deviation of the Gaussian kernel to the bandwidth of the smoothening constant
+		smoothening = (smooth_factor * np.sqrt(1 / np.cov(cent_track)))
+
+		# take the min/max longer such that the pitch values in the boundaries can decay
+		min_bin = (min(cent_track) - (min(cent_track) % smooth_factor)) - (5 * smooth_factor)
+		max_bin = (max(cent_track) + (smooth_factor - (max(cent_track) % smooth_factor))) + (5 * smooth_factor)
 
 		# generate the pitch distribution bins; make sure it crosses 0
 		pd_bins = np.concatenate([np.arange(0, min_bin, -cent_ss)[::-1], np.arange(cent_ss, max_bin, cent_ss)])
@@ -37,17 +45,21 @@ def generate_pd(pitch_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, sourc
 		pd_bins = pd_bins if 0 in pd_bins else np.insert(pd_bins, 0, 0)
 
 		# generate the kernel density estimate and evaluate at the given bins
-		kde = stats.gaussian_kde(pitch_track, bw_method=smoothening)
+		kde = stats.gaussian_kde(cent_track, bw_method=smoothening)
 		pd_vals = kde.evaluate(pd_bins)
-	else:
-		pd_bins = np.arange((min(pitch_track)), max(pitch_track), cent_ss)
-		pd_vals = np.histogram(pitch_track,
-		                       bins=np.arange((min(pitch_track) - (cent_ss / 2)), (max(pitch_track) + (cent_ss / 2)),
-		                                      cent_ss), density=True)[0]
-		pd_vals[0] = 0  # filter out the pitch extraction errors
+
+	else: #histogram
+		# get the min and max possible values of the histogram edges; the actual values will be dependent on "cent_ss"
+		min_edge = min(cent_track) - (cent_ss / 2)
+		max_edge = max(cent_track) + (cent_ss / 2)
+
+		# generate the pitch distribution bins; make 0 is the center of a bin
+		pd_bins = np.concatenate([np.arange(-cent_ss/2, min_edge, -cent_ss)[::-1], np.arange(cent_ss/2, max_edge, cent_ss)])
+
+		pd_vals = np.histogram(cent_track, bins=pd_bins, density=True)[0]
+
 	return p_d.PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, source=source, ref_freq=ref_freq,
 	                             segment=segment, overlap=overlap)
-
 
 def generate_pcd(pd):
 	### Initializations
