@@ -21,8 +21,8 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz',
 x = int(sys.argv[1])-1
 
 #data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
-data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
-#data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
+#data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
+data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
 
 # get the training experient/fold parameters 
 idx = np.unravel_index(int(x), (len(fold_list), len(cent_ss_list), 
