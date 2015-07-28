@@ -3,6 +3,7 @@ import numpy as np
 import sys
 import json
 import os
+from datetime import datetime
 from os import path
 sys.path.insert(0, './../')
 import ChordiaEstimation as che
@@ -80,7 +81,7 @@ with open((os.path.join('./Folds', 'fold_' + str(fold) + '.json')), 'r') as f:
 	cur_fold = json.load(f)['train'] # careful not to change to test!!
 	f.close()
 
-print 'Starting training ' + str(training_dir_idx) + ' fold ' + str(fold)
+print 'Starting training ' + str(training_dir_idx) + ' fold ' + str(fold) + ' ' + str(datetime.now())
 
 # retrieve annotations of the training recordings
 for makam_name in makam_list:
@@ -103,7 +104,7 @@ for makam_name in makam_list:
 		metric=distribution_type, pt_dir=pitch_track_dir, save_dir=fold_dir)
 
 
-print '   Finished training ' + str(training_dir_idx) + ' fold ' + str(fold)
+print '   Finished training ' + str(training_dir_idx) + ' fold ' + str(fold) + ' ' + str(datetime.now())
 
 # save the experiment info
 with open(os.path.join(training_dir, 'parameters.json'), 'w') as f:
