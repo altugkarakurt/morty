@@ -19,9 +19,9 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz',
 			  'Segah', 'Sultaniyegah', 'Suzinak', 'Ussak']
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
+#data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
 #data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
-#data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
+data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
 
 
 # folder structure
@@ -30,7 +30,7 @@ experiment_dir = './Experiments' # assumes it is already created
 #chooses which training to use 
 training_idx = int(sys.argv[1])
 training_dir = os.path.join(experiment_dir, 'Training' + str(training_idx))
-modePath = os.path.join(training_dir, 'Tonic')
+tonicPath = os.path.join(training_dir, 'Tonic')
 if not os.path.exists(tonicPath):
 	os.makedirs(tonicPath)
 
