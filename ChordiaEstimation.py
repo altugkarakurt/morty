@@ -3,6 +3,7 @@ import numpy as np
 import ModeFunctions as mf
 import PitchDistribution as p_d
 import json
+import pdb
 import os
 
 class ChordiaEstimation:
@@ -91,7 +92,7 @@ class ChordiaEstimation:
 					tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_row]]], anti_freq)[0]
 				elif(metric=='pd'):
 					tonic_list[r] = mf.cent_to_hz([shift_idxs[min_row] * self.cent_ss], ref_freq)[0]
-				mode_list[r] = mode_names[min(np.where((cum_lens > min_col))[0])]
+				mode_list[r] = (mode_names[min(np.where((cum_lens > min_col))[0])], mode_dists[min_col].source)
 				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
 			return [mode_list, tonic_list]
 
@@ -109,10 +110,9 @@ class ChordiaEstimation:
 
 		elif(est_mode):
 			distance_vector = mf.mode_estimate(dist, mode_dists, distance_method=distance_method, metric=metric, cent_ss=self.cent_ss)
-			distance_vector = distance_vector[0] if metric=='pcd' else distance_vector
 			for r in range(rank):
 				idx = np.argmin(distance_vector)
-				mode_list[r] = mode_names[min(np.where((cum_lens > idx))[0])]
+				mode_list[r] = (mode_names[min(np.where((cum_lens > idx))[0])], mode_dists[idx].source)
 				distance_vector[idx] = (np.amax(distance_vector) + 1) 
 			return mode_list
 
@@ -133,7 +133,7 @@ class ChordiaEstimation:
 	def load_collection(self, mode_name, metric, dist_dir='./'):
 		obj_list = []
 		fname = mode_name + '.json'
-		with open((dist_dir + fname)) as f:
+		with open(os.path.join(dist_dir, fname)) as f:
 			dist_list = json.load(f)[mode_name]
 		for d in dist_list:
 			obj_list.append(p_d.PitchDistribution(np.array(d['bins']), np.array(d['vals']), kernel_width=d['kernel_width'], source=d['source'], ref_freq=d['ref_freq'], segment=d['segmentation'], overlap=d['overlap']))
