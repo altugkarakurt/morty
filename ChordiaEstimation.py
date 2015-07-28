@@ -13,8 +13,8 @@ class ChordiaEstimation:
 		self.chunk_size = chunk_size
 		self.threshold = threshold
 
-	def train(self, mode_name, pt_list, ref_freq_list, metric='pcd', save_dir='./', pt_dir='./', ):
-		save_name = mode_name + '_' + metric + '.json'
+	def train(self, mode_name, pt_list, ref_freq_list, metric='pcd', save_dir='./', pt_dir='./'):
+		save_name = mode_name + '.json'
 		dist_list = []
 		for pt in range(len(pt_list)):
 			cur = mf.load_track(pt_list[pt], pt_dir)
