@@ -3,6 +3,7 @@ import numpy as np
 import ModeFunctions as mf
 import PitchDistribution as p_d
 import json
+import os
 
 class ChordiaEstimation:
 
@@ -29,8 +30,7 @@ class ChordiaEstimation:
 		dist_json = [{'bins':d.bins.tolist(), 'vals':d.vals.tolist(), 'kernel_width':d.kernel_width, 'source':d.source, 'ref_freq':d.ref_freq, 'segmentation':d.segmentation} for d in dist_list]
 
 
-		with open((save_dir + save_name), 'w') as f:
-			dist_json = {mode_name:dist_json}
+		with open(os.path.join(save_dir, save_name), 'w') as f:
 			json.dump(dist_json, f, indent=2)
 			f.close()
 
