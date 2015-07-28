@@ -30,7 +30,9 @@ experiment_dir = './Experiments' # assumes it is already created
 #chooses which training to use 
 training_idx = int(sys.argv[1])
 training_dir = os.path.join(experiment_dir, 'Training' + str(training_idx))
-os.makedirs(os.path.join(training_dir, 'Joint'))
+modePath = os.path.join(training_dir, 'Mode')
+if not os.path.exists(modePath):
+	os.makedirs(modePath)
 
 # get the training experient/fold parameters 
 with open(os.path.join(training_dir, 'parameters.json'), 'r') as f:
@@ -97,6 +99,6 @@ for distance in distance_list:
 							rank=rank, distance_method=distance, ref_freq=recording['tonic'], metric=distribution_type, mode_dir=fold_dir)
 
 				output[('Fold' + str(fold))].append({'mbid':recording['mbid'], 'tonic_estimation':cur_out})
-	with open(os.path.join(training_dir, 'Joint', (distance + '.json')), 'w') as f:
+	with open(os.path.join(modePath, distance + '.json'), 'w') as f:
 		json.dump(output, f, indent=2)
 		f.close()
