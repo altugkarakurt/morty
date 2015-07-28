@@ -19,9 +19,9 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz',
 			  'Segah', 'Sultaniyegah', 'Suzinak', 'Ussak']
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
+#data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
 #data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
-#data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
+data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
 
 
 # folder structure
@@ -30,7 +30,9 @@ experiment_dir = './Experiments' # assumes it is already created
 #chooses which training to use 
 training_idx = int(sys.argv[1])
 training_dir = os.path.join(experiment_dir, 'Training' + str(training_idx))
-os.makedirs(os.path.join(training_dir, 'Joint'))
+jointPath = os.path.join(training_dir, 'Joint')
+if not os.path.exists(jointPath):
+	os.makedirs(jointPath)
 
 # get the training experient/fold parameters 
 with open(os.path.join(training_dir, 'parameters.json'), 'r') as f:
@@ -101,6 +103,6 @@ for distance in distance_list:
 					cur_out.append((tmp_out[0][i], tmp_out[1][i]))
 
 				output[('Fold' + str(fold))].append({'mbid':recording['mbid'], 'joint_estimation':cur_out})
-	with open(os.path.join(training_dir, 'Joint', (distance + '.json')), 'w') as f:
+	with open(os.path.join(jointPath, distance + '.json'), 'w') as f:
 		json.dump(output, f, indent=2)
 		f.close()
