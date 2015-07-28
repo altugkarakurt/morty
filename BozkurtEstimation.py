@@ -52,8 +52,8 @@ class BozkurtEstimation:
 		dist = mf.generate_pcd(dist) if (metric=='pcd') else dist
 		mode_dists = [(p_d.load((m + '.json'), mode_dir)) for m in mode_names]
 		mode_dist = p_d.load((mode_name + '.json'), mode_dir) if (mode_name!='') else None
-		tonic_list = np.zeros(rank)
-		mode_list = ['' for x in range(rank)]
+		tonic_list = [('',0) for x in range(rank)]
+		mode_list = [('',0) for x in range(rank)]
 
 		if(est_tonic):
 			if(metric=='pcd'):
@@ -81,12 +81,12 @@ class BozkurtEstimation:
 				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
 				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
 				if(metric=='pcd'):
-					tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_row]]], anti_freq)[0]
+					tonic_list[r] = (mf.cent_to_hz([dist.bins[peak_idxs[min_row]]], anti_freq)[0], dist_mat[min_row][min_col])
 				elif(metric=='pd'):
-					tonic_list[r] = mf.cent_to_hz([shift_idxs[min_row] * self.cent_ss], ref_freq)[0]
-				mode_list[r] = mode_names[min_col]
+					tonic_list[r] = (mf.cent_to_hz([shift_idxs[min_row] * self.cent_ss], ref_freq)[0], dist_mat[min_row][min_col])
+				mode_list[r] = (mode_names[min_col], dist_mat[min_row][min_col])
 				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
-			return mode_list, tonic_list.tolist()
+			return mode_list, tonic_list
 
 		elif(est_tonic):
 			peak_idxs = shift_idxs if (metric=='pd') else peak_idxs
@@ -96,17 +96,17 @@ class BozkurtEstimation:
 			for r in range(min(rank, len(peak_idxs))):
 				idx = np.argmin(distance_vector)
 				if(metric=='pcd'):
-					tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[idx]]], anti_freq)[0]
+					tonic_list[r] = (mf.cent_to_hz([dist.bins[peak_idxs[idx]]], anti_freq)[0], distance_vector[idx])
 				elif(metric=='pd'):
-					tonic_list[r] = mf.cent_to_hz([shift_idxs[idx] * self.cent_ss], ref_freq)[0]
+					tonic_list[r] = (mf.cent_to_hz([shift_idxs[idx] * self.cent_ss], ref_freq)[0], distance_vector[idx])
 				distance_vector[idx] = (np.amax(distance_vector) + 1)
-			return tonic_list.tolist()
+			return tonic_list
 
 		elif(est_mode):
 			distance_vector = mf.mode_estimate(dist, mode_dists, distance_method=distance_method, metric=metric, cent_ss=self.cent_ss)
 			for r in range(min(rank, len(mode_names))):
 				idx = np.argmin(distance_vector)
-				mode_list[r] = mode_names[idx]
+				mode_list[r] = (mode_names[idx], distance_vector[idx])
 				distance_vector[idx] = (np.amax(distance_vector) + 1)
 			return mode_list
 	
