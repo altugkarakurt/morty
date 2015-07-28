@@ -2,7 +2,7 @@
 import scipy as sp
 import numpy as np
 import math
-import pdb
+
 import os
 from scipy import stats
 from scipy.spatial import distance
@@ -55,7 +55,7 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source
 
 		# generate the pitch distribution bins; make 0 is the center of a bin
 		pd_edges = np.concatenate([np.arange(-cent_ss/2.0, min_edge, -cent_ss)[::-1], np.arange(cent_ss/2.0, max_edge, cent_ss)])
-		pdb.set_trace()
+
 		# a rare case is when min_bin and max_bin are both greater than 0 in this case the first array will be empty
 		# resulting in pd_bins in the range of cent_ss to max_bin. If it occurs we should put a -cent_ss/2 to the start of the
 		# array
