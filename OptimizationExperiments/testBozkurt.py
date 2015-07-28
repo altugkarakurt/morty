@@ -101,5 +101,6 @@ for distance in distance_list:
 					cur_out.append((tmp_out[0][i], tmp_out[1][i]))
 
 				output[('Fold' + str(fold))].append({'mbid':recording['mbid'], 'joint_estimation':cur_out})
-	with open(os.path.join(training_dir, 'Joint', (distance + '.json')), 'w') as f:		json.dump(output, f, indent=2)
+	with open(os.path.join(training_dir, 'Joint', (distance + '.json')), 'w') as f:
+		json.dump(output, f, indent=2)
 		f.close()
