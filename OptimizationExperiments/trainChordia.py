@@ -14,7 +14,7 @@ threshold = 0.5
 cent_ss_list = [7.5, 15, 25, 50, 100]
 smooth_factor_list = [0, 2.5, 7.5, 15, 20]
 distribution_type_list = ['pcd', 'pd']
-chunk_size_list = [30, 60, 90, 120, 0]
+chunk_size_list = [30, 60, 90, 120]
 overlap_list = [0, 0.25, 0.5, 0.75]
 makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 
 			  'Hicazkar', 'Huseyni', 'Huzzam', 'Karcigar', 'Kurdilihicazkar', 
@@ -23,9 +23,9 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz',
 
 x = int(sys.argv[1])-1
 
-data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
+#data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
 #data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
-#data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
+data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
 
 # get the training experient/fold parameters 
 idx = np.unravel_index(int(x), (len(fold_list), len(cent_ss_list), 
@@ -51,7 +51,7 @@ experiment_info = {'cent_ss': cent_ss, 'smooth_factor':smooth_factor,
                    'method':'chordia', 'overlap':overlap}
 
 # folder structure
-experiment_dir = './Experiments' # assumes it is already created
+experiment_dir = './ChordiaExperiments' # assumes it is already created
 
 training_dir_idx = (x+1)%total_num_train if ((x+1)%total_num_train != 0) else str(total_num_train) 
 training_dir = os.path.join(experiment_dir, 'Training' + str(training_dir_idx))
@@ -102,7 +102,6 @@ for makam_name in makam_list:
 	# train
 	estimator.train(makam_name, pitch_track_list, tonic_list, 
 		metric=distribution_type, pt_dir=pitch_track_dir, save_dir=fold_dir)
-
 
 print '   Finished training ' + str(training_dir_idx) + ' fold ' + str(fold) + ' ' + str(datetime.now())
 
