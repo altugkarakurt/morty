@@ -48,7 +48,7 @@ experiment_info = {'cent_ss': cent_ss, 'smooth_factor':smooth_factor,
                    'method':'bozkurt'}
 
 # folder structure
-experiment_dir = './Experiments' # assumes it is already created
+experiment_dir = './BozkurtExperiments' # assumes it is already created
 
 training_dir_idx = (x+1)%total_num_train if ((x+1)%total_num_train != 0) else str(250) 
 training_dir = os.path.join(experiment_dir, 'Training' + str(training_dir_idx))

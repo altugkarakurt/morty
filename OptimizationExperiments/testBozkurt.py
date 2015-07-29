@@ -25,7 +25,7 @@ data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # h
 
 
 # folder structure
-experiment_dir = './Experiments' # assumes it is already created
+experiment_dir = './BozkurtExperiments' # assumes it is already created
 
 #chooses which training to use 
 training_idx = int(sys.argv[1])
