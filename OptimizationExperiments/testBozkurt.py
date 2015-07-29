@@ -20,9 +20,9 @@ def run(train_num):
 				  'Segah', 'Sultaniyegah', 'Suzinak', 'Ussak']
 
 	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	#data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
+	data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
 	#data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
-	data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
+	#data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
 
 
 	# folder structure
@@ -46,7 +46,7 @@ def run(train_num):
 		done_dists = [d[:-5] for d in done_dists]
 		if (distance in done_dists):
 			print 'Already done ' + distance
-			sys.exit()
+			continue
 
 		cent_ss = cur_params['cent_ss']
 		smooth_factor = cur_params['smooth_factor']
