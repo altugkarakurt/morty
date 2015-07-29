@@ -24,8 +24,8 @@
 #
 # Send me a mail when processed and when finished:
 # ------------------------------------------------
-#$ -M sertan.senturk@upf.edu
-#$ -m bea
+# -M sertan.senturk@upf.edu
+# -m bea
 #
 # Start script
 # --------------------------------
