@@ -14,7 +14,7 @@ threshold = 0.5
 cent_ss_list = [7.5, 15, 25, 50, 100]
 smooth_factor_list = [0, 2.5, 7.5, 15, 20]
 distribution_type_list = ['pcd', 'pd']
-chunk_size_list = [30, 60, 90, 120, 0]
+chunk_size_list = [30, 60, 90, 120]
 overlap_list = [0, 0.25, 0.5, 0.75]
 makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 
 			  'Hicazkar', 'Huseyni', 'Huzzam', 'Karcigar', 'Kurdilihicazkar', 
@@ -102,7 +102,6 @@ for makam_name in makam_list:
 	# train
 	estimator.train(makam_name, pitch_track_list, tonic_list, 
 		metric=distribution_type, pt_dir=pitch_track_dir, save_dir=fold_dir)
-
 
 print '   Finished training ' + str(training_dir_idx) + ' fold ' + str(fold) + ' ' + str(datetime.now())
 
