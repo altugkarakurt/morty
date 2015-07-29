@@ -141,14 +141,14 @@ def distance(piece, trained, method='euclidean'):
 			d += math.sqrt(piece.vals[i] * trained.vals[i]);
 		return (-math.log(d))
 
-	elif (method == 'intersection'):
+	elif (method == 'intersection'): #to be renamed as inverse intersection
 		d = 0
 		for j in range(len(piece.vals)):
 			d += min(piece.vals[j], trained.vals[j])
-		return d / (len(piece.vals))
+		return (len(piece.vals)) / d
 
 	elif (method == 'corr'):
-		return 1.0 / np.correlate(piece.vals, trained.vals)
+		return 1.0 - np.correlate(piece.vals, trained.vals)
 
 	else:
 		return 0
