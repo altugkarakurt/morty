@@ -40,6 +40,13 @@ with open(os.path.join(training_dir, 'parameters.json'), 'r') as f:
 	f.close()
 
 for distance in distance_list:
+
+	done_dists = next(os.walk(modePath))[2]
+	done_dists = [d[:-5] for d in done_dists]
+	if (distance in done_dists):
+		print 'Already done ' + distance
+		sys.exit()
+
 	cent_ss = cur_params['cent_ss']
 	smooth_factor = cur_params['smooth_factor']
 	distribution_type = cur_params['distribution_type']
