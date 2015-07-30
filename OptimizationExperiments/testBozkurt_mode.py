@@ -20,8 +20,8 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz',
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
-data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
-#data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
+#data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
+data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
 
 
 # folder structure
@@ -44,7 +44,7 @@ for distance in distance_list:
 	done_dists = next(os.walk(modePath))[2]
 	done_dists = [d[:-5] for d in done_dists]
 	if (distance in done_dists):
-		#print 'Already done ' + distance
+		print 'Already done ' + distance
 		continue
 
 	print 'Computing ' + distance

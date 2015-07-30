@@ -9,42 +9,42 @@ sys.path.insert(0, './../')
 import BozkurtEstimation as be
 import ModeFunctions as mf
 
-#Experiment Parameters-------------------------------------------------------------------------
-nk = 10
-ld_list = np.arange(1,11)
-stance_list = ['intersection', 'corr', 'manhattan', 'euclidean', 'l3', 'bhat']
-kam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 
+###Experiment Parameters-------------------------------------------------------------------------
+rank = 10
+fold_list = np.arange(1,11)
+distance_list = ['intersection', 'corr', 'manhattan', 'euclidean', 'l3', 'bhat']
+makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 
 			  'Hicazkar', 'Huseyni', 'Huzzam', 'Karcigar', 'Kurdilihicazkar', 
 			  'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 
 			  'Segah', 'Sultaniyegah', 'Suzinak', 'Ussak']
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-ata_folder = '../../../Makam_Dataset/Pitch_Tracks/'
-ta_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
-ata_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
+#data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
+data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
 
 
-folder structure
-periment_dir = './BozkurtExperiments' # assumes it is already created
+# folder structure
+experiment_dir = './BozkurtExperiments' # assumes it is already created
 
-hooses which training to use 
-aining_idx = int(sys.argv[1])
-aining_dir = os.path.join(experiment_dir, 'Training' + str(training_idx))
-nicPath = os.path.join(training_dir, 'Tonic')
- not os.path.exists(tonicPath):
+#chooses which training to use 
+training_idx = int(sys.argv][1])
+training_dir = os.path.join(experiment_dir, 'Training' + str(training_idx))
+tonicPath = os.path.join(training_dir, 'Tonic')
+if not os.path.exists(tonicPath):
 	os.makedirs(tonicPath)
 
-get the training experient/fold parameters 
-th open(os.path.join(training_dir, 'parameters.json'), 'r') as f:
+# get the training experient/fold parameters 
+with open(os.path.join(training_dir, 'parameters.json'), 'r') as f:
 	cur_params = json.load(f)
 	f.close()
 
-r distance in distance_list:
+for distance in distance_list:
 
 	done_dists = next(os.walk(tonicPath))[2]
 	done_dists = [d[:-5] for d in done_dists]
 	if (distance in done_dists):
-		#print 'Already done ' + distance
+		print 'Already done ' + distance
 		continue
 
 	print 'Computing ' + distance
