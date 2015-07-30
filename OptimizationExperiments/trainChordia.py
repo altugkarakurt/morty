@@ -15,7 +15,7 @@ cent_ss_list = [7.5, 15, 25, 50, 100]
 smooth_factor_list = [0, 2.5, 7.5, 15, 20]
 distribution_type_list = ['pcd', 'pd']
 chunk_size_list = [30, 60, 90, 120]
-overlap_list = [0, 0.25, 0.5, 0.75]
+overlap_list = [0, 0.5]
 makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 
 			  'Hicazkar', 'Huseyni', 'Huzzam', 'Karcigar', 'Kurdilihicazkar', 
 			  'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 
