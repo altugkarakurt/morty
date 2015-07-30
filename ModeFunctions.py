@@ -45,11 +45,8 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source
 		
 		# generate the kernel density estimate and evaluate at the given bins
 		kde = stats.gaussian_kde(cent_track, bw_method=smoothening)
-
-		print "after kde"
-
 		pd_vals = kde.evaluate(pd_bins)
-		print "after eval"
+
 	else: #histogram
 		# get the min and max possible values of the histogram edges; the actual values will be dependent on "cent_ss"
 		min_edge = min(cent_track) - (cent_ss / 2.0)
@@ -69,7 +66,7 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source
 
 	if(len(pd_bins) != len(pd_vals)):
 		raise ValueError('Lengths of bins and Vals are different')
-	print "pre return"
+
 	return p_d.PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, source=source, ref_freq=ref_freq,
 	                             segment=segment, overlap=overlap)
 
@@ -215,8 +212,6 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', c
 		distance_vector = np.array(generate_distance_matrix(dist, [0], mode_dists, method=distance_method))[0]
 
 	elif (metric == 'pd'):
-		print "pre distance"
-
 		distance_vector = np.zeros(len(mode_dists))
 		for i in range(len(mode_dists)):
 			trial = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source,
