@@ -28,7 +28,7 @@ folder structure
 periment_dir = './BozkurtExperiments' # assumes it is already created
 
 hooses which training to use 
-aining_idx = int(sys.argv][1])
+aining_idx = int(sys.argv[1])
 aining_dir = os.path.join(experiment_dir, 'Training' + str(training_idx))
 nicPath = os.path.join(training_dir, 'Tonic')
  not os.path.exists(tonicPath):
