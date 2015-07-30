@@ -9,43 +9,42 @@ sys.path.insert(0, './../')
 import BozkurtEstimation as be
 import ModeFunctions as mf
 
-###Experiment Parameters-------------------------------------------------------------------------
-rank = 10
-fold_list = np.arange(1,11)
-distance_list = ['intersection', 'corr', 'manhattan', 'bhat', 'euclidean', 'l3']
-makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 
-			  'Hicazkar', 'Huseyni', 'Huzzam', 'Karcigar', 'Kurdilihicazkar', 
-			  'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 
-			  'Segah', 'Sultaniyegah', 'Suzinak', 'Ussak']
+def run(distance_inp, training_i):
+	###Experiment Parameters-------------------------------------------------------------------------
+	rank = 10
+	fold_list = np.arange(1,11)
+	makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 
+				  'Hicazkar', 'Huseyni', 'Huzzam', 'Karcigar', 'Kurdilihicazkar', 
+				  'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 
+				  'Segah', 'Sultaniyegah', 'Suzinak', 'Ussak']
 
-#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
-#data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
-data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
+	#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
+	#data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
+	#data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
 
 
-# folder structure
-experiment_dir = './BozkurtExperiments' # assumes it is already created
+	# folder structure
+	experiment_dir = './BozkurtExperiments' # assumes it is already created
 
-#chooses which training to use 
-training_idx = int(sys.argv[1])
-training_dir = os.path.join(experiment_dir, 'Training' + str(training_idx))
-jointPath = os.path.join(training_dir, 'Joint')
-if not os.path.exists(jointPath):
-	os.makedirs(jointPath)
+	#chooses which training to use 
+	training_idx = int(training_i)
+	training_dir = os.path.join(experiment_dir, 'Training' + str(training_idx))
+	jointPath = os.path.join(training_dir, 'Joint')
+	if not os.path.exists(jointPath):
+		os.makedirs(jointPath)
 
-# get the training experient/fold parameters 
-with open(os.path.join(training_dir, 'parameters.json'), 'r') as f:
-	cur_params = json.load(f)
-	f.close()
+	# get the training experient/fold parameters 
+	with open(os.path.join(training_dir, 'parameters.json'), 'r') as f:
+		cur_params = json.load(f)
+		f.close()
 
-for distance in distance_list:
-
+	distance = distance_inp
 	done_dists = next(os.walk(jointPath))[2]
 	done_dists = [d[:-5] for d in done_dists]
-	if (distance in done_dists):
+	if (distance[:] in done_dists):
 		print 'Already done ' + distance
-		continue
+		return
 
 	print 'Computing ' + distance
 	cent_ss = cur_params['cent_ss']

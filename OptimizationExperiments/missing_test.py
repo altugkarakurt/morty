@@ -11,19 +11,25 @@ import FileOperations as fo
 
 experiment_dir = 'BozkurtExperiments'
 
-i = int(sys.argv[1])
+i = int(sys.argv[1]) - 1
 
-training_dir = os.path.join(experiment_dir, ('Training' + str(i)))
-for test_type in ['Joint', 'Mode', 'Tonic']:
-	print "> Training " + str(i)
-	dist_dir = os.path.join(training_dir, test_type)
+folder_list = ['Joint', 'Mode', 'Tonic']
+file_list = ['bhat', 'intersection', 'euclidean', 'manhattan', 'l3', 'corr']
 
-	if test_type == 'Mode':
-		print ">> Mode"
-		mode.run(i)
-	elif test_type == 'Tonic':
-		print ">> Tonic"
-		tonic.run(i)
-	elif test_type == 'Joint':
-		print ">> Joint"
-		joint.run(i) 
+idx = np.unravel_index(i, (len(folder_list), len(file_list), len(range(1,251))))
+
+folder = folder_list[idx[0]]
+distance = file_list[idx[1]]
+training_idx = range(1,251)[idx[2]]
+print folder
+print distance
+print training_idx
+training_dir = os.path.join(experiment_dir, ('Training' + str(training_idx)))
+dist_dir = os.path.join(training_dir, folder)
+
+if folder == 'Mode':
+	mode.run(distance, training_idx)
+elif folder == 'Tonic':
+	tonic.run(distance, training_idx)
+elif folder == 'Joint':
+	joint.run(distance, training_idx) 
