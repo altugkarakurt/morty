@@ -15,8 +15,8 @@
 #
 # Output/Error Text
 # ----------------
-#$ -o ./logs/makamRecog_$JOB_ID.out
-#$ -e ./logs/makamRecog_$JOB_ID.err
+#$ -o ./logs/makamRecogChordia_$JOB_ID.out
+#$ -e ./logs/makamRecogChordia_$JOB_ID.err
 #
 # Create an array job = !!!!!!number of audio in the target folder!!!!!!
 # ----------------
@@ -38,7 +38,7 @@ export LANG="en_US.utf8"
 module load python/2.7.5
 module load essentia/2.0.1
 
-python trainBozkurt.py ${SGE_TASK_ID}
+python trainChordia.py ${SGE_TASK_ID}
 
 # Print job Done
 printf "Job $JOB_ID done at `date`\n"
