@@ -12,7 +12,7 @@ import ModeFunctions as mf
 ###Experiment Parameters-------------------------------------------------------------------------
 rank = 10
 fold_list = np.arange(1,11)
-distance_list = ['intersection', 'corr', 'manhattan', 'l3', 'bhat', 'euclidean']
+distance_list = ['intersection', 'corr', 'manhattan', 'bhat', 'euclidean', 'l3']
 makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 
 			  'Hicazkar', 'Huseyni', 'Huzzam', 'Karcigar', 'Kurdilihicazkar', 
 			  'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 
