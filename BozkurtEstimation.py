@@ -102,7 +102,7 @@ class BozkurtEstimation:
 				distance_vector[idx] = (np.amax(distance_vector) + 1)
 			return tonic_list
 
-		elif(est_mode):
+		elif(est_mode):			
 			distance_vector = mf.mode_estimate(dist, mode_dists, distance_method=distance_method, metric=metric, cent_ss=self.cent_ss)
 			for r in range(min(rank, len(mode_names))):
 				idx = np.argmin(distance_vector)

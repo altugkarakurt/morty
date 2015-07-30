@@ -26,28 +26,28 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source
 
 	# filter out the Nan, -infinity and +infinity from the pitch track, if exists
 	# TODO
-	print "pre generate pd"
 	# get the pitch values
 	if (smooth_factor > 0): # KDE
+		print "pre generate pd"
 		# convert the standard deviation of the Gaussian kernel to the bandwidth of the smoothening constant
 		smoothening = (smooth_factor * np.sqrt(1 / np.cov(cent_track)))
-
+		print "after smooth"
 		# take the min/max longer such that the pitch values in the boundaries can decay
 		min_bin = (min(cent_track) - (min(cent_track) % smooth_factor)) - (5 * smooth_factor)
 		max_bin = (max(cent_track) + (smooth_factor - (max(cent_track) % smooth_factor))) + (5 * smooth_factor)
-
+		print "after bin"
 		# generate the pitch distribution bins; make sure it crosses 0
 		pd_bins = np.concatenate([np.arange(0, min_bin, -cent_ss)[::-1], np.arange(cent_ss, max_bin, cent_ss)])
-
+		print "after bin cat"
 		# a rare case is when min_bin and max_bin are both greater than 0 in this case the first array will be empty
 		# resulting in pd_bins in the range of cent_ss to max_bin. If it occurs we should put a 0 to the start of the
 		# array
 		pd_bins = pd_bins if 0 in pd_bins else np.insert(pd_bins, 0, 0)
-
+		print "after bin oglu bin"
 		# generate the kernel density estimate and evaluate at the given bins
 		kde = stats.gaussian_kde(cent_track, bw_method=smoothening)
 		pd_vals = kde.evaluate(pd_bins)
-
+		print "after kde"
 	else: #histogram
 		# get the min and max possible values of the histogram edges; the actual values will be dependent on "cent_ss"
 		min_edge = min(cent_track) - (cent_ss / 2.0)
@@ -67,6 +67,7 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source
 
 	if(len(pd_bins) != len(pd_vals)):
 		raise ValueError('Lengths of bins and Vals are different')
+	print "pre return"
 	return p_d.PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, source=source, ref_freq=ref_freq,
 	                             segment=segment, overlap=overlap)
 
