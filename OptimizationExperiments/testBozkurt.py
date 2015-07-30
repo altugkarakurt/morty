@@ -12,7 +12,7 @@ import ModeFunctions as mf
 ###Experiment Parameters-------------------------------------------------------------------------
 rank = 10
 fold_list = np.arange(1,11)
-distance_list = ['intersection', 'corr', 'manhattan', 'euclidean', 'l3', 'bhat']
+distance_list = ['intersection', 'corr', 'manhattan', 'l3', 'bhat', 'euclidean']
 makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 
 			  'Hicazkar', 'Huseyni', 'Huzzam', 'Karcigar', 'Kurdilihicazkar', 
 			  'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 
@@ -40,7 +40,7 @@ with open(os.path.join(training_dir, 'parameters.json'), 'r') as f:
 	f.close()
 
 for distance in distance_list:
-	
+
 	done_dists = next(os.walk(jointPath))[2]
 	done_dists = [d[:-5] for d in done_dists]
 	if (distance in done_dists):
