@@ -26,7 +26,7 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5, source
 
 	# filter out the Nan, -infinity and +infinity from the pitch track, if exists
 	# TODO
-
+	print "pre generate pd"
 	# get the pitch values
 	if (smooth_factor > 0): # KDE
 		# convert the standard deviation of the Gaussian kernel to the bandwidth of the smoothening constant
@@ -212,6 +212,8 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', c
 		distance_vector = np.array(generate_distance_matrix(dist, [0], mode_dists, method=distance_method))[0]
 
 	elif (metric == 'pd'):
+		print "pre distance"
+
 		distance_vector = np.zeros(len(mode_dists))
 		for i in range(len(mode_dists)):
 			trial = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source,
