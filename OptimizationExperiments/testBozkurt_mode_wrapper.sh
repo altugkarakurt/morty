@@ -20,7 +20,7 @@
 #
 # Create an array job = !!!!!!number of audio in the target folder!!!!!!
 # ----------------
-#$ -t 1-250:1
+#$ -t 1-2:1
 #
 # Send me a mail when processed and when finished:
 # ------------------------------------------------
@@ -38,7 +38,6 @@ export LANG="en_US.utf8"
 module load python/2.7.5
 module load essentia/2.0.1
 
-python testBozkurt_mode.py ${SGE_TASK_ID}
-
-# Print job Done
+python testBozkurt_mode.py 5 
+% the int job Done
 printf "Job $JOB_ID done at `date`\n"

@@ -20,8 +20,8 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz',
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
-data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
-#data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
+#data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
+data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
 
 
 # folder structure

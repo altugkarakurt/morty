@@ -28,7 +28,7 @@ data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # h
 experiment_dir = './BozkurtExperiments' # assumes it is already created
 
 #chooses which training to use 
-training_idx = int(sys.argv][1])
+training_idx = int(sys.argv[1])
 training_dir = os.path.join(experiment_dir, 'Training' + str(training_idx))
 tonicPath = os.path.join(training_dir, 'Tonic')
 if not os.path.exists(tonicPath):
