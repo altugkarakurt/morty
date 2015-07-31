@@ -3,9 +3,10 @@ import json
 import numpy as np
 import os
 import sys
+from scipy import io
+import scipy
 sys.path.insert(0, './../')
 import Evaluater as ev
-
 
 #-----------------------------Parameters-----------------------------------
 test_types = ['Joint', 'Tonic', 'Mode']
@@ -29,7 +30,7 @@ for t in range(1,251):
 		test_dir = os.path.join(training_dir, test_type)
 
 		for distance in distance_list:
-
+			#try:
 			#Distance level initializations
 			with open(os.path.join(training_dir, 'parameters.json'), 'r') as f:
 				param = json.load(f)
@@ -91,7 +92,11 @@ for t in range(1,251):
 					#Joint Estimation
 					if(test_type == 'Joint'):
 						est_mode = k['joint_estimation'][0][0]
+						if type(est_mode) == type([]):
+							est_mode = est_mode[0]
 						est_tonic = k['joint_estimation'][0][1]
+						if type(est_tonic) == type([]):
+							est_tonic = est_tonic[0]
 						dist_result['folds'][('Fold' + str(fold))]['confusion'][makam_list.index(cur_mode)][makam_list.index(est_mode)] += 1
 						dist_result['overall']['confusion'][makam_list.index(cur_mode)][makam_list.index(est_mode)] += 1
 						cur_eval = evaluater.joint_evaluate(cur_mbid, (est_tonic, cur_tonic), (est_mode, cur_mode))
@@ -145,8 +150,22 @@ for t in range(1,251):
 			dist_result['overall']['tonic_histogram_vals'], tmp = np.histogram(fold_tonic_list, bins=tonic_diff_edges, density=False)
 			dist_result['overall']['tonic_histogram_vals'] = dist_result['overall']['tonic_histogram_vals'].tolist()
 
-			with open(os.path.join(test_dir, (distance+'_eval.json')), 'w') as f:
-				json.dump(dist_result, f, indent=2) 
-			print  distance + ' distance done!'
+			# statistical significance tests are currently done in MATLAb for convenience
+			# since the resultant json is big and MATLAB sucks at json reading, save the dictionary as a mat file too
+			# NOTE: For some reason the dictionary fails to be saved due to "dist_result['parameters']"
+			# 		Remove it from the dictionary for now. Parameters can be read from "parameters.json"
+			#		in the folder up-one-level
+			mat_result = {'overall':dist_result['overall'], 'folds':dist_result['folds']}
+			matFile = os.path.join(test_dir, distance + '_eval.mat')
+			io.savemat(matFile, mat_result)
+
+			# save json
+			jsonFile = os.path.join(test_dir, distance+'_eval.json')
+			with open(jsonFile, 'w') as f:
+				json.dump(dist_result, f, indent=2)
+
+			#except ValueError:
+			#	print 'Failed at ' + str(t) + '_' + distance + '_' + test_type
+			#	raise ValueError
 		print test_type + ' test_type done!'
 	print 'Training ' + str(t) + ' done!'
