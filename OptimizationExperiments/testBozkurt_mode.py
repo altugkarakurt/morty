@@ -103,7 +103,6 @@ def run(distance_inp, training_i):
 				pitch_track = mf.load_track(txt_name=(recording['mbid'] + '.pitch'), 
 					                        txt_dir=pitch_track_dir)
 
-				print "preestimate"
 				cur_out = estimator.estimate(pitch_track[:,1], pitch_track[:,0], 
 							mode_names=makam_list, est_tonic=False, est_mode=True, 
 							rank=rank, distance_method=distance, ref_freq=recording['tonic'], metric=distribution_type, mode_dir=fold_dir)
