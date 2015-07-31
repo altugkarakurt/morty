@@ -23,9 +23,9 @@ class Evaluater:
 	def tonic_evaluate(self, mbid, estimated, annotated):
 		tmp_diff = mf.hz_to_cent([estimated], annotated)[0] 
 		cent_diff = ((tmp_diff + self.CENT_PER_OCTAVE/2) % (self.CENT_PER_OCTAVE)) - (self.CENT_PER_OCTAVE/2)
-		same_octave = (tmp_diff == cent_diff)
+		same_octave = (tmp_diff - cent_diff < 0.01)
 		bool_tonic = (abs(cent_diff) < self.tolerance)
-		
+
 		# finds the corresponsing interval symbol for the cent difference
 		cent_diff = cent_diff if cent_diff > 0 else (1200+cent_diff)
 		for i in self.INTERVAL_SYMBOLS:

@@ -22,7 +22,7 @@ with open('annotations.json', 'r') as f:
 evaluater = ev.Evaluater()
 experiment_dir = os.path.join('BozkurtExperiments')
 
-for t in range(21,251):
+for t in range(1,251):
 	for test_type in test_types:
 		print test_type
 		training_dir = os.path.join(experiment_dir, 'Training' + str(t))
@@ -112,7 +112,7 @@ for t in range(21,251):
 
 					#Mode Estimation
 					elif(test_type == 'Mode'):
-						est_mode = k['tonic_estimation'][0]
+						est_mode = k['tonic_estimation'][0][0]
 						cur_eval = evaluater.mode_evaluate(cur_mbid, est_mode, cur_mode)
 						dist_result['folds'][('Fold' + str(fold))]['confusion'][makam_list.index(cur_mode)][makam_list.index(est_mode)] += 1
 						dist_result['overall']['confusion'][makam_list.index(cur_mode)][makam_list.index(est_mode)] += 1
@@ -145,7 +145,6 @@ for t in range(21,251):
 			dist_result['overall']['tonic_histogram_vals'], tmp = np.histogram(fold_tonic_list, bins=tonic_diff_edges, density=False)
 			dist_result['overall']['tonic_histogram_vals'] = dist_result['overall']['tonic_histogram_vals'].tolist()
 
-			sys.exit()
 			with open(os.path.join(test_dir, (distance+'_eval.json')), 'w') as f:
 				json.dump(dist_result, f, indent=2) 
 			print  distance + ' distance done!'
