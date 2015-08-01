@@ -15,6 +15,7 @@ makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 'Hicaz
 		      'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 'Segah', 'Sultaniyegah', 'Suzinak', 'Ussak']
 overall_tonic_list = []
 #--------------------------------------------------------------------------
+overall_true_tonics = []
 
 with open('annotations.json', 'r') as f:
 	annot = json.load(f)
@@ -36,6 +37,7 @@ for t in range(1,251):
 				param = json.load(f)
 				f.close()
 
+			param['distance'] = distance
 			dist_result = {'folds':dict(), 'overall':dict(), 'parameters':param}
 			if(test_type == 'Joint'):
 
@@ -67,6 +69,7 @@ for t in range(1,251):
 
 			for fold in range(1,11):
 				cur_fold = cur_test[('Fold' + str(fold))]
+				fold_true_tonics = []
 
 				#Fold level initializations
 				if(test_type == 'Joint'):
@@ -110,6 +113,8 @@ for t in range(1,251):
 						if(cur_eval['tonic_eval']):
 							dist_result['folds'][('Fold' + str(fold))]['tonic_accuracy'] += 1
 							dist_result['overall']['tonic_accuracy'] += 1
+							fold_true_tonics.append(cur_eval['cent_diff'])
+							overall_true_tonics.append(cur_eval['cent_diff'])
 
 						if(cur_eval['joint_eval']):
 							dist_result['folds'][('Fold' + str(fold))]['joint_accuracy'] += 1
@@ -141,11 +146,21 @@ for t in range(1,251):
 						if(cur_eval['tonic_eval']):
 							dist_result['folds'][('Fold' + str(fold))]['tonic_accuracy'] += 1
 							dist_result['overall']['tonic_accuracy'] += 1
+							fold_true_tonics.append(cur_eval['cent_diff'])
+							overall_true_tonics.append(cur_eval['cent_diff'])
 
 					dist_result['folds'][('Fold' + str(fold))]['individual'].append(cur_eval)
 
 				for key in list(set(dist_result['folds'][('Fold' + str(fold))].keys()) - set(['confusion', 'makam_list', 'individual', 'tonic_histogram_vals'])):
 					dist_result['folds'][('Fold' + str(fold))][key] /= 100.0
+
+				#if there are no true tonic estimations in a fold, the std and mean is ''
+				if(not fold_true_tonics == []):
+					dist_result['folds'][('Fold' + str(fold))]['tonic_std'] = np.std(fold_true_tonics)
+					dist_result['folds'][('Fold' + str(fold))]['tonic_mean'] = np.std(fold_true_tonics)
+				else:
+					dist_result['folds'][('Fold' + str(fold))]['tonic_std'] = ''
+					dist_result['folds'][('Fold' + str(fold))]['tonic_mean'] = ''
 				
 				#tmp is useless and won't be used elsewhere
 				dist_result['folds'][('Fold' + str(fold))]['tonic_histogram_vals'], tmp = np.histogram(fold_tonic_list, bins=tonic_diff_edges, density=False)
@@ -155,6 +170,12 @@ for t in range(1,251):
 				dist_result['overall'][key] = round(dist_result['overall'][key] * 1) / 1000
 			dist_result['overall']['tonic_histogram_vals'], tmp = np.histogram(fold_tonic_list, bins=tonic_diff_edges, density=False)
 			dist_result['overall']['tonic_histogram_vals'] = dist_result['overall']['tonic_histogram_vals'].tolist()
+			if(not overall_true_tonics == []):
+				dist_result['overall']['tonic_std'] = np.std(overall_true_tonics)
+				dist_result['overall']['tonic_mean'] = np.std(overall_true_tonics)
+			else:
+				dist_result['overall']['tonic_std'] = ''
+				dist_result['overall']['tonic_mean'] = ''
 
 			# statistical significance tests are currently done in MATLAb for convenience
 			# since the resultant json is big and MATLAB sucks at json reading, save the dictionary as a mat file too

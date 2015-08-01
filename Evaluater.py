@@ -27,12 +27,12 @@ class Evaluater:
 		bool_tonic = (abs(cent_diff) < self.tolerance)
 
 		# finds the corresponsing interval symbol for the cent difference
-		cent_diff = cent_diff if cent_diff > 0 else (1200+cent_diff)
+		dummy_diff = cent_diff if cent_diff > 0 else (1200+cent_diff)
 		for i in self.INTERVAL_SYMBOLS:
-			if (i[1] <=  cent_diff < i[2]):
+			if (i[1] <=  dummy_diff < i[2]):
 				interval = i[0]
 				break
-			elif (cent_diff == 1200):
+			elif (dummy_diff == 1200):
 				interval = 'P1'
 				break
 		
