@@ -28,7 +28,7 @@ class ChordiaEstimation:
 			for tmp in temp_list:
 				dist_list.append(tmp)
 
-		dist_json = [{'bins':d.bins.tolist(), 'vals':d.vals.tolist(), 'kernel_width':d.kernel_width, 'source':d.source, 'ref_freq':d.ref_freq, 'segmentation':d.segmentation} for d in dist_list]
+		dist_json = [{'bins':d.bins.tolist(), 'vals':d.vals.tolist(), 'kernel_width':d.kernel_width, 'source':d.source, 'ref_freq':d.ref_freq, 'segmentation':d.segmentation, 'overlap':d.overlap} for d in dist_list]
 
 
 		with open(os.path.join(save_dir, save_name), 'w') as f:
@@ -94,7 +94,7 @@ class ChordiaEstimation:
 					tonic_list[r] = mf.cent_to_hz([shift_idxs[min_row] * self.cent_ss], ref_freq)[0]
 				mode_list[r] = (mode_names[min(np.where((cum_lens > min_col))[0])], mode_dists[min_col].source)
 				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
-			return [mode_list, tonic_list]
+			return [mode_list, tonic_list.tolist()]
 
 		elif(est_tonic):
 			peak_idxs = shift_idxs if metric=='pd' else peak_idxs
@@ -106,7 +106,7 @@ class ChordiaEstimation:
 				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
 				tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_col]]], anti_freq)[0]
 				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
-			return tonic_list
+			return tonic_list.tolist()
 
 		elif(est_mode):
 			distance_vector = mf.mode_estimate(dist, mode_dists, distance_method=distance_method, metric=metric, cent_ss=self.cent_ss)
@@ -134,7 +134,7 @@ class ChordiaEstimation:
 		obj_list = []
 		fname = mode_name + '.json'
 		with open(os.path.join(dist_dir, fname)) as f:
-			dist_list = json.load(f)[mode_name]
+			dist_list = json.load(f)
 		for d in dist_list:
 			obj_list.append(p_d.PitchDistribution(np.array(d['bins']), np.array(d['vals']), kernel_width=d['kernel_width'], source=d['source'], ref_freq=d['ref_freq'], segment=d['segmentation'], overlap=d['overlap']))
 		return obj_list
