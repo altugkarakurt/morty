@@ -118,7 +118,10 @@ for t in range(1,251):
 					#Mode Estimation
 					elif(test_type == 'Mode'):
 						est_mode = k['tonic_estimation'][0][0]
+						if type(est_mode) == type([]):
+							est_mode = est_mode[0]
 						cur_eval = evaluater.mode_evaluate(cur_mbid, est_mode, cur_mode)
+						
 						dist_result['folds'][('Fold' + str(fold))]['confusion'][makam_list.index(cur_mode)][makam_list.index(est_mode)] += 1
 						dist_result['overall']['confusion'][makam_list.index(cur_mode)][makam_list.index(est_mode)] += 1
 						if(cur_eval['mode_eval']):
@@ -127,8 +130,11 @@ for t in range(1,251):
 
 					#Tonic Estimation
 					elif(test_type == 'Tonic'):
-						es_tonic = k['tonic_estimation'][0]
+						est_tonic = k['tonic_estimation'][0]
+						if type(est_tonic) == type([]):
+							est_tonic = est_tonic[0]
 						cur_eval = evaluater.tonic_evaluate(cur_mbid, est_tonic, cur_tonic)
+						
 						fold_tonic_list.append(cur_eval['cent_diff'])
 						overall_tonic_list.append(cur_eval['cent_diff'])
 
