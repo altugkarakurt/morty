@@ -194,5 +194,5 @@ for t in range(1,251):
 			#except ValueError:
 			#	print 'Failed at ' + str(t) + '_' + distance + '_' + test_type
 			#	raise ValueError
-		print test_type + ' test_type done!'
+		print test_type + ' done!'
 	print 'Training ' + str(t) + ' done!'
