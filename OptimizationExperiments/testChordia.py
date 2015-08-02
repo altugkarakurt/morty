@@ -2,36 +2,38 @@
 import numpy as np
 import sys
 import json
-from datetime import datetime
+import time
 import os
 from os import path
 sys.path.insert(0, './../')
 import ChordiaEstimation as che
 import ModeFunctions as mf
 
-print str(datetime.now())
+
 ###Experiment Parameters-------------------------------------------------------------------------
 threshold = 0.5
-k_param = 3
 fold_list = np.arange(1,11)
 distance_list = ['intersection', 'manhattan', 'bhat']
 makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 
 			  'Hicazkar', 'Huseyni', 'Huzzam', 'Karcigar', 'Kurdilihicazkar', 
 			  'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 
 			  'Segah', 'Sultaniyegah', 'Suzinak', 'Ussak']
-
+k_list = [1,3,5,10,1,3,5,10,1,3,5,10,1,3,5,10]
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
+#data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
 #data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
-#data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
+data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
 
 x = int(sys.argv[1])
 
 # folder structure
 experiment_dir = './ChordiaExperiments' # assumes it is already created
 
-#chooses which training to use 
-training_idx = int(x)
+#chooses which training to use
+training_idx = x % 48 if (x % 48 != 0) else 48
+k_param = k_list[(x-1)/48]
+distance = distance_list[(x-1)/192]
+
 training_dir = os.path.join(experiment_dir, 'Training' + str(training_idx))
 jointPath = os.path.join(training_dir, 'Joint')
 if not os.path.exists(jointPath):
@@ -104,12 +106,14 @@ for distance in distance_list:
 
 				pitch_track = mf.load_track(txt_name=(recording['mbid'] + '.pitch'), 
 					                        txt_dir=pitch_track_dir)
+				init_time = time.time()
 				cur_out = estimator.estimate(pitch_track[:,1], pitch_track[:,0], 
 							mode_names=makam_list, est_tonic=True, est_mode=True, k_param=k_param,
 							distance_method=distance, metric=distribution_type, mode_dir=fold_dir)
-				print str(datetime.now())
-				output[('Fold' + str(fold))].append({'mbid':recording['mbid'], 'joint_estimation':cur_out})
-				sys.exit()
-	with open(os.path.join(jointPath, distance + '.json'), 'w') as f:
+				end_time = time.time()
+				elapsed = (round((end_time - init_time) * 100) / 100)
+				print elapsed
+				output[('Fold' + str(fold))].append({'mbid':recording['mbid'], 'joint_estimation':cur_out[0], 'sources': cur_out[1], 'distances':cur_out[2], 'elapsed_time':elapsed})
+	with open(os.path.join(jointPath, distance + '_k' + str(k_param) + '.json'), 'w') as f:
 		json.dump(output, f, indent=2)
 		f.close()

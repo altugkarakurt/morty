@@ -3,7 +3,6 @@ import numpy as np
 import ModeFunctions as mf
 import PitchDistribution as p_d
 import json
-import pdb
 import os
 
 class ChordiaEstimation:
@@ -50,7 +49,7 @@ class ChordiaEstimation:
 		for p in range(len(pts)):
 			neighbors[p] = self.segment_estimate(pts[p], mode_names=mode_names, mode_name=mode_name, mode_dir=mode_dir, est_tonic=est_tonic, est_mode=est_mode, distance_method=distance_method, metric=metric, ref_freq=ref_freq, min_cnt=min_cnt)
 		
-		candidate_distances, candidate_ests, candidate_sources, kn_ests, kn_sources, idx_counts, elem_counts = ([] for i in range(7))
+		candidate_distances, candidate_ests, candidate_sources, kn_distances, kn_ests, kn_sources, idx_counts, elem_counts, res_distances, res_sources = ([] for i in range(10))
 
 		if(est_mode and est_tonic):
 			for i in xrange(len(pts)):
@@ -62,6 +61,7 @@ class ChordiaEstimation:
 
 			for k in xrange(k_param):
 				idx = np.argmin(candidate_distances)
+				kn_distances.append(candidate_distances[idx])
 				kn_ests.append(candidate_ests[idx])
 				kn_sources.append(candidate_sources[idx])
 				candidate_distances[idx] = (np.amax(candidate_distances) + 1)
@@ -72,9 +72,10 @@ class ChordiaEstimation:
 			joint_estimation = elem_counts[np.argmax(idx_counts)]
 
 			for m in xrange(len(kn_ests)):
-				if (not (kn_ests[m] == joint_estimation)):
-					kn_sources.remove(kn_sources[m])
-			result = [joint_estimation, kn_sources]
+				if (kn_ests[m] == joint_estimation):
+					res_sources.append(kn_sources[m])
+					res_distances.append(kn_distances[m])
+			result = [joint_estimation, res_sources, res_distances]
 
 		elif(est_mode):
 			for i in xrange(len(pts)):
@@ -96,9 +97,9 @@ class ChordiaEstimation:
 			mode_estimation = elem_counts[np.argmax(idx_counts)]
 
 			for m in xrange(len(kn_ests)):
-				if (not (kn_ests[m] == mode_estimation)):
-					kn_sources.remove(kn_sources[m])
-			result = [mode_estimation, kn_sources]
+				if (kn_ests[m] == joint_estimation):
+					res_sources.append(kn_sources[m])
+			result = [mode_estimation, res_sources]
 
 		elif(est_tonic):
 
@@ -121,12 +122,11 @@ class ChordiaEstimation:
 			tonic_estimation = elem_counts[np.argmax(idx_counts)]
 
 			for m in xrange(len(kn_ests)):
-				if (not (kn_ests[m] == tonic_estimation)):
-					kn_sources.remove(kn_sources[m])
-			result = [tonic_estimation, kn_sources]
+				if (kn_ests[m] == joint_estimation):
+					res_sources.append(kn_sources[m])
+			result = [tonic_estimation, res_sources]
 
-		print result
-		return 0
+		return result
 
 	def segment_estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./', est_tonic=True, est_mode=True, distance_method="euclidean", metric='pcd', ref_freq=440, min_cnt=3):
 		### Preliminaries before the estimations
