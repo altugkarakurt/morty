@@ -21,9 +21,9 @@ k_list = [1,3,5,10]
 training_list = np.arange(1,49)
 fold_list = np.arange(1,11)
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DATA FOLDER INIT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
+#data_folder = '../../../Makam_Dataset/Pitch_Tracks/'
 #data_folder = '../../../test_datasets/turkish_makam_recognition_dataset/data/' #sertan desktop local
-#data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
+data_folder = '../../../experiments/turkish_makam_recognition_dataset/data/' # hpc cluster
 
 x = int(sys.argv[1])
 
