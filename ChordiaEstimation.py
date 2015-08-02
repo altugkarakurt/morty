@@ -87,6 +87,7 @@ class ChordiaEstimation:
 
 			for k in xrange(k_param):
 				idx = np.argmin(candidate_distances)
+				kn_distances.append(candidate_distances[idx])
 				kn_ests.append(candidate_ests[idx])
 				kn_sources.append(candidate_sources[idx])
 				candidate_distances[idx] = (np.amax(candidate_distances) + 1)
@@ -97,9 +98,10 @@ class ChordiaEstimation:
 			mode_estimation = elem_counts[np.argmax(idx_counts)]
 
 			for m in xrange(len(kn_ests)):
-				if (kn_ests[m] == joint_estimation):
+				if (kn_ests[m] == mode_estimation):
 					res_sources.append(kn_sources[m])
-			result = [mode_estimation, res_sources]
+					res_distances.append(kn_distances[m])
+			result = [mode_estimation, res_sources, res_distances]
 
 		elif(est_tonic):
 
@@ -112,6 +114,7 @@ class ChordiaEstimation:
 
 			for k in xrange(k_param):
 				idx = np.argmin(candidate_distances)
+				kn_distances.append(candidate_distances[idx])
 				kn_ests.append(candidate_ests[idx])
 				kn_sources.append(candidate_sources[idx])
 				candidate_distances[idx] = (np.amax(candidate_distances) + 1)
@@ -122,9 +125,10 @@ class ChordiaEstimation:
 			tonic_estimation = elem_counts[np.argmax(idx_counts)]
 
 			for m in xrange(len(kn_ests)):
-				if (kn_ests[m] == joint_estimation):
+				if (kn_ests[m] == tonic_estimation):
 					res_sources.append(kn_sources[m])
-			result = [tonic_estimation, res_sources]
+					res_distances.append(kn_distances[m])
+			result = [tonic_estimation, res_sources, res_distances]
 
 		return result
 
