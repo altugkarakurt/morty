@@ -76,7 +76,7 @@ class ChordiaEstimation:
 					kn_sources.remove(kn_sources[m])
 			result = [joint_estimation, kn_sources]
 
-		if(est_mode):
+		elif(est_mode):
 			for i in xrange(len(pts)):
 				for j in neighbors[i][1]:
 					candidate_distances.append(j)
@@ -114,7 +114,7 @@ class ChordiaEstimation:
 				kn_ests.append(candidate_ests[idx])
 				kn_sources.append(candidate_sources[idx])
 				candidate_distances[idx] = (np.amax(candidate_distances) + 1)
-			
+
 			for c in set(kn_ests):
 				idx_counts.append(kn_ests.count(c))
 				elem_counts.append(c)
@@ -123,9 +123,8 @@ class ChordiaEstimation:
 			for m in xrange(len(kn_ests)):
 				if (not (kn_ests[m] == tonic_estimation)):
 					kn_sources.remove(kn_sources[m])
-			result = [mode_estimation, kn_sources]
+			result = [tonic_estimation, kn_sources]
 
-		pdb.set_trace()
 		print result
 		return 0
 
