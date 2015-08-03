@@ -136,16 +136,10 @@ def distance(piece, trained, method='euclidean'):
 		return sp.spatial.distance.minkowski(piece.vals, trained.vals, 3)
 
 	elif (method == 'bhat'):
-		d = 0
-		for i in range(len(piece.vals)):
-			d += math.sqrt(piece.vals[i] * trained.vals[i]);
-		return (-math.log(d))
+		return -math.log(sum(np.sqrt(piece.vals * trained.vals)))
 
 	elif (method == 'intersection'): #to be renamed as inverse intersection
-		d = 0
-		for j in range(len(piece.vals)):
-			d += min(piece.vals[j], trained.vals[j])
-		return (len(piece.vals)) / d
+		return len(piece.vals) / (sum(np.minimum(piece.vals, trained.vals)))
 
 	elif (method == 'corr'):
 		return 1.0 - np.correlate(piece.vals, trained.vals)
