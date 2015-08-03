@@ -31,16 +31,28 @@ x = int(sys.argv[1])
 experiment_dir = './ChordiaExperiments' # assumes it is already created
 
 #chooses which training to use
-idx = np.unravel_index(int(x-1), (len(k_list), len(distance_list), len(training_list)))
+idx = np.unravel_index(int(x-1), (len(k_list), len(distance_list), len(training_list), len(fold_list)))
 
 k_param = k_list[idx[0]]
 distance = distance_list[idx[1]]
 training_idx = training_list[idx[2]]
+fold = fold_list[idx[3]]
 
 training_dir = os.path.join(experiment_dir, 'Training' + str(training_idx))
 jointPath = os.path.join(training_dir, 'Joint')
 if not os.path.exists(jointPath):
 	os.makedirs(jointPath)
+
+distancePath = os.path.join(jointPath, (distance + '_k' + str(k_param)))
+if not os.path.exists(distancePath):
+	os.makedirs(distancePath)
+
+json_dir = os.path.join(jointPath, (distance + '_k' + str(k_param) + '.json'))
+if os.path.isfile(json_dir):
+	print 'Exists!'
+	sys.exit()
+
+foldpath = jointPath
 
 # get the training experient/fold parameters 
 with open(os.path.join(training_dir, 'parameters.json'), 'r') as f:
@@ -69,53 +81,53 @@ with open('annotations.json', 'r') as f:
 	f.close()
 
 output = dict()
-for fold in fold_list:
-	output['Fold' + str(fold)] = []
-	fold_dir = os.path.join(training_dir, 'Fold' + str(fold))
-	
-	# load the current fold to get the test recordings
-	with open((os.path.join('./Folds', 'fold_' + str(fold) + '.json')), 'r') as f:
-		cur_fold = json.load(f)['test']
+
+output['Fold' + str(fold)] = []
+fold_dir = os.path.join(training_dir, 'Fold' + str(fold))
+
+# load the current fold to get the test recordings
+with open((os.path.join('./Folds', 'fold_' + str(fold) + '.json')), 'r') as f:
+	cur_fold = json.load(f)['test']
+	f.close()
+
+# retrieve annotations of the training recordings
+for makam_name in makam_list:
+
+	# just for checking the uniqueness of test recordings
+	with open(os.path.join(fold_dir, makam_name + '.json')) as f:
+		makam_recordings = json.load(f)[0]['source']
 		f.close()
 
-	# retrieve annotations of the training recordings
-	for makam_name in makam_list:
+	# divide the training data into makams
+	makam_annot = [k for k in cur_fold if k['makam']==makam_name]
+	pitch_track_dir = os.path.join(data_folder, makam_name)
 
-		# just for checking the uniqueness of test recordings
-		with open(os.path.join(fold_dir, makam_name + '.json')) as f:
-			makam_recordings = json.load(f)[0]['source']
-			f.close()
+	# load the annotations for testing data; it will be only used for 
+	# makam recognition (with annotated tonic)
+	for i in makam_annot:
+		for j in annot:
+			# append the tonic of the recordıng from the relevant annotation
+			if(i['mbid'] == j['mbid']):
+				i['tonic'] = j['tonic'] 
+				break
 
-		# divide the training data into makams
-		makam_annot = [k for k in cur_fold if k['makam']==makam_name]
-		pitch_track_dir = os.path.join(data_folder, makam_name)
+	#actual estimation
+	for recording in makam_annot:
+		
+		#check if test recording was use in training
+		if (recording['mbid'] + '.pitch' in makam_recordings):
+			raise ValueError(('Unique-check Failure. ' + recording['mbid']))
 
-		# load the annotations for testing data; it will be only used for 
-		# makam recognition (with annotated tonic)
-		for i in makam_annot:
-			for j in annot:
-				# append the tonic of the recordıng from the relevant annotation
-				if(i['mbid'] == j['mbid']):
-					i['tonic'] = j['tonic'] 
-					break
-
-		#actual estimation
-		for recording in makam_annot:
-			
-			#check if test recording was use in training
-			if (recording['mbid'] + '.pitch' in makam_recordings):
-				raise ValueError(('Unique-check Failure. ' + recording['mbid']))
-
-			pitch_track = mf.load_track(txt_name=(recording['mbid'] + '.pitch'), 
-				                        txt_dir=pitch_track_dir)
-			init_time = time.time()
-			cur_out = estimator.estimate(pitch_track[:,1], pitch_track[:,0], 
-						mode_names=makam_list, est_tonic=True, est_mode=True, k_param=k_param,
-						distance_method=distance, metric=distribution_type, mode_dir=fold_dir)
-			end_time = time.time()
-			elapsed = (round((end_time - init_time) * 100) / 100)
-			print elapsed
-			output[('Fold' + str(fold))].append({'mbid':recording['mbid'], 'joint_estimation':cur_out[0], 'sources': cur_out[1], 'distances':cur_out[2], 'elapsed_time':elapsed})
-with open(os.path.join(jointPath, distance + '_k' + str(k_param) + '.json'), 'w') as f:
+		pitch_track = mf.load_track(txt_name=(recording['mbid'] + '.pitch'), 
+			                        txt_dir=pitch_track_dir)
+		init_time = time.time()
+		cur_out = estimator.estimate(pitch_track[:,1], pitch_track[:,0], 
+					mode_names=makam_list, est_tonic=True, est_mode=True, k_param=k_param,
+					distance_method=distance, metric=distribution_type, mode_dir=fold_dir)
+		end_time = time.time()
+		elapsed = (round((end_time - init_time) * 100) / 100)
+		print elapsed
+		output[('Fold' + str(fold))].append({'mbid':recording['mbid'], 'joint_estimation':cur_out[0], 'sources': cur_out[1], 'distances':cur_out[2], 'elapsed_time':elapsed})
+with open(os.path.join(distancePath, str(fold) + '.json'), 'w') as f:
 	json.dump(output, f, indent=2)
 	f.close()
