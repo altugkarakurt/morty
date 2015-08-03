@@ -37,7 +37,11 @@ for t in range(1,49):
 				param = json.load(f)
 				f.close()
 
-			param['distance'] = distance
+			tmp_idx = distance.index('_')
+			param_distance = distance[:tmp_idx]
+			param_k = int(distance[(tmp_idx+2):])
+			param['distance'] = param_distance
+			param['k'] = param_k
 			dist_result = {'folds':dict(), 'overall':dict(), 'parameters':param}
 			if(test_type == 'Joint'):
 
