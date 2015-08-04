@@ -52,6 +52,10 @@ if os.path.isfile(json_dir):
 	print 'Exists!'
 	sys.exit()
 
+if os.path.isfile(os.path.join(distancePath, (str(fold) + '.json'))):
+	print 'Exists! Yay! ' + os.path.join(distancePath, (str(fold) + '.json'))
+	sys.exit()
+
 foldpath = jointPath
 
 # get the training experient/fold parameters 
