@@ -4,12 +4,13 @@ import numpy as np
 import os
 import sys
 from scipy import io
+import pdb
 import scipy
 sys.path.insert(0, './../')
 import Evaluater as ev
 
 #-----------------------------Parameters-----------------------------------
-test_types = ['Joint']
+test_types = ['Tonic', 'Mode']
 distance_list = ['bhat_k1', 'intersection_k1', 'manhattan_k1', 'bhat_k3', 'intersection_k3', 'manhattan_k3', 'bhat_k5', 'intersection_k5', 'manhattan_k5', 'bhat_k10', 'intersection_k10', 'manhattan_k10']
 makam_list = ['Acemasiran', 'Acemkurdi', 'Beyati', 'Bestenigar', 'Hicaz', 'Hicazkar', 'Huseyni', 'Huzzam', 'Karcigar', 'Kurdilihicazkar', 
 		      'Mahur', 'Muhayyer', 'Neva', 'Nihavent', 'Rast', 'Saba', 'Segah', 'Sultaniyegah', 'Suzinak', 'Ussak']
@@ -126,7 +127,7 @@ for t in range(1,49):
 
 						#Mode Estimation
 						elif(test_type == 'Mode'):
-							est_mode = k['tonic_estimation'][0][0]
+							est_mode = k['mode_estimation'][0][0]
 							if type(est_mode) == type([]):
 								est_mode = est_mode[0]
 							cur_eval = evaluater.mode_evaluate(cur_mbid, est_mode, cur_mode)
@@ -139,7 +140,7 @@ for t in range(1,49):
 
 						#Tonic Estimation
 						elif(test_type == 'Tonic'):
-							est_tonic = k['tonic_estimation'][0]
+							est_tonic = k['tonic_estimation']
 							if type(est_tonic) == type([]):
 								est_tonic = est_tonic[0]
 							cur_eval = evaluater.tonic_evaluate(cur_mbid, est_tonic, cur_tonic)
