@@ -56,8 +56,6 @@ if os.path.isfile(os.path.join(distancePath, (str(fold) + '.json'))):
 	print 'Exists! Yay! ' + os.path.join(distancePath, (str(fold) + '.json'))
 	sys.exit()
 
-foldpath = jointPath
-
 # get the training experient/fold parameters 
 with open(os.path.join(training_dir, 'parameters.json'), 'r') as f:
 	cur_params = json.load(f)

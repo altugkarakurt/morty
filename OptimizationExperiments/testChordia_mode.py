@@ -31,21 +31,35 @@ x = int(sys.argv[1])
 experiment_dir = './ChordiaExperiments' # assumes it is already created
 
 #chooses which training to use
-idx = np.unravel_index(int(x-1), (len(k_list), len(distance_list), len(training_list)))
+idx = np.unravel_index(int(x-1), (len(k_list), len(distance_list), len(training_list), len(fold_list)))
 
 k_param = k_list[idx[0]]
 distance = distance_list[idx[1]]
 training_idx = training_list[idx[2]]
+fold = fold_list[idx[3]]
 
 training_dir = os.path.join(experiment_dir, 'Training' + str(training_idx))
 modePath = os.path.join(training_dir, 'Mode')
 if not os.path.exists(modePath):
 	os.makedirs(modePath)
 
+distancePath = os.path.join(modePath, (distance + '_k' + str(k_param)))
+if not os.path.exists(distancePath):
+	os.makedirs(distancePath)
+
 # get the training experient/fold parameters 
 with open(os.path.join(training_dir, 'parameters.json'), 'r') as f:
 	cur_params = json.load(f)
 	f.close()
+
+json_dir = os.path.join(modePath, (distance + '_k' + str(k_param) + '.json'))
+if os.path.isfile(json_dir):
+	print 'Exists!'
+	sys.exit()
+
+if os.path.isfile(os.path.join(distancePath, (str(fold) + '.json'))):
+	print 'Exists! Yay! ' + os.path.join(distancePath, (str(fold) + '.json'))
+	sys.exit()
 
 done_dists = next(os.walk(modePath))[2]
 done_dists = [d[:-5] for d in done_dists]
@@ -116,6 +130,6 @@ for fold in fold_list:
 			elapsed = (round((end_time - init_time) * 100) / 100)
 			print elapsed
 			output[('Fold' + str(fold))].append({'mbid':recording['mbid'], 'mode_estimation':cur_out[0], 'sources': cur_out[1], 'distances':cur_out[2], 'elapsed_time':elapsed})
-with open(os.path.join(modePath, distance + '_k' + str(k_param) + '.json'), 'w') as f:
+with open(os.path.join(distancePath, distance + '_k' + str(k_param) + '.json'), 'w') as f:
 	json.dump(output, f, indent=2)
 	f.close()
