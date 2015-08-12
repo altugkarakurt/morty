@@ -30,7 +30,7 @@ class BozkurtEstimation:
 
 	def __init__(self, cent_ss=7.5, smooth_factor=7.5, chunk_size=0):
 		"""------------------------------------------------------------------------
-		These attributes are wrapped as an object sşnce these are used in both 
+		These attributes are wrapped as an object since these are used in both 
 		training and estimation stages and must be consistent in both processes.
 		---------------------------------------------------------------------------
 		cent_ss       : Step size of the distribution bins
