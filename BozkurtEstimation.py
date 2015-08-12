@@ -60,7 +60,7 @@ class BozkurtEstimation:
 		----------------------------------------------------------------------------
 		mode_name     : Name of the mode to be trained. This is only used for naming
 		                the resultant JSON file, in the form "mode_name.json"
-		pt_list       : List of pitch tracks (i.e. 1-D list of float/int)
+		pt_list       : List of pitch tracks (i.e. 1-D list of frequencies)
 		ref_freq_list : List of annotated tonics of recordings
 		pt_dir        : The directory where pitch tracks are stored.
 		metric        : Whether the model should be octave wrapped (Pitch Class 
