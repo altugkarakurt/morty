@@ -27,19 +27,14 @@ This project depends on [NumPy](http://www.numpy.org/), [SciPy](http://www.scipy
 * *PitchDistribution* is used the data structure of pitch distributions. It wraps the related data to a pitch
 distribution. It also includes save and load functions to make the pitch distributions accessible for later use.
 
-* *BozkurtEstimation* is the most important class of the project. It wraps the other two classes and provides higher
-level functions that the users are expected to interact. The training and estimation functions are in this class.
+* *ModeFunctions* includes the low-level functions related to the task. These functions are generic and common in both Bozkurt and Chordia methods. These aren't expected to be directly used, instead they are called by the higher level wrapper functions in BozkurtEstimation and ChordiaEstimation.
 
-* *MakamFunctions* includes the low-level functions related to the task. These functions aren't going to be directly
-used, they are called by the higer level functions in Bozkurt Estimation.
+* *BozkurtEstimation* implements the methods proposed in the two papers below. The details are explained in the comments of the code.
+> A. C. Gedik, B.Bozkurt, 2010, "Pitch Frequency Histogram Based Music Information Retrieval for Turkish Music", Signal Processing, vol.10,
+> B. Bozkurt, 2008, "An automatic pitch analysis method for Turkish maqam music", Journal of New Music Research 37 1–13.
 
-### Examples
-As an example, the pitch tracks of three Ottoman-Turkish Makam Music piece are given in the project, along with their
-PD, PCD and the joint PD and PCD of their common makam (Turkish mode) Ussak. These are for demonstrating the structure
-of the data and to be used for discovering the project's functionalities.
+* *ChordiaEstimation* implements the method proposed in the paper below for North Indian Classical Music in a more generic approach. The details are explained in the comments of the code.
+> Chordia, P. and Şentürk, S. (2013). Joint recognition of raag and tonic in North Indian music. Computer Music Journal, 37(3):82–98.
 
-Example test functions based on this data will be added soon.
-
-### Related Literature
 To be continued...
 
