@@ -125,11 +125,78 @@ class ChordiaEstimation:
 		         mode_dir='./', est_tonic=True, est_mode=True,
 		         distance_method="euclidean", metric='pcd', ref_freq=440,
 		         k_param=1):
+		"""-------------------------------------------------------------------------
+		In the estimation phase, the input pitch track is sliced into chunk and each
+		chunk is compared with each candidate mode's each sample model, i.e. with 
+		the distributions of each training recording's each chunk. This function is
+		a wrapper, that handles decision making portion and the overall flow of the
+		estimation process. Internally, segment estimate is called for generation of
+		distance matrices and detecting neighbor distributions.
+
+		1) Joint Estimation: Neither the tonic nor the mode of the recording is known.
+		Then, joint estimation estimates both of these parameters without any prior
+		knowledge about the recording.
+		To use this: est_mode and est_tonic flags should be True since both are to
+		be estimated. In this case ref_freq and mode_name parameters are not used,
+		since these are used to pass the annotated data about the recording.
+
+		2) Tonic Estimation: The mode of the recording is known and tonic is to be
+		estimated. This is generally the most accurate estimation among the three.
+		To use this: est_tonic should be True and est_mode should be False. In this
+		case ref_freq  and mode_names parameters are not used since tonic isn't
+		known a priori and mode is known and hence there is no candidate mode.
+
+		3) Mode Estimation: The tonic of the recording is known and mode is to be
+		estimated.
+		To use this: est_mode should be True and est_tonic should be False. In this
+		case mode_name parameter isn't used since the mode annotation is not
+		available. It can be ignored.
+		----------------------------------------------------------------------------
+		pitch_track     : Pitch track of the input recording whose tonic and/or mode
+		                  is to be estimated. This is only a 1-D list of frequency
+		                  values.
+		time_track      : The timestamps of the pitch track. This is only used for
+		                  slicing.
+		mode_dir        : The directory where the mode models are stored. This is to
+		                  load the annotated mode or the candidate mode.
+		mode_names      : Names of the candidate modes. These are used when loading
+		                  the mode models. If the mode isn't estimated, this parameter
+		                  isn't used and can be ignored.
+		mode_name       : Annotated mode of the recording. If it's not known and to be
+		                  estimated, this parameter isn't used and can be ignored.
+		est_tonic       : Whether tonic is to be estimated or not. If this flag is
+		                  False, ref_freq is treated as the annotated tonic.
+		est_mode        : Whether mode is to be estimated or not. If this flag is
+		                  False, mode_name is treated as the annotated mode.
+		k_param         : The k parameter of K Nearest Neighbors. 
+		distance_method : The choice of distance methods. See distance() in
+		                  ModeFunctions for more information.
+		metric          : Whether the model should be octave wrapped (Pitch Class
+		                  Distribution: PCD) or not (Pitch Distribution: PD)
+		ref_freq        : Annotated tonic of the recording. If it's unknown, we use
+		                  an arbitrary value, so this can be ignored.
+		-------------------------------------------------------------------------"""
+		# Pitch track is sliced into chunks.
 		pts, segs = mf.slice(time_track, pitch_track, 'input', self.chunk_size,
 			                 self.threshold, self.overlap)
+
+		# Here's a neat trick. In order to return an estimation about the entire
+		# recording based on our observations on individual chunks, we look at the
+		# nearest neighbors of  union of all chunks. We are returning min_cnt
+		# many number of closest neighbors from each chunk. To make sure that we
+		# capture all of the nearest neighbors, we return a little more than
+		# required and then treat the union of these nearest neighbors as if it's
+		# the distance matrix of the entire recording.Then, we find the nearest
+		# neighbors from the union of these from each chunk. This is quite an
+		# overshoot, we only need min_cnt >= k_param. 
+
+		### TODO: shrink this value as much as possible.
+		min_cnt = len(pts) * k_param
+
+		#Initializations
 		tonic_list = 0
 		mode_list = ''
-		min_cnt = len(pts) * k_param
+
 		if(est_tonic and est_mode):
 			neighbors = [ [mode_list, tonic_list] for i in range(len(segs)) ]
 		elif(est_tonic):
@@ -137,6 +204,9 @@ class ChordiaEstimation:
 		elif(est_mode):
 			neighbors = [ mode_list for i in range(len(segs)) ]
 
+		# segment_estimate() generates the distributions of each chunk iteratively,
+		# then compares it with all candidates and returns min_cnt closest neighbors
+		# of each chunk to neighbors list.
 		for p in range(len(pts)):
 			neighbors[p] = self.segment_estimate(pts[p], mode_names=mode_names,
 				                                 mode_name=mode_name, mode_dir=mode_dir,
@@ -145,10 +215,19 @@ class ChordiaEstimation:
 				                                 metric=metric, ref_freq=ref_freq,
 				                                 min_cnt=min_cnt)
 		
+		### TODO: Clean up the spaghetti decision making part. The procedures
+		### are quite repetitive. Wrap them up with a separate function.
+
+		# Temporary variables used during the desicion making part.
 		candidate_distances, candidate_ests, candidate_sources, kn_distances, kn_ests,
 		kn_sources, idx_counts, elem_counts, res_distances, res_sources = ([] for i in range(10))
 
+		# Joint estimation decision making. 
 		if(est_mode and est_tonic):
+			# Flattens the returned candidates and related data about them and
+			# stores them into candidate_* variables. candidate_distances stores
+			# the distance values, candidate_ests stores the mode/tonic pairs
+			# candidate_sources stores the sources of the nearest neighbors.
 			for i in xrange(len(pts)):
 				for j in neighbors[i][1]:
 					candidate_distances.append(j)
@@ -156,6 +235,11 @@ class ChordiaEstimation:
 					candidate_ests.append((neighbors[i][0][1][l], neighbors[i][0][0][l][0]))
 					candidate_sources.append(neighbors[i][0][0][l][1])
 
+			# Finds the nearest neighbors and fills all related data about
+			# them to kn_* variables. Each of these variables have length k.
+			# kn_distances stores the distance values, kn_ests stores
+			# mode/tonic pairs, kn_sources store the name/id of the distribution
+			# that gave rise to the corresponding distances.
 			for k in xrange(k_param):
 				idx = np.argmin(candidate_distances)
 				kn_distances.append(candidate_distances[idx])
@@ -163,18 +247,28 @@ class ChordiaEstimation:
 				kn_sources.append(candidate_sources[idx])
 				candidate_distances[idx] = (np.amax(candidate_distances) + 1)
 			
+			# Counts the occurences of each candidate mode/tonic pair in
+			# the K nearest neighbors. The result is our estimation. 
 			for c in set(kn_ests):
 				idx_counts.append(kn_ests.count(c))
 				elem_counts.append(c)
 			joint_estimation = elem_counts[np.argmax(idx_counts)]
 
+			# We have concluded our estimation. Here, we retrieve the 
+			# relevant data to this estimation; the sources and coresponding
+			# distances.
 			for m in xrange(len(kn_ests)):
 				if (kn_ests[m] == joint_estimation):
 					res_sources.append(kn_sources[m])
 					res_distances.append(kn_distances[m])
 			result = [joint_estimation, res_sources, res_distances]
 
+		# Mode estimation decision making
 		elif(est_mode):
+			# Flattens the returned candidates and related data about them and
+			# stores them into candidate_* variables. candidate_distances stores
+			# the distance values, candidate_ests stores the candidate modes
+			# candidate_sources stores the sources of the nearest neighbors.
 			for i in xrange(len(pts)):
 				for j in neighbors[i][1]:
 					candidate_distances.append(j)
@@ -182,26 +276,42 @@ class ChordiaEstimation:
 					candidate_ests.append(neighbors[i][0][l][0])
 					candidate_sources.append(neighbors[i][0][l][1])
 
+			# Finds the nearest neighbors and fills all related data about
+			# them to kn_* variables. Each of these variables have length k.
+			# kn_distances stores the distance values, kn_ests stores
+			# mode names, kn_sources store the name/id of the distributions
+			# that gave rise to the corresponding distances.
 			for k in xrange(k_param):
 				idx = np.argmin(candidate_distances)
 				kn_distances.append(candidate_distances[idx])
 				kn_ests.append(candidate_ests[idx])
 				kn_sources.append(candidate_sources[idx])
 				candidate_distances[idx] = (np.amax(candidate_distances) + 1)
-			
+
+			# Counts the occurences of each candidate mode name in
+			# the K nearest neighbors. The result is our estimation. 
 			for c in set(kn_ests):
 				idx_counts.append(kn_ests.count(c))
 				elem_counts.append(c)
 			mode_estimation = elem_counts[np.argmax(idx_counts)]
 
+			# We have concluded our estimation. Here, we retrieve the 
+			# relevant data to this estimation; the sources and coresponding
+			# distances.
 			for m in xrange(len(kn_ests)):
 				if (kn_ests[m] == mode_estimation):
 					res_sources.append(kn_sources[m])
 					res_distances.append(kn_distances[m])
 			result = [mode_estimation, res_sources, res_distances]
 
-		elif(est_tonic):
 
+		# Tonic estimation decision making
+		elif(est_tonic):
+			# Flattens the returned candidates and related data about them and
+			# stores them into candidate_* variables. candidate_distances stores
+			# the distance values, candidate_ests stores the candidate peak 
+			# frequencies, candidate_sources stores the sources of the nearest
+			# neighbors.
 			for i in xrange(len(pts)):
 				for j in neighbors[i][1]:
 					candidate_distances.append(j)
@@ -209,6 +319,11 @@ class ChordiaEstimation:
 					candidate_ests.append(neighbors[i][0][l][0])
 					candidate_sources.append(neighbors[i][0][l][1])
 
+			# Finds the nearest neighbors and fills all related data about
+			# them to kn_* variables. Each of these variables have length k.
+			# kn_distances stores the distance values, kn_ests stores
+			# peak frequencies, kn_sources store the name/id of the
+			# distributions that gave rise to the corresponding distances.
 			for k in xrange(k_param):
 				idx = np.argmin(candidate_distances)
 				kn_distances.append(candidate_distances[idx])
@@ -216,11 +331,16 @@ class ChordiaEstimation:
 				kn_sources.append(candidate_sources[idx])
 				candidate_distances[idx] = (np.amax(candidate_distances) + 1)
 
+			# Counts the occurences of each candidate tonic frequency in
+			# the K nearest neighbors. The result is our estimation. 
 			for c in set(kn_ests):
 				idx_counts.append(kn_ests.count(c))
 				elem_counts.append(c)
 			tonic_estimation = elem_counts[np.argmax(idx_counts)]
 
+			# We have concluded our estimation. Here, we retrieve the 
+			# relevant data to this estimation; the sources and coresponding
+			# distances.
 			for m in xrange(len(kn_ests)):
 				if (kn_ests[m] == tonic_estimation):
 					res_sources.append(kn_sources[m])
