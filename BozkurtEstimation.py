@@ -155,7 +155,8 @@ class BozkurtEstimation:
 		                  ModeFunctions for more information.
 		metric          : Whether the model should be octave wrapped (Pitch Class
 		                  Distribution: PCD) or not (Pitch Distribution: PD)
-		ref_freq        : Th
+		ref_freq        : Annotated tonic of the recording. If it's unknown, we use
+		                  an arbitrary value, so this can be ignored.
 		-------------------------------------------------------------------------"""
 
 		# Preliminaries before the estimations
