@@ -94,15 +94,14 @@ class ChordiaEstimation:
 			time_track = cur[:,0]
 			pitch_track = cur[:,1]
 			# Current pitch track is sliced into chunks.
-			pts, segs = mf.slice(time_track, pitch_track, pt_list[pt],
+			pts, chunk_data = mf.slice(time_track, pitch_track, pt_list[pt],
 				                 self.chunk_size, self.threshold, self.overlap)
 			# Each chunk is converted to cents
 			pts = [mf.hz_to_cent(k, ref_freq=ref_freq_list[pt]) for k in pts]
 			# This is a wrapper function. It iteratively generates the distribution
 			# for each chunk and return it as a list. After this point, we only
 			# need to save it. God bless modular programming!
-			temp_list = self.train_segments(pts, segs, ref_freq_list[pt],
-				                            save_dir, save_name, metric)
+			temp_list = self.train_chunks(pts, chunk_data, ref_freq_list[pt], metric)
 			# The list is composed of lists of PitchDistributions. So,
 			# each list in temp_list corresponds to a recording and each
 			# PitchDistribution in that list belongs to a chunk. Since these
@@ -177,7 +176,7 @@ class ChordiaEstimation:
 		                  an arbitrary value, so this can be ignored.
 		-------------------------------------------------------------------------"""
 		# Pitch track is sliced into chunks.
-		pts, segs = mf.slice(time_track, pitch_track, 'input', self.chunk_size,
+		pts, chunk_data = mf.slice(time_track, pitch_track, 'input', self.chunk_size,
 			                 self.threshold, self.overlap)
 
 		# Here's a neat trick. In order to return an estimation about the entire
@@ -198,17 +197,17 @@ class ChordiaEstimation:
 		mode_list = ''
 
 		if(est_tonic and est_mode):
-			neighbors = [ [mode_list, tonic_list] for i in range(len(segs)) ]
+			neighbors = [ [mode_list, tonic_list] for i in range(len(chunk_data)) ]
 		elif(est_tonic):
-			neighbors = [ tonic_list for i in range(len(segs)) ]
+			neighbors = [ tonic_list for i in range(len(chunk_data)) ]
 		elif(est_mode):
-			neighbors = [ mode_list for i in range(len(segs)) ]
+			neighbors = [ mode_list for i in range(len(chunk_data)) ]
 
-		# segment_estimate() generates the distributions of each chunk iteratively,
+		# chunk_estimate() generates the distributions of each chunk iteratively,
 		# then compares it with all candidates and returns min_cnt closest neighbors
 		# of each chunk to neighbors list.
 		for p in range(len(pts)):
-			neighbors[p] = self.segment_estimate(pts[p], mode_names=mode_names,
+			neighbors[p] = self.chunk_estimate(pts[p], mode_names=mode_names,
 				                                 mode_name=mode_name, mode_dir=mode_dir,
 				                                 est_tonic=est_tonic, est_mode=est_mode,
 				                                 distance_method=distance_method,
@@ -349,111 +348,269 @@ class ChordiaEstimation:
 
 		return result
 
-	def segment_estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./',
+	def chunk_estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./',
 		                 est_tonic=True, est_mode=True, distance_method="euclidean",
 		                 metric='pcd', ref_freq=440, min_cnt=3):
-		### Preliminaries before the estimations
+		"""-------------------------------------------------------------------------
+		This function is called by the wrapper estimate() function only. It gets a 
+		pitch track chunk, generates its pitch distribution and compares it with the
+		chunk distributions of the candidate modes. Then, finds the min_cnt nearest
+		neighbors and returns them to estimate(), where these are used to make an
+		estimation about the overall recording.
+		----------------------------------------------------------------------------
+		pitch_track     : Pitch track chunk of the input recording whose tonic and/or
+		                  mode is to be estimated. This is only a 1-D list of frequency
+		                  values.
+		mode_dir        : The directory where the mode models are stored. This is to
+		                  load the annotated mode or the candidate mode.
+		mode_names      : Names of the candidate modes. These are used when loading
+		                  the mode models. If the mode isn't estimated, this parameter
+		                  isn't used and can be ignored.
+		mode_name       : Annotated mode of the recording. If it's not known and to be
+		                  estimated, this parameter isn't used and can be ignored.
+		est_tonic       : Whether tonic is to be estimated or not. If this flag is
+		                  False, ref_freq is treated as the annotated tonic.
+		est_mode        : Whether mode is to be estimated or not. If this flag is
+		                  False, mode_name is treated as the annotated mode.
+		distance_method : The choice of distance methods. See distance() in
+		                  ModeFunctions for more information.
+		metric          : Whether the model should be octave wrapped (Pitch Class
+		                  Distribution: PCD) or not (Pitch Distribution: PD)
+		ref_freq        : Annotated tonic of the recording. If it's unknown, we use
+		                  an arbitrary value, so this can be ignored.
+		min_cnt         : The number of nearest neighbors of the current chunk to be
+		                  returned. The details of this parameter and its implications
+		                  are explained in the first lines of estimate().
+		-------------------------------------------------------------------------"""
+		# Preliminaries before the estimations
+		# Cent-to-Hz covnersion is done and pitch distributions are generated
 		cent_track = mf.hz_to_cent(pitch_track, ref_freq)
 		dist = mf.generate_pd(cent_track, ref_freq=ref_freq,
 			                  smooth_factor=self.smooth_factor, cent_ss=self.cent_ss)
 		dist = mf.generate_pcd(dist) if (metric=='pcd') else dist
-		mode_collections = [self.load_collection(mode, metric, dist_dir=mode_dir) for mode in mode_names]
-		cum_lens = np.cumsum([len(col) for col in mode_collections])
+		# The model mode distribution(s) are loaded. If the mode is annotated and tonic
+		# is to be estimated, only the model of annotated mode is retrieved.
+		mode_collections = [self.load_collection(mode, dist_dir=mode_dir) for mode in mode_names]
 		mode_dists = [d for col in mode_collections for d in col]
-		mode_dist = self.load_collection(mode_name, metric, dist_dir=mode_dir) if (mode_name!='') else None
+		mode_dist = self.load_collection(mode_name, dist_dir=mode_dir) if (mode_name!='') else None
+		# cum_lens (cummulative lengths) keeps track of number of chunks retrieved from
+		# each mode. So that we are able to find out which mode the best performed chunk
+		# belongs to.
+		cum_lens = np.cumsum([len(col) for col in mode_collections])
+		#Initializations of possible output parameters
 		tonic_list = [0 for x in range(min_cnt)]
 		mode_list = ['' for x in range(min_cnt)]
 		min_distance_list = np.zeros(min_cnt)
 
+		# If tonic will be estimated, there are certain common preliminary steps, 
+		# regardless of the process being a joint estimation of a tonic estimation.
 		if(est_tonic):
 			if(metric=='pcd'):
-				### Shifting to the global minima to prevent wrong detection of peaks
+				# This is a precaution step, just to be on the safe side. If there
+				# happens to be a peak at the last (and first due to the circular nature
+				# of PCD) sample, it is considered as two peaks, one at the end and
+				# one at the beginning. To prevent this, we find the global minima
+				# of the distribution and shift it to the beginning, i.e. make it the
+				# new reference frequency. This new reference could have been any other
+				# as long as there is no peak there, but minima is fairly easy to find.
 				shift_factor = dist.vals.tolist().index(min(dist.vals))
 				dist = dist.shift(shift_factor)
+				# anti-freq is the new reference frequency after shift, as mentioned
+				# above.
 				anti_freq = mf.cent_to_hz([dist.bins[shift_factor]], ref_freq=ref_freq)[0]
+				# Peaks of the distribution are found and recorded. These will be treated
+				# as tonic candidates.
 				peak_idxs, peak_vals = dist.detect_peaks()
 			elif(metric=='pd'):
+				# Since PD isn't circular, the precaution in PCD is unnecessary here.
+				# Peaks of the distribution are found and recorded. These will be treated
+				# as tonic candidates.
 				peak_idxs, peak_vals = dist.detect_peaks()
+				# The number of samples to be shifted is the list [peak indices - zero bin]
+				# origin is the bin with value zero and the shifting is done w.r.t. it.
 				origin =  np.where(dist.bins==0)[0][0]
 				shift_idxs = [(idx - origin) for idx in peak_idxs]
 
-		### Call to actual estimation functions
+		# Here the actual estimation steps begin
+
+		#Joint Estimation
+		### TODO: The first steps of joint estimation are very similar for both Bozkurt and
+		### Chordia. We might squeeze them into a single function in ModeFunctions.
 		if(est_tonic and est_mode):
 			if(metric=='pcd'):
+				# PCD doesn't require any prelimimary steps. Generates the distance matrix.
+				# The rows are tonic candidates and columns are mode candidates.
 				dist_mat = mf.generate_distance_matrix(dist, peak_idxs, mode_dists, method=distance_method)
 			elif(metric=='pd'):
+				# Since PD lengths aren't equal, zero padding is required and
+				# tonic_estimate() of ModeFunctions just does that. It can handle only
+				# a single column, so the columns of the matrix are iteratively generated
 				dist_mat = np.zeros((len(shift_idxs), len(mode_dists)))
 				for m in xrange(len(mode_dists)):
 					dist_mat[:,m] = mf.tonic_estimate(dist, shift_idxs, mode_dists[m],
 						                              distance_method=distance_method,
 						                              metric=metric, cent_ss=self.cent_ss)
 
+			# Distance matrix is ready now. Since we need to report min_cnt many
+			# nearest neighbors, the loop is iterated min_cnt times and returns
+			# one neighbor at each iteration, from closest to futher. When first
+			# nearest neighbor is found it's changed to the worst, so in the
+			# next iteration, the nearest would be the second nearest and so on.
 			for r in xrange(min_cnt):
+				# The minima of the distance matrix is found. This is to find
+				# the current nearest neighbor chunk.
 				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
-				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]	
+				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
+				# Due to the precaution step of PCD, the reference frequency is
+				# changed. That's why it's treated differently than PD. Here,
+				# the cent value of the tonic estimate is converted back to Hz.	
 				if(metric=='pcd'):
 					tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_row]]],
 						                          anti_freq)[0]
 				elif(metric=='pd'):
 					tonic_list[r] = mf.cent_to_hz([shift_idxs[min_row] * self.cent_ss],
 						                          ref_freq)[0]
+				# We have found out which chunk is our nearest now. Here, we find out
+				# which mode it belongs to, from cum_lens.
 				mode_list[r] = (mode_names[min(np.where((cum_lens > min_col))[0])],
 					           mode_dists[min_col].source[:-6])
+				# To observe how close these neighbors are, we report their distances.
+				# This doesn't affect the computation at all and it's just for the 
+				# evaluating and understanding the behvaviour of the system. 
 				min_distance_list[r] = dist_mat[min_row][min_col]
+				# The minimum value is replaced with a value larger than maximum,
+				# so we can easily find the second nearest neighbor.
 				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
 			return [[mode_list, tonic_list], min_distance_list.tolist()]
 
+		# Tonic Estimation
 		elif(est_tonic):
+			# This part assigns the special case changes to standard variables,
+			# so that we can treat PD and PCD in the same way, as much as
+			# possible.
 			peak_idxs = shift_idxs if metric=='pd' else peak_idxs
+			anti_freq = ref_freq if metric=='pd' else anti_freq
+
+			# Distance matrix is generated. In the mode_estimate() function
+			# of ModeFunctions, PD and PCD are treated differently and it
+			# handles the special cases such as zero-padding. The mode is
+			# already known, so there is only one mode collection, i.e.
+			# set of chunk distributions that belong to the same mode, to
+			# be compared. Each column is a chunk distribution and each
+			# row is a tonic candidate.
 			dist_mat = [mf.tonic_estimate(dist, peak_idxs, d,
 				                          distance_method=distance_method,
 				                          metric=metric, cent_ss=self.cent_ss) for d in mode_dist]
-			anti_freq = ref_freq if metric=='pd' else anti_freq
 
+			# Distance matrix is ready now. Since we need to report min_cnt many
+			# nearest neighbors, the loop is iterated min_cnt times and returns
+			# one neighbor at each iteration, from closest to futher. When first
+			# nearest neighbor is found it's changed to the worst, so in the
+			# next iteration, the nearest would be the second nearest and so on.
 			for r in xrange(min_cnt):
+				# The minima of the distance matrix is found. This is to find
+				# the current nearest neighbor chunk.
 				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
 				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
+				# The corresponding tonic candidate is found, based on the
+				# current nearest neighbor and it's distance is recorded
 				tonic_list[r] = (mf.cent_to_hz([dist.bins[peak_idxs[min_col]]],
 					                           anti_freq)[0], mode_dists[min_row].source[:-6])
 				min_distance_list[r] = dist_mat[min_row][min_col]
+				# The minimum value is replaced with a value larger than maximum,
+				# so we can easily find the second nearest neighbor.
 				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
 			return [tonic_list, min_distance_list.tolist()]
 
+		# Mode estimation
 		elif(est_mode):
+			# Only in mode estimation, the distance matrix is actually a vector.
+			# Since the tonic is annotated, the distribution isn't shifted and
+			# compared to each chunk distribution of each candidate mode.
+			# Again, mode_estimate() of ModeFunctions handles the different
+			# approach required for PCD and PD.
 			distance_vector = mf.mode_estimate(dist, mode_dists,
 				                               distance_method=distance_method,
 				                               metric=metric, cent_ss=self.cent_ss)
+			
+			# Distance matrix is ready now. Since we need to report min_cnt many
+			# nearest neighbors, the loop is iterated min_cnt times and returns
+			# one neighbor at each iteration, from closest to futher. When first
+			# nearest neighbor is found it's changed to the worst, so in the
+			# next iteration, the nearest would be the second nearest and so on.
 			for r in xrange(min_cnt):
+				# The minima of the distance matrix is found. This is to find
+				# the current nearest neighbor chunk.
 				idx = np.argmin(distance_vector)
+				# We have found out which chunk is our nearest now. Here, we find out
+				# which mode it belongs to, from cum_lens.
 				mode_list[r] = (mode_names[min(np.where((cum_lens > idx))[0])],
 					                                    mode_dists[idx].source[:-6])
+				# The distance of the current nearest neighbors recorded. The details
+				# of this step is explained in the end of the analogous loop in joint
+				# estimation of thşs function.
 				min_distance_list[r] = distance_vector[idx]
+				# The minimum value is replaced with a value larger than maximum,
+				# so we can easily find the second nearest neighbor.
 				distance_vector[idx] = (np.amax(distance_vector) + 1) 
 			return [mode_list, min_distance_list.tolist()]
 
 		else:
 			return 0
 
-	def train_segments(self, pts, seg_tuples, ref_freq, save_dir,
-		               save_name, metric='pcd'):
+	def train_chunks(self, pts, chunk_data, ref_freq, metric='pcd'):
+		"""-------------------------------------------------------------------------
+		Gets the pitch track chunks of a recording, generates its pitch distribution
+		and returns the PitchDistribution objects as a list. This function is called
+		for each of the recordings in the training. The outputs of this function are
+		combined in train() and the resultant mode model is obtained.
+		----------------------------------------------------------------------------
+		pts        : List of pitch tracks of chunks that belong to the same mode.
+		             The pitch distributions of these are iteratively generated to
+		             use as the sample points of the mode model
+		chunk_data : The relevant data about the chunks; source, initial timestamp
+		             and final timestamp. The format is the same as slice() of
+		             ModeFunctions.
+		ref_freq   : Reference frequency to be used in PD/PCD generation. Since this
+		             the training function, this should be the annotated tonic of the
+		             recording
+		metric     : The choice of PCD or PD
+		-------------------------------------------------------------------------"""
 		dist_list = []
+		# Iterates over the pitch tracks of a recording
 		for idx in range(len(pts)):
-			src = seg_tuples[idx][0]
-			interval = (seg_tuples[idx][1], seg_tuples[idx][2])
+			# Retrieves the relevant information about the current chunk
+			src = chunk_data[idx][0]
+			interval = (chunk_data[idx][1], chunk_data[idx][2])
+			# PitchDistribution of the current chunk is generated
 			dist = mf.generate_pd(pts[idx], ref_freq=ref_freq,
 				                  smooth_factor=self.smooth_factor,
 				                  cent_ss=self.cent_ss, source=src,
 				                  segment=interval, overlap=self.overlap)
 			if(metric=='pcd'):
 				dist = mf.generate_pcd(dist)
+			# The resultant pitch distributions are filled in the list to be returned
 			dist_list.append(dist)
 		return dist_list
 
-	def load_collection(self, mode_name, metric, dist_dir='./'):
+	def load_collection(self, mode_name, dist_dir='./'):
+		"""-------------------------------------------------------------------------
+		Since each mode model consists of a list of PitchDistribution objects, the
+		load() function from that class can't be used directly. This function loads
+		JSON files that contain a list of PitchDistribution objects. This is used
+		for retrieving the mode models in the beginning of estimation process.
+		----------------------------------------------------------------------------
+		mode_name : Name of the mode to be loaded. The name of the JSON file is
+		            expected to be "mode_name.json" 
+		dist_dir  : Directory where the JSON file is stored.
+		-------------------------------------------------------------------------"""
 		obj_list = []
 		fname = mode_name + '.json'
 		with open(os.path.join(dist_dir, fname)) as f:
 			dist_list = json.load(f)
+
+		# List of dictionaries is is iterated over to initialize a list of
+		# PitchDistribution objects.
 		for d in dist_list:
 			obj_list.append(p_d.PitchDistribution(np.array(d['bins']),
 				            np.array(d['vals']), kernel_width=d['kernel_width'],
