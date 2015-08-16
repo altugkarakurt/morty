@@ -28,7 +28,7 @@ class BozkurtEstimation:
 	tasks and the other does the estimation once the trainings are completed.
 	-------------------------------------------------------------------------"""
 
-	def __init__(self, cent_ss=7.5, smooth_factor=7.5, chunk_size=0):
+	def __init__(self, cent_ss=7.5, smooth_factor=7.5, chunk_size=0, hop_size=0.0029025):
 		"""------------------------------------------------------------------------
 		These attributes are wrapped as an object since these are used in both 
 		training and estimation stages and must be consistent in both processes.
@@ -41,12 +41,16 @@ class BozkurtEstimation:
 		                entire recording will be used to generate the pitch
 		                distributions. If this is t, then only the first t seconds
 		                of the recording is used only and remaining is discarded.
+		hop_size      : The step size of timestamps of pitch tracks. This is used
+		                for both training and estimating.
 		------------------------------------------------------------------------"""
 		self.smooth_factor = smooth_factor
 		self.cent_ss = cent_ss
 		self.chunk_size = chunk_size
+		self.hop_size = hop_size
 
-	def train(self, mode_name, pt_list, ref_freq_list, pt_dir='./', metric='pcd', save_dir='./'):
+	def train(self, mode_name, pt_list, ref_freq_list, pt_dir='./', metric='pcd',
+		      save_dir='./', hop_size):
 		"""-------------------------------------------------------------------------
 		For the mode trainings, the requirements are a set of recordings with 
 		annotated tonics for each mode under consideration. This function only
@@ -81,15 +85,15 @@ class BozkurtEstimation:
 			# chunk_size == 0 means the recordings aren't going to be sliced and used
 			# as they are.
 			if (self.chunk_size == 0):
-				cur_track = mf.load_track(pt_list[idx], pt_dir)[:,1]
+				cur_track = mf.load_track(pt_list[idx], pt_dir)
 				cur_cent_track = mf.hz_to_cent(cur_track, ref_freq=ref_freq_list[idx])
 				joint_seg = 'all'
 
 			# if slicing is desired, the pieces are sliced and only the first chunk
 			# is used.
 			else:
-				tmp_track = mf.load_track(pt_list[idx], pt_dir)[:,1]
-				time_track = mf.load_track(pt_list[idx], pt_dir)[:,0]
+				tmp_track = mf.load_track(pt_list[idx], pt_dir)
+				time_track = np.arange(0, (self.hop_size*len(tmp_track)), self.hop_size)
 				cur_track, segs = mf.slice(time_track, tmp_track, mode_name, self.chunk_size)
 				cur_cent_track = mf.hz_to_cent(cur_track[0], ref_freq=ref_freq_list[idx])
 				joint_seg = (segs[0][1], segs[0][2])
@@ -105,7 +109,7 @@ class BozkurtEstimation:
 		# Mode model is saved.
 		joint_dist.save((mode_name + '.json'), save_dir=save_dir)
 
-	def estimate(self, pitch_track, time_track, mode_names=[], mode_name='', mode_dir='./',
+	def estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./',
 		         est_tonic=True, est_mode=True, rank=1, distance_method="euclidean",
 		         metric='pcd', ref_freq=440):
 		"""-------------------------------------------------------------------------
@@ -134,8 +138,6 @@ class BozkurtEstimation:
 		pitch_track     : Pitch track of the input recording whose tonic and/or mode
 		                  is to be estimated. This is only a 1-D list of frequency
 		                  values.
-		time_track      : The timestamps of the pitch track. This is only used for
-		                  slicing.
 		mode_dir        : The directory where the mode models are stored. This is to
 		                  load the annotated mode or the candidate mode.
 		mode_names      : Names of the candidate modes. These are used when loading
@@ -163,6 +165,7 @@ class BozkurtEstimation:
 		# Pitch track of the input recording is (first sliced if necessary) converted
 		# to cents.
 		if (self.chunk_size > 0):
+			time_track = np.arange(0, (hop_size*len(pitch_track), self.hop_size))
 			cur_track, segs = mf.slice(time_track, pitch_track, mode_name, self.chunk_size)
 			cent_track = mf.hz_to_cent(cur_track[0], ref_freq=ref_freq)
 		else:

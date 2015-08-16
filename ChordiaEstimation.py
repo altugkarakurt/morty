@@ -28,7 +28,7 @@ class ChordiaEstimation:
 	-------------------------------------------------------------------------"""
 
 	def __init__(self, cent_ss=7.5, smooth_factor=7.5, chunk_size=60,
-		         threshold=0.5, overlap=0):
+		         threshold=0.5, overlap=0, hop_size=0.0029025):
 		"""------------------------------------------------------------------------
 		These attributes are wrapped as an object since these are used in both 
 		training and estimation stages and must be consistent in both processes.
@@ -50,12 +50,15 @@ class ChordiaEstimation:
 		overlap       : If it's zero, the next chunk starts from the end of the
 		                previous chunk, else it starts from the
 		                (chunk_size*threshold)th sample of the previous chunk.
+		hop_size      : The step size of timestamps of pitch tracks. This is used
+		                for both training and estimating.
 		------------------------------------------------------------------------"""
 		self.cent_ss = cent_ss
 		self.overlap = overlap
 		self.smooth_factor = smooth_factor
 		self.chunk_size = chunk_size
 		self.threshold = threshold
+		self.hop_size = hop_size
 
 	def train(self, mode_name, pt_list, ref_freq_list, metric='pcd',
 		      save_dir='./', pt_dir='./'):
@@ -90,9 +93,8 @@ class ChordiaEstimation:
 		# so we assume that the tonic doesn't change throughout a recording.
 		for pt in range(len(pt_list)):
 			# Pitch track is loaded from local directory
-			cur = mf.load_track(pt_list[pt], pt_dir)
-			time_track = cur[:,0]
-			pitch_track = cur[:,1]
+			pitch_track = mf.load_track(pt_list[pt], pt_dir)
+			time_track = np.arange(0, (hop_size*len(pitch_track)), self.hop_size)
 			# Current pitch track is sliced into chunks.
 			pts, chunk_data = mf.slice(time_track, pitch_track, pt_list[pt],
 				                 self.chunk_size, self.threshold, self.overlap)
@@ -120,7 +122,7 @@ class ChordiaEstimation:
 			json.dump(dist_json, f, indent=2)
 			f.close()
 
-	def estimate(self, pitch_track, time_track, mode_names=[], mode_name='',
+	def estimate(self, pitch_track, mode_names=[], mode_name='',
 		         mode_dir='./', est_tonic=True, est_mode=True,
 		         distance_method="euclidean", metric='pcd', ref_freq=440,
 		         k_param=1):
@@ -153,9 +155,6 @@ class ChordiaEstimation:
 		----------------------------------------------------------------------------
 		pitch_track     : Pitch track of the input recording whose tonic and/or mode
 		                  is to be estimated. This is only a 1-D list of frequency
-		                  values.
-		time_track      : The timestamps of the pitch track. This is only used for
-		                  slicing.
 		mode_dir        : The directory where the mode models are stored. This is to
 		                  load the annotated mode or the candidate mode.
 		mode_names      : Names of the candidate modes. These are used when loading
@@ -176,6 +175,7 @@ class ChordiaEstimation:
 		                  an arbitrary value, so this can be ignored.
 		-------------------------------------------------------------------------"""
 		# Pitch track is sliced into chunks.
+		time_track = np.arange(0, (self.hop_size*len(pitch_track)), self.hop_size)
 		pts, chunk_data = mf.slice(time_track, pitch_track, 'input', self.chunk_size,
 			                 self.threshold, self.overlap)
 
