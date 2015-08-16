@@ -123,9 +123,10 @@ for fold in fold_list:
 			pitch_track = mf.load_track(txt_name=(recording['mbid'] + '.pitch'), 
 				                        txt_dir=pitch_track_dir)
 			init_time = time.time()
-			cur_out = estimator.estimate(pitch_track[:,1], pitch_track[:,0], 
-						mode_names=makam_list, est_tonic=False, est_mode=True, k_param=k_param,
-						distance_method=distance, metric=distribution_type, mode_dir=fold_dir, ref_freq=recording['tonic'])
+			cur_out = estimator.estimate(pitch_track, mode_names=makam_list,
+				        est_tonic=False, est_mode=True, k_param=k_param,
+						distance_method=distance, metric=distribution_type,
+						mode_dir=fold_dir, ref_freq=recording['tonic'])
 			end_time = time.time()
 			elapsed = (round((end_time - init_time) * 100) / 100)
 			print elapsed

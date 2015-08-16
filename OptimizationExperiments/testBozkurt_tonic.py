@@ -102,9 +102,8 @@ def run(distance_inp, training_i):
 
 				pitch_track = mf.load_track(txt_name=(recording['mbid'] + '.pitch'), 
 					                        txt_dir=pitch_track_dir)
-				cur_out = estimator.estimate(pitch_track[:,1], pitch_track[:,0], 
-							mode_name=recording['makam'], est_tonic=True, est_mode=False, 
-							rank=rank, distance_method=distance, 
+				cur_out = estimator.estimate(pitch_track, mode_name=recording['makam'],
+					        est_tonic=True, est_mode=False, rank=rank, distance_method=distance, 
 							metric=distribution_type, mode_dir=fold_dir)
 
 				output[('Fold' + str(fold))].append({'mbid':recording['mbid'], 'tonic_estimation':cur_out})
