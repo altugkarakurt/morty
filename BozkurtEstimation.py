@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import maths
+import math
 import ModeFunctions as mf
 import PitchDistribution as p_d
 
@@ -50,7 +50,7 @@ class BozkurtEstimation:
 		self.hop_size = hop_size
 
 	def train(self, mode_name, pt_list, ref_freq_list, pt_dir='./', metric='pcd',
-		      save_dir='./', hop_size):
+		      save_dir='./'):
 		"""-------------------------------------------------------------------------
 		For the mode trainings, the requirements are a set of recordings with 
 		annotated tonics for each mode under consideration. This function only
@@ -165,7 +165,7 @@ class BozkurtEstimation:
 		# Pitch track of the input recording is (first sliced if necessary) converted
 		# to cents.
 		if (self.chunk_size > 0):
-			time_track = np.arange(0, (hop_size*len(pitch_track), self.hop_size))
+			time_track = np.arange(0, (self.hop_size*len(pitch_track), self.hop_size))
 			cur_track, segs = mf.slice(time_track, pitch_track, mode_name, self.chunk_size)
 			cent_track = mf.hz_to_cent(cur_track[0], ref_freq=ref_freq)
 		else:

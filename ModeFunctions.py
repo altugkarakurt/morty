@@ -206,26 +206,26 @@ def distance(vals_1, vals_2, method='euclidean'):
 	corr         : Correlation
 	-------------------------------------------------------------------------"""
 	if (method == 'euclidean'):
-		return sp.spatial.distance.euclidean(piece.vals, trained.vals)
+		return sp.spatial.distance.euclidean(vals_1, vals_2)
 
 	elif (method == 'manhattan'):
-		return sp.spatial.distance.minkowski(piece.vals, trained.vals, 1)
+		return sp.spatial.distance.minkowski(vals_1, vals_2, 1)
 
 	elif (method == 'l3'):
-		return sp.spatial.distance.minkowski(piece.vals, trained.vals, 3)
+		return sp.spatial.distance.minkowski(vals_1, vals_2, 3)
 
 	elif (method == 'bhat'):
-		return -math.log(sum(np.sqrt(piece.vals * trained.vals)))
+		return -math.log(sum(np.sqrt(vals_1 * vals_2)))
 
 	# Since correlation and intersection are actually similarity measures,
 	# we take their inverse to be able to use them as distances. In other
 	# words, max. similarity would give the min. inverse and we are always
 	# looking for minimum distances.
 	elif (method == 'intersection'):
-		return len(piece.vals) / (sum(np.minimum(piece.vals, trained.vals)))
+		return len(piece.vals) / (sum(np.minimum(vals_1, vals_2)))
 
 	elif (method == 'corr'):
-		return 1.0 - np.correlate(piece.vals, trained.vals)
+		return 1.0 - np.correlate(vals_1, vals_2)
 
 	else:
 		return 0
@@ -239,7 +239,7 @@ def pd_zero_pad(pd, mode_pd, cent_ss=7.5):
 	----------------------------------------------------------------------------
 	pd      : Input pd
 	mode_pd : pd of the candidate mode
-    -------------------------------------------------------------------------"""
+	-------------------------------------------------------------------------"""
 
 	# The padding process requires the two bin lists to have an intersection. 
 	# This is ensured by the generate_pd function, since we enforce all pds to
@@ -305,7 +305,7 @@ def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean", metr
 
 
 def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', cent_ss=7.5):
-    """-------------------------------------------------------------------------
+	"""-------------------------------------------------------------------------
 	Compares the recording's distribution with each candidate mode with respect
 	to the given tonic and returns the resultant distance vector to higher level
 	functions. Here the input distribution is expected to be aligned according to
@@ -345,7 +345,7 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', c
 
 
 def slice(time_track, pitch_track, pt_source, chunk_size, threshold=0.5, overlap=0):
-    """-------------------------------------------------------------------------
+	"""-------------------------------------------------------------------------
 	Slices a pitch track into equal chunks of desired length.
 	----------------------------------------------------------------------------
 	time_track  : The timestamps of the pitch track. This is used to determine
