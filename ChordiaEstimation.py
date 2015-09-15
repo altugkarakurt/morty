@@ -218,7 +218,7 @@ class ChordiaEstimation:
 		### are quite repetitive. Wrap them up with a separate function.
 
 		# Temporary variables used during the desicion making part.
-		candidate_distances, candidate_ests, candidate_sources, kn_distances, kn_ests,
+		candidate_distances, candidate_ests, candidate_sources, kn_distances, kn_ests, \
 		kn_sources, idx_counts, elem_counts, res_distances, res_sources = ([] for i in range(10))
 
 		# Joint estimation decision making. 
@@ -515,7 +515,7 @@ class ChordiaEstimation:
 				# The corresponding tonic candidate is found, based on the
 				# current nearest neighbor and it's distance is recorded
 				tonic_list[r] = (mf.cent_to_hz([dist.bins[peak_idxs[min_col]]],
-					                           anti_freq)[0], mode_dists[min_row].source[:-6])
+					                           anti_freq)[0], mode_dist[min_row].source[:-6])
 				min_distance_list[r] = dist_mat[min_row][min_col]
 				# The minimum value is replaced with a value larger than maximum,
 				# so we can easily find the second nearest neighbor.
