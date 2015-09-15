@@ -206,26 +206,26 @@ def distance(vals_1, vals_2, method='euclidean'):
 	corr         : Correlation
 	-------------------------------------------------------------------------"""
 	if (method == 'euclidean'):
-		return sp.spatial.distance.euclidean(piece.vals, trained.vals)
+		return sp.spatial.distance.euclidean(vals_1, vals_2)
 
 	elif (method == 'manhattan'):
-		return sp.spatial.distance.minkowski(piece.vals, trained.vals, 1)
+		return sp.spatial.distance.minkowski(vals_1, vals_2, 1)
 
 	elif (method == 'l3'):
-		return sp.spatial.distance.minkowski(piece.vals, trained.vals, 3)
+		return sp.spatial.distance.minkowski(vals_1, vals_2, 3)
 
 	elif (method == 'bhat'):
-		return -math.log(sum(np.sqrt(piece.vals * trained.vals)))
+		return -math.log(sum(np.sqrt(vals_1 * vals_2)))
 
 	# Since correlation and intersection are actually similarity measures,
 	# we take their inverse to be able to use them as distances. In other
 	# words, max. similarity would give the min. inverse and we are always
 	# looking for minimum distances.
 	elif (method == 'intersection'):
-		return len(piece.vals) / (sum(np.minimum(piece.vals, trained.vals)))
+		return len(piece.vals) / (sum(np.minimum(vals_1, vals_2)))
 
 	elif (method == 'corr'):
-		return 1.0 - np.correlate(piece.vals, trained.vals)
+		return 1.0 - np.correlate(vals_1, vals_2)
 
 	else:
 		return 0
