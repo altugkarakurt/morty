@@ -239,7 +239,7 @@ def pd_zero_pad(pd, mode_pd, cent_ss=7.5):
 	----------------------------------------------------------------------------
 	pd      : Input pd
 	mode_pd : pd of the candidate mode
-    -------------------------------------------------------------------------"""
+	-------------------------------------------------------------------------"""
 
 	# The padding process requires the two bin lists to have an intersection. 
 	# This is ensured by the generate_pd function, since we enforce all pds to
@@ -305,7 +305,7 @@ def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean", metr
 
 
 def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', cent_ss=7.5):
-    """-------------------------------------------------------------------------
+	"""-------------------------------------------------------------------------
 	Compares the recording's distribution with each candidate mode with respect
 	to the given tonic and returns the resultant distance vector to higher level
 	functions. Here the input distribution is expected to be aligned according to
@@ -345,7 +345,7 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', c
 
 
 def slice(time_track, pitch_track, pt_source, chunk_size, threshold=0.5, overlap=0):
-    """-------------------------------------------------------------------------
+	"""-------------------------------------------------------------------------
 	Slices a pitch track into equal chunks of desired length.
 	----------------------------------------------------------------------------
 	time_track  : The timestamps of the pitch track. This is used to determine
