@@ -222,7 +222,7 @@ def distance(vals_1, vals_2, method='euclidean'):
 	# words, max. similarity would give the min. inverse and we are always
 	# looking for minimum distances.
 	elif (method == 'intersection'):
-		return len(piece.vals) / (sum(np.minimum(vals_1, vals_2)))
+		return len(vals_1) / (sum(np.minimum(vals_1, vals_2)))
 
 	elif (method == 'corr'):
 		return 1.0 - np.correlate(vals_1, vals_2)

@@ -94,7 +94,7 @@ class ChordiaEstimation:
 		for pt in range(len(pt_list)):
 			# Pitch track is loaded from local directory
 			pitch_track = mf.load_track(pt_list[pt], pt_dir)
-			time_track = np.arange(0, (hop_size*len(pitch_track)), self.hop_size)
+			time_track = np.arange(0, (self.hop_size*len(pitch_track)), self.hop_size)
 			# Current pitch track is sliced into chunks.
 			pts, chunk_data = mf.slice(time_track, pitch_track, pt_list[pt],
 				                 self.chunk_size, self.threshold, self.overlap)
