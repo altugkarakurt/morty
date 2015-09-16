@@ -3,7 +3,7 @@ import json
 import numpy as np
 import ModeFunctions as mf
 
-class Evaluater:
+class Evaluator:
 
 	def __init__(self, tonic_tolerance=25):
 		self.tolerance = tonic_tolerance

@@ -7,7 +7,7 @@ from scipy import io
 import pdb
 import scipy
 sys.path.insert(0, './../')
-import Evaluater as ev
+import Evaluator as ev
 
 #-----------------------------Parameters-----------------------------------
 test_types = ['Tonic', 'Mode']
@@ -22,7 +22,7 @@ with open('annotations.json', 'r') as f:
 	annot = json.load(f)
 	f.close()
 
-evaluater = ev.Evaluater()
+evaluater = ev.Evaluator()
 experiment_dir = os.path.join('ChordiaExperiments')
 
 for t in range(1,49):
