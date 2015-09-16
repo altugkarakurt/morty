@@ -81,7 +81,7 @@ class BozkurtEstimation:
 		# Normalize the pitch tracks of the mode wrt the tonic frequency and concatenate
 		mode_track = []
 		for pf, tonic in zip(pt_files, tonic_freqs):
-			pitch_track = np.loadtxt(os.path.join(pf))
+			pitch_track = np.loadtxt(pf)
 
 			if self.chunk_size == 0:  # use the complete pitch track
 				cur_cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic)
@@ -180,7 +180,7 @@ class BozkurtEstimation:
 		mode_list = [('', 0) for x in range(rank)]
 
 		# If tonic will be estimated, there are certain common preliminary steps, 
-		# regardless of the process being a joint estimation of a tonic estimation.
+		# regardless of the process being a joint estimation or a tonic estimation.
 		if (est_tonic):
 			if (metric == 'pcd'):
 				# This is a precaution step, just to be on the safe side. If there
