@@ -3,11 +3,6 @@ import os
 from extras import fileOperations
 from sklearn import cross_validation
 
-def load_fold(fold_name):
-	with open(fold_name, 'r') as f:
-		res = json.load(f)
-	return res
-
 def stratified_fold(data_dir, n_folds = 10, savefile = ''):
 	modes = fileOperations.getModeNames(data_dir)
 	[filepaths, basefolders, filenames] = fileOperations.getFileNamesInDir(data_dir, extension='.pitch')
