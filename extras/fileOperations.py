@@ -11,6 +11,9 @@ def getFileNamesInDir(dir_name, extension = '.mp3', skip_foldername = ''):
 		print "> Directory doesn't exist!"
 		return [], [], []
 
+	# if the dir_name finishes with the file separator, remove it so os.walk works properly
+	dir_name = dir_name[:-1] if dir_name[-1] == os.sep else dir_name
+
 	# walk all the subdirectories
 	for (path, dirs, files) in os.walk(dir_name):
 		for f in files:

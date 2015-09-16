@@ -6,15 +6,16 @@ import json
 import math
 import numpy as np
 
-def batch_extract_melody(audioDir):
+
+def batch_extract_melody(audioDir, extension='.mp3'):
 	extractor = pitch.PitchExtractMakam()
 
-	audioFiles = getFileNamesInDir(audioDir, extension=".wav")[0]
+	audioFiles = getFileNamesInDir(audioDir, extension=extension)[0]
 	txtfiles = [os.path.splitext(f)[0] + '.txt' for f in audioFiles]  # ooutput files
 
 	for ii, audio in enumerate(audioFiles):
 		print ' '
-		print str(ii+1) + ": " + os.path.basename(audio)
+		print str(ii + 1) + ": " + os.path.basename(audio)
 
 		results = extractor.run(audio)
 		melody = np.array(json.loads(results['pitch']))[:, 1]
