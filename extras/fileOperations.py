@@ -25,3 +25,11 @@ def getFileNamesInDir(dir_name, extension = '.mp3', skip_foldername = ''):
 
 	print "> Found " + str(len(names)) + " files."
 	return fullnames, folders, names
+
+def getModeNames(data_dir):
+	# check if the folder exists
+	if not os.path.isdir(data_dir):
+		print "> Directory doesn't exist!"
+		return []
+
+	return [x[1] for x in os.walk(data_dir)][0]
