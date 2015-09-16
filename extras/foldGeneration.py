@@ -16,11 +16,11 @@ def stratified_fold(data_dir, n_folds=10, savefile=''):
 
 	folds = dict()
 	for ff, fold in enumerate(skf):
-		folds['fold' + str(ff)] = {'train_set': [], 'test_set': []}
+		folds['fold' + str(ff)] = {'train': [], 'test': []}
 		for tr_idx in fold[0]:
-			folds['fold' + str(ff)]['train_set'].append({'file': filepaths[tr_idx], 'mode': filemodes[tr_idx]})
+			folds['fold' + str(ff)]['train'].append({'file': filepaths[tr_idx], 'mode': filemodes[tr_idx]})
 		for te_idx in fold[1]:
-			folds['fold' + str(ff)]['test_set'].append({'file': filepaths[te_idx], 'mode': filemodes[te_idx]})
+			folds['fold' + str(ff)]['test'].append({'file': filepaths[te_idx], 'mode': filemodes[te_idx]})
 
 	# save the folds to a file if specified
 	if savefile:
