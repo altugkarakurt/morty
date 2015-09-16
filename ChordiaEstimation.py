@@ -50,8 +50,10 @@ class ChordiaEstimation:
 		overlap       : If it's zero, the next chunk starts from the end of the
 		                previous chunk, else it starts from the
 		                (chunk_size*threshold)th sample of the previous chunk.
-		hop_size      : The step size of timestamps of pitch tracks. This is used
-		                for both training and estimating.
+		frame_rate      : The step size of timestamps of pitch tracks. Default is
+						(128 = hopSize of the pitch extractor in pycompmusic)
+						divided by 44100 audio sampling frequency. This is used
+						to slice the pitch tracks according to the given chunk_size.
 		------------------------------------------------------------------------"""
 		self.cent_ss = cent_ss
 		self.overlap = overlap

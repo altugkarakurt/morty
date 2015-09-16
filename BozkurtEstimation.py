@@ -29,7 +29,7 @@ class BozkurtEstimation:
 	tasks and the other does the estimation once the trainings are completed.
 	-------------------------------------------------------------------------"""
 
-	def __init__(self, cent_ss=7.5, smooth_factor=7.5, chunk_size=0, hop_size=0.0029025):
+	def __init__(self, cent_ss=7.5, smooth_factor=7.5, chunk_size=0, frame_rate=128.0/44110):
 		"""------------------------------------------------------------------------
 		These attributes are wrapped as an object since these are used in both 
 		training and estimation stages and must be consistent in both processes.
@@ -42,13 +42,15 @@ class BozkurtEstimation:
 						entire recording will be used to generate the pitch
 						distributions. If this is t, then only the first t seconds
 						of the recording is used only and remaining is discarded.
-		hop_size      : The step size of timestamps of pitch tracks. This is used
-						for both training and estimating.
+		frame_rate     : The frame rate of the pitch tracks. Default is
+						(128 = hopSize of the pitch extractor in pycompmusic)
+						divided by 44100 audio sampling frequency. This is used
+						to slice the pitch tracks according to the given chunk_size.
 		------------------------------------------------------------------------"""
 		self.smooth_factor = smooth_factor
 		self.cent_ss = cent_ss
 		self.chunk_size = chunk_size
-		self.hop_size = hop_size
+		self.frame_rate = frame_rate
 
 	def train(self, mode_name, pt_files, tonic_freqs, metric='pcd', save_dir=''):
 		"""-------------------------------------------------------------------------
@@ -86,7 +88,7 @@ class BozkurtEstimation:
 			if self.chunk_size == 0:  # use the complete pitch track
 				cur_cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic)
 			else:  # slice and used the start of the pitch track
-				time_track = np.arange(0, self.hop_size * len(pitch_track), self.hop_size)
+				time_track = np.arange(0, self.frame_rate * len(pitch_track), self.frame_rate)
 				pitch_track, segs = mf.slice(time_track, pitch_track, mode_name, self.chunk_size)
 				cur_cent_track = mf.hz_to_cent(pitch_track[0], ref_freq=tonic)
 
@@ -164,7 +166,7 @@ class BozkurtEstimation:
 		# Pitch track of the input recording is (first sliced if necessary) converted
 		# to cents.
 		if (self.chunk_size > 0):
-			time_track = np.arange(0, (self.hop_size * len(pitch_track), self.hop_size))
+			time_track = np.arange(0, (self.frame_rate * len(pitch_track), self.frame_rate))
 			cur_track, segs = mf.slice(time_track, pitch_track, mode_name, self.chunk_size)
 			cent_track = mf.hz_to_cent(cur_track[0], ref_freq=ref_freq)
 		else:
