@@ -6,7 +6,7 @@ import json
 import math
 import numpy as np
 
-def batch_melody_extract(audioDir):
+def batch_extract_melody(audioDir):
 	extractor = pitch.PitchExtractMakam()
 
 	audioFiles = getFileNamesInDir(audioDir, extension=".wav")[0]
