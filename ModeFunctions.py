@@ -8,20 +8,7 @@ from scipy.spatial import distance
 
 import PitchDistribution as p_d
 
-
-def load_track(txt_name, txt_dir):
-	"""-------------------------------------------------------------------------
-	Loads the pitch track from a text file. 0th column is the time-stamps and
-	1st column is the corresponding frequency values. To retrieve only the freq.
-	values, use [:,1] and for timestamps use [:,0] to the returned matrix.
-	----------------------------------------------------------------------------
-	txt_name: Name of the txt file
-	txt_dir:  Directory of the txt file
-	-------------------------------------------------------------------------"""
-	return np.loadtxt(os.path.join(txt_dir, txt_name))
-
-
-def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5,
+def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 				source='', segment='all', overlap='-'):
 	"""-------------------------------------------------------------------------
 	Given the pitch track in the unit of cents, generates the Pitch Distribution
@@ -34,7 +21,7 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5,
 	                recorded in the PitchDistribution object.
 	smooth_factor:  The standard deviation of the gaussian kernel, used in Kernel
 	                Density Estimation. If 0, no smoothing is applied.
-	cent_ss:        The step size of the Pitch Distribution bins.
+	step_size:        The step size of the Pitch Distribution bins.
 	source:	        The source information (i.e. recording name/id) to be stored
 	                in PitchDistribution object.
 	segment:        Stores which part of the recording, the distribution belongs
@@ -66,12 +53,12 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5,
 		max_bin = (max(cent_track) + (smooth_factor - (max(cent_track) % smooth_factor))) + (5 * smooth_factor)
 		
 		# Generates pitch distribution bins. We make sure it crosses from 0
-		pd_bins = np.concatenate([np.arange(0, min_bin, -cent_ss)[::-1],
-								 np.arange(cent_ss, max_bin, cent_ss)])
+		pd_bins = np.concatenate([np.arange(0, min_bin, -step_size)[::-1],
+								 np.arange(step_size, max_bin, step_size)])
 		
 		# An exceptional case is when min_bin and max_bin are both positive
 		# In this case, the 1st array will be empty, generating pd_bins in the
-		# range of [cent_ss, max_bin]. If so, a 0 is inserted to the head.
+		# range of [step_size, max_bin]. If so, a 0 is inserted to the head.
 		pd_bins = pd_bins if (0 in pd_bins) else np.insert(pd_bins, 0, 0)
 		
 		# Generates the kernel density estimate and evaluates it on pd_bins
@@ -82,18 +69,18 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, cent_ss=7.5,
 	else:
 		# Finds the endpoints of the histogram edges. Histogram bins will be
 		# generated as the midpoints of these edges. 
-		min_edge = min(cent_track) - (cent_ss / 2.0)
-		max_edge = max(cent_track) + (cent_ss / 2.0)
-		pd_edges = np.concatenate([np.arange(-cent_ss/2.0, min_edge, -cent_ss)[::-1],
-								   np.arange(cent_ss/2.0, max_edge, cent_ss)])
+		min_edge = min(cent_track) - (step_size / 2.0)
+		max_edge = max(cent_track) + (step_size / 2.0)
+		pd_edges = np.concatenate([np.arange(-step_size/2.0, min_edge, -step_size)[::-1],
+								   np.arange(step_size/2.0, max_edge, step_size)])
 
 		# An exceptional case is when min_bin and max_bin are both positive
-		# In this case, pd_edges would be in the range of [cent_ss/2, max_bin].
-		# If so, a -cent_ss is inserted to the head, to make sure 0 would be
+		# In this case, pd_edges would be in the range of [step_size/2, max_bin].
+		# If so, a -step_size is inserted to the head, to make sure 0 would be
 		# in pd_bins. The same procedure is repeated for the case when both
-		# are negative. Then, cent_ss is inserted to the tail.
-		pd_edges = pd_edges if -cent_ss/2.0 in pd_edges else np.insert(pd_edges, 0, (-cent_ss/2.0))
-		pd_edges = pd_edges if cent_ss/2.0 in pd_edges else np.append(pd_edges, (cent_ss/2.0))
+		# are negative. Then, step_size is inserted to the tail.
+		pd_edges = pd_edges if -step_size/2.0 in pd_edges else np.insert(pd_edges, 0, (-step_size/2.0))
+		pd_edges = pd_edges if step_size/2.0 in pd_edges else np.append(pd_edges, (step_size/2.0))
 
 		# Generates the histogram and bins (i.e. the midpoints of edges)
 		pd_vals, pd_edges = np.histogram(cent_track, bins=pd_edges, density=True)
@@ -231,7 +218,7 @@ def distance(vals_1, vals_2, method='euclidean'):
 		return 0
 
 
-def pd_zero_pad(pd, mode_pd, cent_ss=7.5):
+def pd_zero_pad(pd, mode_pd, step_size=7.5):
 	"""-------------------------------------------------------------------------
 	This function is only used in tonic detection with pd. If necessary, it zero
 	pads the distributions from both sides, to make them of the same length. The
@@ -264,7 +251,7 @@ def pd_zero_pad(pd, mode_pd, cent_ss=7.5):
 	return pd, mode_pd
 
 
-def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean", metric='pcd', cent_ss=7.5):
+def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean", metric='pcd', step_size=7.5):
 	"""-------------------------------------------------------------------------
 	Given a mode (or candidate mode), compares the piece's distribution with 
 	each candidate tonic and returns the resultant distance vector to higher
@@ -278,10 +265,10 @@ def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean", metr
 	distance_method : The choice of distance method. See the full list at
 	                  distance()
 	metric          : Whether PCD or PD is used
-	cent_ss         : The step-size of the pitch distribution. Unit is cents
+	step_size         : The step-size of the pitch distribution. Unit is cents
 	-------------------------------------------------------------------------"""
 
-	#TODO: cent_ss and pd/pcd information can be retrieved from the dist object
+	#TODO: step_size and pd/pcd information can be retrieved from the dist object
 	#try and test that
 
 	# There are no preliminaries, simply generate the distance vector
@@ -294,9 +281,9 @@ def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean", metr
 		# internals before the following steps.
 		temp = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source,
 		                             ref_freq=dist.ref_freq, segment=dist.segmentation)
-		temp, mode_dist = pd_zero_pad(temp, mode_dist, cent_ss=cent_ss)
+		temp, mode_dist = pd_zero_pad(temp, mode_dist, step_size=step_size)
 
-		# Fils both sides of distribution values with zeros, to make sure
+		# Fills both sides of distribution values with zeros, to make sure
 		# that the shifts won't drop any non-zero values
 		temp.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), temp.vals, np.zeros(abs(min(peak_idxs)))))
 		mode_dist.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), mode_dist.vals, np.zeros(abs(min(peak_idxs)))))
@@ -304,7 +291,7 @@ def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean", metr
 		return np.array(generate_distance_matrix(temp, peak_idxs, [mode_dist], method=distance_method))[:, 0]
 
 
-def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', cent_ss=7.5):
+def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', step_size=7.5):
 	"""-------------------------------------------------------------------------
 	Compares the recording's distribution with each candidate mode with respect
 	to the given tonic and returns the resultant distance vector to higher level
@@ -319,10 +306,10 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', c
 	distance_method : The choice of distance method. See the full list at
 	                  distance()
 	metric          : Whether PCD or PD is used
-	cent_ss         : The step-size of the pitch distribution. Unit is cents
+	step_size         : The step-size of the pitch distribution. Unit is cents
 	-------------------------------------------------------------------------"""
 
-	#TODO: cent_ss and pd/pcd information can be retrieved from the dist object
+	#TODO: step_size and pd/pcd information can be retrieved from the dist object
 	#try and test that
 
 	# There are no preliminaries, simply generate the distance vector.
@@ -339,7 +326,7 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', c
 		for i in range(len(mode_dists)):
 			trial = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width,
 				                          source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
-			trial, mode_trial = pd_zero_pad(trial, mode_dists[i], cent_ss=cent_ss)
+			trial, mode_trial = pd_zero_pad(trial, mode_dists[i], step_size=step_size)
 			distance_vector[i] = distance(trial, mode_trial, method=distance_method)
 	return distance_vector
 

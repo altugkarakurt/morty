@@ -27,13 +27,13 @@ class ChordiaEstimation:
 	recording. 
 	-------------------------------------------------------------------------"""
 
-	def __init__(self, cent_ss=7.5, smooth_factor=7.5, chunk_size=60,
+	def __init__(self, step_size=7.5, smooth_factor=7.5, chunk_size=60,
 		         threshold=0.5, overlap=0, hop_size=0.0029025):
 		"""------------------------------------------------------------------------
 		These attributes are wrapped as an object since these are used in both 
 		training and estimation stages and must be consistent in both processes.
 		---------------------------------------------------------------------------
-		cent_ss       : Step size of the distribution bins
+		step_size       : Step size of the distribution bins
 		smooth_factor : Std. deviation of the gaussian kernel used to smoothen the
 		                distributions. For further details, see generate_pd() of
 		                ModeFunctions.
@@ -55,7 +55,7 @@ class ChordiaEstimation:
 						divided by 44100 audio sampling frequency. This is used
 						to slice the pitch tracks according to the given chunk_size.
 		------------------------------------------------------------------------"""
-		self.cent_ss = cent_ss
+		self.step_size = step_size
 		self.overlap = overlap
 		self.smooth_factor = smooth_factor
 		self.chunk_size = chunk_size
@@ -388,7 +388,7 @@ class ChordiaEstimation:
 		# Cent-to-Hz covnersion is done and pitch distributions are generated
 		cent_track = mf.hz_to_cent(pitch_track, ref_freq)
 		dist = mf.generate_pd(cent_track, ref_freq=ref_freq,
-			                  smooth_factor=self.smooth_factor, cent_ss=self.cent_ss)
+			                  smooth_factor=self.smooth_factor, step_size=self.step_size)
 		dist = mf.generate_pcd(dist) if (metric=='pcd') else dist
 		# The model mode distribution(s) are loaded. If the mode is annotated and tonic
 		# is to be estimated, only the model of annotated mode is retrieved.
@@ -451,7 +451,7 @@ class ChordiaEstimation:
 				for m in xrange(len(mode_dists)):
 					dist_mat[:,m] = mf.tonic_estimate(dist, shift_idxs, mode_dists[m],
 						                              distance_method=distance_method,
-						                              metric=metric, cent_ss=self.cent_ss)
+						                              metric=metric, step_size=self.step_size)
 
 			# Distance matrix is ready now. Since we need to report min_cnt many
 			# nearest neighbors, the loop is iterated min_cnt times and returns
@@ -470,7 +470,7 @@ class ChordiaEstimation:
 					tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_row]]],
 						                          anti_freq)[0]
 				elif(metric=='pd'):
-					tonic_list[r] = mf.cent_to_hz([shift_idxs[min_row] * self.cent_ss],
+					tonic_list[r] = mf.cent_to_hz([shift_idxs[min_row] * self.step_size],
 						                          ref_freq)[0]
 				# We have found out which chunk is our nearest now. Here, we find out
 				# which mode it belongs to, from cum_lens.
@@ -502,7 +502,7 @@ class ChordiaEstimation:
 			# row is a tonic candidate.
 			dist_mat = [mf.tonic_estimate(dist, peak_idxs, d,
 				                          distance_method=distance_method,
-				                          metric=metric, cent_ss=self.cent_ss) for d in mode_dist]
+				                          metric=metric, step_size=self.step_size) for d in mode_dist]
 
 			# Distance matrix is ready now. Since we need to report min_cnt many
 			# nearest neighbors, the loop is iterated min_cnt times and returns
@@ -533,7 +533,7 @@ class ChordiaEstimation:
 			# approach required for PCD and PD.
 			distance_vector = mf.mode_estimate(dist, mode_dists,
 				                               distance_method=distance_method,
-				                               metric=metric, cent_ss=self.cent_ss)
+				                               metric=metric, step_size=self.step_size)
 			
 			# Distance matrix is ready now. Since we need to report min_cnt many
 			# nearest neighbors, the loop is iterated min_cnt times and returns
@@ -585,10 +585,8 @@ class ChordiaEstimation:
 			src = chunk_data[idx][0]
 			interval = (chunk_data[idx][1], chunk_data[idx][2])
 			# PitchDistribution of the current chunk is generated
-			dist = mf.generate_pd(pts[idx], ref_freq=ref_freq,
-				                  smooth_factor=self.smooth_factor,
-				                  cent_ss=self.cent_ss, source=src,
-				                  segment=interval, overlap=self.overlap)
+			dist = mf.generate_pd(pts[idx], ref_freq=ref_freq, smooth_factor=self.smooth_factor,
+			                      step_size=self.step_size, source=src, segment=interval, overlap=self.overlap)
 			if(metric=='pcd'):
 				dist = mf.generate_pcd(dist)
 			# The resultant pitch distributions are filled in the list to be returned
