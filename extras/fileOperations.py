@@ -1,14 +1,17 @@
 import os
 
-def getFileNamesInDir(dir_name, extension = '.mp3', skip_foldername = ''):
+def getFileNamesInDir(dir_name, extension = '.mp3', skip_foldername = '', verbose = False):
 	names = []
 	folders = []
 	fullnames = []
-	print dir_name
+
+	if verbose:
+		print dir_name
 
 	# check if the folder exists
 	if not os.path.isdir(dir_name):
-		print "> Directory doesn't exist!"
+		if verbose:
+			print "> Directory doesn't exist!"
 		return [], [], []
 
 	# if the dir_name finishes with the file separator, remove it so os.walk works properly
@@ -23,7 +26,8 @@ def getFileNamesInDir(dir_name, extension = '.mp3', skip_foldername = ''):
 					names.append(unicode(f,'utf-8'))
 					fullnames.append(os.path.join(path,f))
 
-	print "> Found " + str(len(names)) + " files."
+	if verbose:
+		print "> Found " + str(len(names)) + " files."
 	return fullnames, folders, names
 
 def getModeNames(data_dir):
