@@ -5,16 +5,15 @@ import numpy as np
 import json
 import os
 
-def load(fname, dist_dir='./'):
+def load(fname):
 	"""-------------------------------------------------------------------------
 	Loads a PitchDistribution object from JSON file.
 	----------------------------------------------------------------------------
-	fname    : The name of the JSON file
-	dist_dir : Pathway of where the JSON is saved
+	fname    : The filename of the JSON file
 	-------------------------------------------------------------------------"""
-	with open(os.path.join(dist_dir, fname)) as f:    
+	with open(fname) as f:
 		dist = json.load(f)
-		f.close()
+
 	return PitchDistribution(np.array(dist[0]['bins']), np.array(dist[0]['vals']),
 		                     kernel_width=dist[0]['kernel_width'],
 		                     source=dist[0]['source'], ref_freq=dist[0]['ref_freq'],
@@ -72,7 +71,7 @@ class PitchDistribution:
 		dist_json = [{'bins':self.bins.tolist(), 'vals':self.vals.tolist(),
 		              'kernel_width':self.kernel_width, 'source':self.source,
 		              'ref_freq':self.ref_freq, 'segmentation':self.segmentation,
-		              'overlap':self.overlap, 'cent_ss':self.step_size}]
+		              'overlap':self.overlap, 'step_size':self.step_size}]
 		with open(os.path.join(save_dir, fname), 'w') as f:
 			json.dump(dist_json, f, indent=2)
 			f.close()
