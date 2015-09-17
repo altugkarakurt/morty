@@ -46,7 +46,7 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 		# Conversion of the std. deviation of the Gaussian to its bandwidth.
 		# This is just to make the smoothing factor more intuitive than SciPy's
 		# bandwidth approach.
-		smoothening = (smooth_factor * np.sqrt(1 / np.cov(cent_track)))
+		smoothing = (smooth_factor * np.sqrt(1 / np.cov(cent_track)))
 		
 		# Extra tails of size 3 std. deviations are added to two ends. 
 		min_bin = (min(cent_track) - (min(cent_track) % smooth_factor)) - (5 * smooth_factor)
@@ -62,7 +62,7 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 		pd_bins = pd_bins if (0 in pd_bins) else np.insert(pd_bins, 0, 0)
 		
 		# Generates the kernel density estimate and evaluates it on pd_bins
-		kde = stats.gaussian_kde(cent_track, bw_method=smoothening)
+		kde = stats.gaussian_kde(cent_track, bw_method=smoothing)
 		pd_vals = kde.evaluate(pd_bins)
 
 	#No smoothing is applied. The output is simply a histogram.
