@@ -158,28 +158,25 @@ class BozkurtEstimation:
 
 		# parse mode input
 		try:
-			mode_files = fo.getFileNamesInDir(mode_in)[2]  # directory is given
-
-			est_mode = True  # do mode estimation
-			mode_names = [os.path.splitext(m)[0] for m in mode_files]
-			models = [pd.load(m) for m in mode_files]
-		except:
-			try:  # dictionary of models
-				mode_names = mode_in.keys()
-				models = [mode_in[m] for m in mode_names]
-
+			if os.path.isdir(mode_in): # folder
+				mode_files = fo.getFileNamesInDir(mode_in)[2]  # directory is given
 				est_mode = True  # do mode estimation
+				mode_names = [os.path.splitext(m)[0] for m in mode_files]
+				models = [pd.load(m) for m in mode_files]
+			elif os.path.isfile(mode_in): # json file
+				est_mode = False # mode already known
+				model = pd.load(mode_in)
+		except TypeError:
+			try:  # dictionary of models
+				if isinstance(mode_in, pd.PitchDistribution):  # mode is loaded
+					est_mode = False  # mode already known
+					model = mode_in
+				elif isinstance(mode_in, dict):  # models of all modes are loaded
+					est_mode = True  # do mode estimation
+					mode_names = mode_in.keys()
+					models = [mode_in[m] for m in mode_names]
 			except:
-				try:  # mode file is given; load it
-					model = pd.load(mode_in)
-					est_mode = False
-				except:
-					try:  # mode is loaded
-						dummy = isinstance(mode_in, pd.PitchDistribution)
-						est_mode = False
-						model = mode_in
-					except:
-						raise "Unknown mode input!"
+				print "Unknown mode input!"
 
 		# parse tonic input
 		if tonic_freq:  # tonic is already known;
@@ -239,7 +236,7 @@ class BozkurtEstimation:
 		# Joint Estimation
 		if (est_tonic and est_mode):
 			if (metric == 'pd'):
-				# Since PD lengths aren't equal, we zero pad the distributions for comparison
+				# Since PD lengths aren't equal, we zero-pad the distributions for comparison
 				# tonic_estimate() of ModeFunctions just does that. It can handle only
 				# a single column, so the columns of the matrix are iteratively generated
 				dist_mat = np.zeros((len(shift_idxs), len(models)))
