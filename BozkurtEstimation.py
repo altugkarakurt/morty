@@ -85,6 +85,8 @@ class BozkurtEstimation:
 		mode_track = []
 		for pf, tonic in zip(pt_files, tonic_freqs):
 			pitch_track = np.loadtxt(pf)
+			if pitch_track.shape[1] > 1:  # assume the first col is time, the second is pitch and the rest is labels etc
+				pitch_track = pitch_track[:,1]
 
 			if self.chunk_size == 0:  # use the complete pitch track
 				cur_cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic)
