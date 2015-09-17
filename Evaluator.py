@@ -25,11 +25,10 @@ class Evaluator:
 		est_cent = mf.hz_to_cent([estimated], annotated)[0]
 
 		# octave wrapping
-		cent_diff = ((est_cent + self.CENT_PER_OCTAVE/2) % self.CENT_PER_OCTAVE) - self.CENT_PER_OCTAVE/2
-		cent_diff = cent_diff if cent_diff > 0 else 1200 + cent_diff  # make the sign positive
+		cent_diff = est_cent % self.CENT_PER_OCTAVE
 
 		# check if the tonic is found correct
-		bool_tonic = abs(cent_diff) < self.tolerance
+		bool_tonic = min([cent_diff, self.CENT_PER_OCTAVE - cent_diff]) < self.tolerance
 
 		# convert the cent difference to symbolic interval (P5, m3 etc.)
 		for i in self.INTERVAL_SYMBOLS:
