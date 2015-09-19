@@ -122,9 +122,7 @@ def hz_to_cent(hertz_track, ref_freq):
 
 	# The 0 Hz values are removed, not only because they are meaningless,
 	# but also logarithm of 0 is problematic.
-	cent_track = np.log2(hertz_track[hertz_track>0] / ref_freq) * 1200.0
-
-	return cent_track
+	return np.log2(hertz_track[hertz_track>0] / ref_freq) * 1200.0
 
 
 def cent_to_hz(cent_track, ref_freq):
@@ -134,10 +132,9 @@ def cent_to_hz(cent_track, ref_freq):
 	cent_track  : The 1-D array of cent values
 	ref_freq	: Reference frequency for cent conversion
 	-------------------------------------------------------------------------"""
-	hertz_track = []
-	for cent in cent_track:
-		hertz_track.append((2 ** (cent / 1200.0)) * ref_freq)
-	return hertz_track
+	cent_track = np.array(cent_track)
+
+	return 2 ** (cent_track / 1200) * ref_freq
 
 
 def generate_distance_matrix(dist, peak_idxs, mode_dists, method='euclidean'):
