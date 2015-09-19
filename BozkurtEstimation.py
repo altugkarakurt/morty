@@ -85,7 +85,7 @@ class BozkurtEstimation:
 		mode_track = []
 		for pf, tonic in zip(pt_files, tonic_freqs):
 			pitch_track = np.loadtxt(pf)
-			if pitch_track.shape[1] > 1:  # assume the first col is time, the second is pitch and the rest is labels etc
+			if pitch_track.ndim > 1:  # assume the first col is time, the second is pitch and the rest is labels etc
 				pitch_track = pitch_track[:,1]
 
 			if self.chunk_size == 0:  # use the complete pitch track
@@ -109,6 +109,8 @@ class BozkurtEstimation:
 
 		# save the model to a file, if requested
 		if save_dir:
+			if not os.path.exists(save_dir):
+				os.makedirs(save_dir)
 			pitch_distrib.save(mode_name + '.json', save_dir=save_dir)
 
 		return pitch_distrib
