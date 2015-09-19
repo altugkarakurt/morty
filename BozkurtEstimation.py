@@ -110,7 +110,8 @@ class BozkurtEstimation:
 
 		return pitch_distrib
 
-	def estimate(self, pitch_track, mode_in='./', tonic_freq=None, rank=1, distance_method="bhat", metric='pcd'):
+	def estimate(self, pitch_track, mode_in='./', tonic_freq=None, rank=1,
+	             distance_method="bhat", metric='pcd'):
 		"""-------------------------------------------------------------------------
 		This is the ultimate estimation function. There are three different types
 		of estimations.

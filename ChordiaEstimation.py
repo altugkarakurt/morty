@@ -28,7 +28,7 @@ class ChordiaEstimation:
 	-------------------------------------------------------------------------"""
 
 	def __init__(self, step_size=7.5, smooth_factor=7.5, chunk_size=60,
-		         threshold=0.5, overlap=0, hop_size=0.0029025):
+		         threshold=0.5, overlap=0, frame_rate=128.0/44100):
 		"""------------------------------------------------------------------------
 		These attributes are wrapped as an object since these are used in both 
 		training and estimation stages and must be consistent in both processes.
@@ -60,10 +60,9 @@ class ChordiaEstimation:
 		self.smooth_factor = smooth_factor
 		self.chunk_size = chunk_size
 		self.threshold = threshold
-		self.hop_size = hop_size
+		self.hop_size = frame_rate
 
-	def train(self, mode_name, pt_list, ref_freq_list, metric='pcd',
-		      save_dir='./', pt_dir='./'):
+	def train(self, mode_name, pt_files, tonic_freqs, metric='pcd', save_dir=''):
 		"""-------------------------------------------------------------------------
 		For the mode trainings, the requirements are a set of recordings with 
 		annotated tonics for each mode under consideration. This function only
@@ -79,33 +78,38 @@ class ChordiaEstimation:
 		----------------------------------------------------------------------------
 		mode_name     : Name of the mode to be trained. This is only used for naming
 		                the resultant JSON file, in the form "mode_name.json"
-		pt_list       : List of pitch tracks (i.e. 1-D list of frequencies)
-		ref_freq_list : List of annotated tonics of recordings
-		pt_dir        : The directory where pitch tracks are stored.
-		metric        : Whether the model should be octave wrapped (Pitch Class 
+		pt_files       : List of pitch tracks (i.e. 1-D list of frequencies)
+		tonic_freqs : List of annotated tonics of recordings
+		metric        : Whether the model should be octave wrapped (Pitch Class
 			            Distribution: PCD) or not (Pitch Distribution: PD)
 		save_dir      : Where to save the resultant JSON files.
 		-------------------------------------------------------------------------"""
 		save_name = mode_name + '.json'
-		dist_list = []
+		pitch_distrib_list = []
 
 		# Each pitch track is iterated over and its pitch distribution is generated
-		# individually, then appended to dist_list. Notice that although we treat
+		# individually, then appended to pitch_distrib_list. Notice that although we treat
 		# each chunk individually, we use a single tonic annotation for each recording
 		# so we assume that the tonic doesn't change throughout a recording.
-		for pt in range(len(pt_list)):
-			# Pitch track is loaded from local directory
-			pitch_track = mf.load_track(pt_list[pt], pt_dir)
+
+		for pf, tonic in zip(pt_files, tonic_freqs):
+			pitch_track = np.loadtxt(pf)
+			if pitch_track.ndim > 1:  # assume the first col is time, the second is pitch and the rest is labels etc
+				pitch_track = pitch_track[:,1]
 			time_track = np.arange(0, (self.hop_size*len(pitch_track)), self.hop_size)
+
 			# Current pitch track is sliced into chunks.
-			pts, chunk_data = mf.slice(time_track, pitch_track, pt_list[pt],
-				                 self.chunk_size, self.threshold, self.overlap)
+			pts, chunk_data = mf.slice(time_track, pitch_track, pf, self.chunk_size,
+			                           self.threshold, self.overlap)
+
 			# Each chunk is converted to cents
-			pts = [mf.hz_to_cent(k, ref_freq=ref_freq_list[pt]) for k in pts]
+			pts = [mf.hz_to_cent(k, ref_freq=tonic) for k in pts]
+
 			# This is a wrapper function. It iteratively generates the distribution
 			# for each chunk and return it as a list. After this point, we only
 			# need to save it. God bless modular programming!
-			temp_list = self.train_chunks(pts, chunk_data, ref_freq_list[pt], metric)
+			temp_list = self.train_chunks(pts, chunk_data, tonic, metric)
+
 			# The list is composed of lists of PitchDistributions. So,
 			# each list in temp_list corresponds to a recording and each
 			# PitchDistribution in that list belongs to a chunk. Since these
@@ -113,16 +117,23 @@ class ChordiaEstimation:
 			# life much easier. From now on, each chunk is treated as an individual
 			# distribution, regardless of which recording it belongs to.
 			for tmp in temp_list:
-				dist_list.append(tmp)
+				pitch_distrib_list.append(tmp)
 
-		# Dump the list of dictionaries in a JSON file.
-		dist_json = [{'bins':d.bins.tolist(), 'vals':d.vals.tolist(),
-		              'kernel_width':d.kernel_width, 'source':d.source,
-		              'ref_freq':d.ref_freq, 'segmentation':d.segmentation,
-		              'overlap':d.overlap} for d in dist_list]
-		with open(os.path.join(save_dir, save_name), 'w') as f:
-			json.dump(dist_json, f, indent=2)
-			f.close()
+		# save the model to a file, if requested
+		if save_dir:
+			if not os.path.exists(save_dir):
+				os.makedirs(save_dir)
+
+			# Dump the list of dictionaries in a JSON file.
+			dist_json = [{'bins':d.bins.tolist(), 'vals':d.vals.tolist(),
+			              'kernel_width':d.kernel_width, 'source':d.source,
+			              'ref_freq':d.ref_freq, 'segmentation':d.segmentation,
+			              'overlap':d.overlap} for d in pitch_distrib_list]
+
+			with open(os.path.join(save_dir, mode_name + '.json'), 'w') as f:
+				json.dump(dist_json, f, indent=2)
+
+		return pitch_distrib_list
 
 	def estimate(self, pitch_track, mode_names=[], mode_name='',
 		         mode_dir='./', est_tonic=True, est_mode=True,
