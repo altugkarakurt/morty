@@ -82,22 +82,17 @@ class BozkurtEstimation:
 		# pitch distribution of this track is the mode's model distribution.
 
 		# Normalize the pitch tracks of the mode wrt the tonic frequency and concatenate
-		mode_track = []
 		for pf, tonic in zip(pt_files, tonic_freqs):
 			pitch_track = np.loadtxt(pf)
 			if pitch_track.ndim > 1:  # assume the first col is time, the second is pitch and the rest is labels etc
 				pitch_track = pitch_track[:,1]
 
 			if self.chunk_size == 0:  # use the complete pitch track
-				cur_cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic)
+				mode_track = mf.hz_to_cent(pitch_track, ref_freq=tonic)
 			else:  # slice and used the start of the pitch track
 				time_track = np.arange(0, self.frame_rate * len(pitch_track), self.frame_rate)
 				pitch_track, segs = mf.slice(time_track, pitch_track, mode_name, self.chunk_size)
-				cur_cent_track = mf.hz_to_cent(pitch_track[0], ref_freq=tonic)
-
-			# concatenate...
-			for i in cur_cent_track:
-				mode_track.append(i)
+				mode_track = mf.hz_to_cent(pitch_track[0], ref_freq=tonic)
 
 		seglen = 'all' if self.chunk_size == 0 else (segs[0][1], segs[0][2])
 

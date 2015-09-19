@@ -2,11 +2,10 @@
 import scipy as sp
 import numpy as np
 import math
-import os
-from scipy import stats
+from sklearn.neighbors.kde import KernelDensity
 from scipy.spatial import distance
 
-import PitchDistribution as p_d
+import PitchDistribution as pD
 
 def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 				source='', segment='all', overlap='-'):
@@ -20,7 +19,7 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 	                This number isn't used in the computations, but is to be
 	                recorded in the PitchDistribution object.
 	smooth_factor:  The standard deviation of the gaussian kernel, used in Kernel
-	                Density Estimation. If 0, no smoothing is applied.
+	                Density Estimation. If 0, a histogram is given
 	step_size:        The step size of the Pitch Distribution bins.
 	source:	        The source information (i.e. recording name/id) to be stored
 	                in PitchDistribution object.
@@ -32,7 +31,7 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 	-------------------------------------------------------------------------"""
 
 	### Some extra interval is added to the beginning and end since the
-	### superposed Gaussian for smoothing would introduce some tails in the
+	### superposed Gaussian for smooth_factor would introduce some tails in the
 	### ends. These vanish after 3 sigmas(=smmoth_factor).
 
 	### The limits are also quantized to be a multiple of chosen step-size
@@ -41,14 +40,9 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 	### TODO: filter out the NaN, -infinity and +infinity from the pitch track
 
 	# Do Kernel Density Estimation
-	if (smooth_factor > 0):
+	if smooth_factor > 0:
 
-		# Conversion of the std. deviation of the Gaussian to its bandwidth.
-		# This is just to make the smoothing factor more intuitive than SciPy's
-		# bandwidth approach.
-		smoothing = (smooth_factor * np.sqrt(1 / np.cov(cent_track)))
-		
-		# Extra tails of size 3 std. deviations are added to two ends. 
+		# Extra tails of size 3 std. deviations are added to two ends.
 		min_bin = (min(cent_track) - (min(cent_track) % smooth_factor)) - (5 * smooth_factor)
 		max_bin = (max(cent_track) + (smooth_factor - (max(cent_track) % smooth_factor))) + (5 * smooth_factor)
 		
@@ -62,25 +56,24 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 		pd_bins = pd_bins if (0 in pd_bins) else np.insert(pd_bins, 0, 0)
 		
 		# Generates the kernel density estimate and evaluates it on pd_bins
-		kde = stats.gaussian_kde(cent_track, bw_method=smoothing)
-		pd_vals = kde.evaluate(pd_bins)
+		kde = KernelDensity(kernel='gaussian', bandwidth=smooth_factor).fit(cent_track[:, np.newaxis])
+		pd_vals = np.exp(kde.score_samples(pd_bins[:, np.newaxis]))
 
-	#No smoothing is applied. The output is simply a histogram.
-	else:
+	else:  # Zero smooth_factor is given: compute histogram.
 		# Finds the endpoints of the histogram edges. Histogram bins will be
 		# generated as the midpoints of these edges. 
 		min_edge = min(cent_track) - (step_size / 2.0)
 		max_edge = max(cent_track) + (step_size / 2.0)
 		pd_edges = np.concatenate([np.arange(-step_size/2.0, min_edge, -step_size)[::-1],
-								   np.arange(step_size/2.0, max_edge, step_size)])
+		                           np.arange(step_size/2.0, max_edge, step_size)])
 
 		# An exceptional case is when min_bin and max_bin are both positive
 		# In this case, pd_edges would be in the range of [step_size/2, max_bin].
 		# If so, a -step_size is inserted to the head, to make sure 0 would be
 		# in pd_bins. The same procedure is repeated for the case when both
 		# are negative. Then, step_size is inserted to the tail.
-		pd_edges = pd_edges if -step_size/2.0 in pd_edges else np.insert(pd_edges, 0, (-step_size/2.0))
-		pd_edges = pd_edges if step_size/2.0 in pd_edges else np.append(pd_edges, (step_size/2.0))
+		pd_edges = pd_edges if -step_size/2.0 in pd_edges else np.insert(pd_edges, 0, -step_size/2.0)
+		pd_edges = pd_edges if step_size/2.0 in pd_edges else np.append(pd_edges, step_size/2.0)
 
 		# Generates the histogram and bins (i.e. the midpoints of edges)
 		pd_vals, pd_edges = np.histogram(cent_track, bins=pd_edges, density=True)
@@ -92,7 +85,7 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 		raise ValueError('Lengths of bins and Vals are different')
 
 	# Initializes the PitchDistribution object and returns it.
-	return p_d.PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, source=source, ref_freq=ref_freq,
+	return pD.PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, source=source, ref_freq=ref_freq,
 	                             segment=segment, overlap=overlap)
 
 def generate_pcd(pd):
@@ -111,10 +104,10 @@ def generate_pcd(pd):
 	for k in range(len(pd.bins)):
 		idx = int((pd.bins[k] % 1200) / pd.step_size)
 		idx = idx if idx != 160 else 0
-		pcd_vals[idx] = pcd_vals[idx] + pd.vals[k]
+		pcd_vals[idx] += pd.vals[k]
 
 	# Initializes the PitchDistribution object and returns it.
-	return p_d.PitchDistribution(pcd_bins, pcd_vals, kernel_width=pd.kernel_width, source=pd.source,
+	return pD.PitchDistribution(pcd_bins, pcd_vals, kernel_width=pd.kernel_width, source=pd.source,
 	                             ref_freq=pd.ref_freq, segment=pd.segmentation, overlap=pd.overlap)
 
 
@@ -125,14 +118,12 @@ def hz_to_cent(hertz_track, ref_freq):
 	hertz_track : The 1-D array of Hertz values
 	ref_freq	: Reference frequency for cent conversion
 	-------------------------------------------------------------------------"""
+	hertz_track = np.array(hertz_track)
 
 	# The 0 Hz values are removed, not only because they are meaningless,
 	# but also logarithm of 0 is problematic.
-	filtered_track = [freq for freq in hertz_track if freq > 0]
+	cent_track = np.log2(hertz_track[hertz_track>0] / ref_freq) * 1200.0
 
-	cent_track = []
-	for freq in filtered_track:
-		cent_track.append(math.log((freq / ref_freq), 2.0) * 1200.0)
 	return cent_track
 
 
@@ -279,7 +270,7 @@ def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean", metr
 
 		# The PitchDistribution object is copied in order not to change its
 		# internals before the following steps.
-		temp = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source,
+		temp = pD.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width, source=dist.source,
 		                             ref_freq=dist.ref_freq, segment=dist.segmentation)
 		temp, mode_dist = pd_zero_pad(temp, mode_dist, step_size=step_size)
 
@@ -324,7 +315,7 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', s
 		# padded according to the current mode distribution length. The entries
 		# of the vector is generated iteratively, one-by-one.
 		for i in range(len(mode_dists)):
-			trial = p_d.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width,
+			trial = pD.PitchDistribution(dist.bins, dist.vals, kernel_width=dist.kernel_width,
 				                          source=dist.source, ref_freq=dist.ref_freq, segment=dist.segmentation)
 			trial, mode_trial = pd_zero_pad(trial, mode_dists[i], step_size=step_size)
 			distance_vector[i] = distance(trial, mode_trial, method=distance_method)
