@@ -60,7 +60,7 @@ class ChordiaEstimation:
 		self.smooth_factor = smooth_factor
 		self.chunk_size = chunk_size
 		self.threshold = threshold
-		self.hop_size = frame_rate
+		self.frame_rate = frame_rate
 
 	def train(self, mode_name, pt_files, tonic_freqs, metric='pcd', save_dir=''):
 		"""-------------------------------------------------------------------------
@@ -96,7 +96,7 @@ class ChordiaEstimation:
 			pitch_track = np.loadtxt(pf)
 			if pitch_track.ndim > 1:  # assume the first col is time, the second is pitch and the rest is labels etc
 				pitch_track = pitch_track[:,1]
-			time_track = np.arange(0, (self.hop_size*len(pitch_track)), self.hop_size)
+			time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
 
 			# Current pitch track is sliced into chunks.
 			pts, chunk_data = mf.slice(time_track, pitch_track, pf, self.chunk_size,
@@ -188,7 +188,7 @@ class ChordiaEstimation:
 		                  an arbitrary value, so this can be ignored.
 		-------------------------------------------------------------------------"""
 		# Pitch track is sliced into chunks.
-		time_track = np.arange(0, (self.hop_size*len(pitch_track)), self.hop_size)
+		time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
 		pts, chunk_data = mf.slice(time_track, pitch_track, 'input', self.chunk_size,
 			                 self.threshold, self.overlap)
 

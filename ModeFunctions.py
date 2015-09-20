@@ -111,18 +111,18 @@ def generate_pcd(pd):
 	                             ref_freq=pd.ref_freq, segment=pd.segmentation, overlap=pd.overlap)
 
 
-def hz_to_cent(hertz_track, ref_freq):
+def hz_to_cent(hz_track, ref_freq):
 	"""-------------------------------------------------------------------------
 	Converts an array of Hertz values into cents.
 	----------------------------------------------------------------------------
-	hertz_track : The 1-D array of Hertz values
+	hz_track : The 1-D array of Hertz values
 	ref_freq	: Reference frequency for cent conversion
 	-------------------------------------------------------------------------"""
-	hertz_track = np.array(hertz_track)
+	hz_track = np.array(hz_track)
 
 	# The 0 Hz values are removed, not only because they are meaningless,
 	# but also logarithm of 0 is problematic.
-	return np.log2(hertz_track[hertz_track>0] / ref_freq) * 1200.0
+	return np.log2(hz_track[hz_track>0] / ref_freq) * 1200.0
 
 
 def cent_to_hz(cent_track, ref_freq):
