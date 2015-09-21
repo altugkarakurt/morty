@@ -125,7 +125,7 @@ for fold in fold_list:
 			init_time = time.time()
 			cur_out = estimator.estimate(pitch_track, mode_names=makam_list,
 				        est_tonic=True, est_mode=False, k_param=k_param, distance_method=distance,
-				        metric=distribution_type, mode_dir=fold_dir, mode_name=recording['makam'])
+				        metric=distribution_type, mode_in=fold_dir, mode_name=recording['makam'])
 			end_time = time.time()
 			elapsed = (round((end_time - init_time) * 100) / 100)
 			print elapsed

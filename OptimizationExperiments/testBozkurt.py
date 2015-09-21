@@ -103,7 +103,7 @@ def run(distance_inp, training_i):
 					                        txt_dir=pitch_track_dir)
 				tmp_out = estimator.estimate(pitch_track, mode_names=makam_list,
 				            est_tonic=True, est_mode=True, rank=rank, distance_method=distance, 
-							metric=distribution_type, mode_dir=fold_dir)
+							metric=distribution_type, mode_in=fold_dir)
 				cur_out = []
 				for i in range(len(tmp_out[0])):
 					cur_out.append((tmp_out[0][i], tmp_out[1][i]))

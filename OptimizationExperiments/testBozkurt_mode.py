@@ -105,8 +105,8 @@ def run(distance_inp, training_i):
 
 				cur_out = estimator.estimate(pitch_track, mode_names=makam_list,
 					        est_tonic=False, est_mode=True, rank=rank,
-					        distance_method=distance, ref_freq=recording['tonic'],
-					        metric=distribution_type, mode_dir=fold_dir)
+					        distance_method=distance, tonic_freq=recording['tonic'],
+					        metric=distribution_type, mode_in=fold_dir)
 
 				output[('Fold' + str(fold))].append({'mbid':recording['mbid'], 'tonic_estimation':cur_out})
 	with open(os.path.join(modePath, distance + '.json'), 'w') as f:

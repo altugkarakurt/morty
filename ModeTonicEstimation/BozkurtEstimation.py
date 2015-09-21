@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import os
-import ModeFunctions as mf
-import PitchDistribution as pd
+from ModeTonicEstimation import ModeFunctions as mf
+from ModeTonicEstimation import PitchDistribution as pd
 import extras.fileOperations as fo
 
 

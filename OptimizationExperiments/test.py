@@ -77,5 +77,5 @@ for makam_name in makam_list:
 	for pt in range(len(pt_list)):
 		print 'new track'
 		pitch_track = mf.load_track(pt_list[pt], pt_dir)
-		cur_res = b.estimate(pitch_track, mode_names=makam_list, mode_name='', mode_dir=save_dir, est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', ref_freq=tonic_list[pt])
+		cur_res = b.estimate(pitch_track, mode_names=makam_list, mode_name='', mode_in=save_dir, est_tonic=True, est_mode=True, rank=1, distance_method="euclidean", metric='pcd', tonic_freq=tonic_list[pt])
 		results.append({'mbid': pt_list[pt][:-6], 'makam':makam_name, 'tonic':tonic_list[pt], 'estimated':cur_res})
