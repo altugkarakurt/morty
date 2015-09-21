@@ -5,7 +5,7 @@ from ModeTonicEstimation import ModeFunctions as mf
 from ModeTonicEstimation import PitchDistribution as pd
 
 
-class BozkurtEstimation:
+class Bozkurt:
 	"""-------------------------------------------------------------------------
 	This is an implementation of the method proposed for tonic and makam
 	estimation, in the following sources. This also includes some improvements

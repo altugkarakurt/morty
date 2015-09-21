@@ -5,7 +5,7 @@ from ModeTonicEstimation import PitchDistribution as p_d
 import json
 import os
 
-class ChordiaEstimation:
+class Chordia:
 	"""-------------------------------------------------------------------------
 	This is an implementation of the method proposed for tonic and raag
 	estimation, in the following paper. This also includes some extra features
