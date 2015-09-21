@@ -93,7 +93,7 @@ def generate_pcd(pd):
 	Given the pitch distribution of a recording, generates its pitch class
 	distribution, by octave wrapping.
 	----------------------------------------------------------------------------
-	pd: PitchDistribution object. Its attributes include everything we need
+	pD: PitchDistribution object. Its attributes include everything we need
 	-------------------------------------------------------------------------"""
 
 	# Initializations
@@ -208,19 +208,19 @@ def distance(vals_1, vals_2, method='euclidean'):
 
 def pd_zero_pad(pd, mode_pd, step_size=7.5):
 	"""-------------------------------------------------------------------------
-	This function is only used in tonic detection with pd. If necessary, it zero
+	This function is only used in tonic detection with pD. If necessary, it zero
 	pads the distributions from both sides, to make them of the same length. The
 	inputs are symmetric, i.e. the input distributions can be given in any order
 	----------------------------------------------------------------------------
-	pd      : Input pd
-	mode_pd : pd of the candidate mode
+	pD      : Input pD
+	mode_pd : pD of the candidate mode
 	-------------------------------------------------------------------------"""
 
 	# The padding process requires the two bin lists to have an intersection. 
 	# This is ensured by the generate_pd function, since we enforce all pds to
 	# include zero in their bins.
 
-	# Finds the number of missing bins in the left and right sides of pd and
+	# Finds the number of missing bins in the left and right sides of pD and
 	# inserts that many zeros.
 	diff_bins = set(mode_pd.bins) - set(pd.bins)
 	num_left_missing = len([x for x in diff_bins if x < min(pd.bins)]) 
@@ -256,14 +256,14 @@ def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean", metr
 	step_size         : The step-size of the pitch distribution. Unit is cents
 	-------------------------------------------------------------------------"""
 
-	#TODO: step_size and pd/pcd information can be retrieved from the dist object
+	#TODO: step_size and pD/pcd information can be retrieved from the dist object
 	#try and test that
 
 	# There are no preliminaries, simply generate the distance vector
 	if (metric == 'pcd'):
 		return np.array(generate_distance_matrix(dist, peak_idxs, [mode_dist], method=distance_method))[:, 0]
 
-	elif (metric == 'pd'):
+	elif (metric == 'pD'):
 
 		# The PitchDistribution object is copied in order not to change its
 		# internals before the following steps.
@@ -297,14 +297,14 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', s
 	step_size         : The step-size of the pitch distribution. Unit is cents
 	-------------------------------------------------------------------------"""
 
-	#TODO: step_size and pd/pcd information can be retrieved from the dist object
+	#TODO: step_size and pD/pcd information can be retrieved from the dist object
 	#try and test that
 
 	# There are no preliminaries, simply generate the distance vector.
 	if (metric == 'pcd'):
 		distance_vector = np.array(generate_distance_matrix(dist, [0], mode_dists, method=distance_method))[0]
 
-	elif (metric == 'pd'):
+	elif (metric == 'pD'):
 		distance_vector = np.zeros(len(mode_dists))
 
 		# For each trial, a new instance of PitchDistribution is created and its

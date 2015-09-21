@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import os
-from ModeTonicEstimation import ModeFunctions as mf
-from ModeTonicEstimation import PitchDistribution as pd
+from ModeTonicEstimation import ModeFunctions as mF
+from ModeTonicEstimation import PitchDistribution as pD
 
 
 class Bozkurt:
@@ -87,19 +87,19 @@ class Bozkurt:
 				pitch_track = pitch_track[:,1]
 
 			if self.chunk_size == 0:  # use the complete pitch track
-				mode_track = mf.hz_to_cent(pitch_track, ref_freq=tonic)
+				mode_track = mF.hz_to_cent(pitch_track, ref_freq=tonic)
 			else:  # slice and used the start of the pitch track
 				time_track = np.arange(0, self.frame_rate * len(pitch_track), self.frame_rate)
-				pitch_track, segs = mf.slice(time_track, pitch_track, mode_name, self.chunk_size)
-				mode_track = mf.hz_to_cent(pitch_track[0], ref_freq=tonic)
+				pitch_track, segs = mF.slice(time_track, pitch_track, mode_name, self.chunk_size)
+				mode_track = mF.hz_to_cent(pitch_track[0], ref_freq=tonic)
 
 		seglen = 'all' if self.chunk_size == 0 else (segs[0][1], segs[0][2])
 
 		# generate the pitch distribution
-		pitch_distrib = mf.generate_pd(mode_track, smooth_factor=self.smooth_factor,
+		pitch_distrib = mF.generate_pd(mode_track, smooth_factor=self.smooth_factor,
 		                               step_size=self.step_size, source=pitch_files, segment=seglen)
 		if metric == 'pcd':  # convert to pitch class distribution, if specified
-			pitch_distrib = mf.generate_pcd(pitch_distrib)
+			pitch_distrib = mF.generate_pcd(pitch_distrib)
 
 		# save the model to a file, if requested
 		if save_dir:
@@ -166,21 +166,23 @@ class Bozkurt:
 			if all(os.path.isfile(m) for m in mode_in): 
 				est_mode = True  # do mode estimation
 				mode_names = [os.path.splitext(m)[0] for m in mode_in]
-				models = [pd.load(m) for m in mode_in]
+				models = [pD.load(m) for m in mode_in]
 			elif os.path.isfile(mode_in): # json file
 				est_mode = False # mode already known
-				model = pd.load(mode_in)
+				model = pD.load(mode_in)
 		except TypeError:
-			try:  # dictionary of models
-				if isinstance(mode_in, pd.PitchDistribution):  # mode is loaded
+			try:  # models
+				if isinstance(mode_in, pD.PitchDistribution):
+					# mode is loaded
 					est_mode = False  # mode already known
 					model = mode_in
-				elif isinstance(mode_in, dict):  # models of all modes are loaded
+				elif all(isinstance(m, pD.PitchDistribution) for m in mode_in.values()):
+					# models of all modes are loaded
 					est_mode = True  # do mode estimation
 					mode_names = mode_in.keys()
 					models = [mode_in[m] for m in mode_names]
 			except:
-				print "Unknown mode input!"
+				ValueError("Unknown mode input!")
 
 		# parse tonic input
 		if tonic_freq:  # tonic is already known;
@@ -190,23 +192,22 @@ class Bozkurt:
 			tonic_freq = 440  # take A4 as the dummy frequency value for cent conversion; it doesnt affect anything
 
 		if not (est_tonic or est_mode):
-			print "Both tonic and mode are known!"
-			return -1
+			ValueError("Both tonic and mode are known!")
 
 		# slice the pitch track if specified
 		if self.chunk_size > 0:
 			time_track = np.arange(0, self.frame_rate * len(pitch_track), self.frame_rate)
-			pitch_track, segs = mf.slice(time_track, pitch_track, '', self.chunk_size)
+			pitch_track, segs = mF.slice(time_track, pitch_track, '', self.chunk_size)
 
 		# normalize pitch track according to the given tonic frequency
-		cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
+		cent_track = mF.hz_to_cent(pitch_track, ref_freq=tonic_freq)
 
 		# Pitch distribution of the input recording is generated
-		distrib = mf.generate_pd(cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
+		distrib = mF.generate_pd(cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
 		                         step_size=self.step_size)
 
 		# convert to PCD, if specified
-		distrib = mf.generate_pcd(distrib) if (metric == 'pcd') else distrib
+		distrib = mF.generate_pcd(distrib) if (metric == 'pcd') else distrib
 
 		# Saved mode models are loaded and output variables are initiated
 		tonic_ranked = [('', 0) for x in range(rank)]
@@ -224,11 +225,11 @@ class Bozkurt:
 				distrib = distrib.shift(shift_factor)
 
 				# update to the new reference frequency after shift
-				tonic_freq = mf.cent_to_hz([distrib.bins[shift_factor]], ref_freq=tonic_freq)[0]
+				tonic_freq = mF.cent_to_hz([distrib.bins[shift_factor]], ref_freq=tonic_freq)[0]
 
 				# Find the peaks of the distribution. These are the tonic candidates.
 				peak_idxs, peak_vals = distrib.detect_peaks()
-			elif metric == 'pd':
+			elif metric == 'pD':
 				# Find the peaks of the distribution. These are the tonic candidates
 				peak_idxs, peak_vals = distrib.detect_peaks()
 
@@ -239,18 +240,18 @@ class Bozkurt:
 
 		# Joint Estimation
 		if (est_tonic and est_mode):
-			if (metric == 'pd'):
+			if (metric == 'pD'):
 				# Since PD lengths aren't equal, we zero-pad the distributions for comparison
 				# tonic_estimate() of ModeFunctions just does that. It can handle only
 				# a single column, so the columns of the matrix are iteratively generated
 				dist_mat = np.zeros((len(shift_idxs), len(models)))
 				for m, model in enumerate(models):
-					dist_mat[:, m] = mf.tonic_estimate(distrib, shift_idxs, model, distance_method=distance_method,
+					dist_mat[:, m] = mF.tonic_estimate(distrib, shift_idxs, model, distance_method=distance_method,
 					                                   metric=metric, step_size=self.step_size)
 			elif (metric == 'pcd'):
 				# PCD doesn't require any preliminary steps. Generate the distance matrix.
 				# The rows are tonic candidates and columns are mode candidates.
-				dist_mat = mf.generate_distance_matrix(distrib, peak_idxs, models, method=distance_method)
+				dist_mat = mF.generate_distance_matrix(distrib, peak_idxs, models, method=distance_method)
 
 			# Distance matrix is ready now. For each rank, (or each pair of
 			# tonic-mode estimate pair) the loop is iterated. When the first
@@ -267,10 +268,10 @@ class Bozkurt:
 				# changed. That's why it's treated differently than PD. Here,
 				# the cent value of the tonic estimate is converted back to Hz.
 				if (metric == 'pcd'):
-					tonic_ranked[r] = (mf.cent_to_hz([distrib.bins[peak_idxs[min_row]]],
+					tonic_ranked[r] = (mF.cent_to_hz([distrib.bins[peak_idxs[min_row]]],
 					                                 tonic_freq)[0], dist_mat[min_row][min_col])
-				elif (metric == 'pd'):
-					tonic_ranked[r] = (mf.cent_to_hz([shift_idxs[min_row] * self.step_size],
+				elif (metric == 'pD'):
+					tonic_ranked[r] = (mF.cent_to_hz([shift_idxs[min_row] * self.step_size],
 					                                 tonic_freq)[0], dist_mat[min_row][min_col])
 				# Current mode estimate is recorded.
 				mode_ranked[r] = (mode_names[min_col], dist_mat[min_row][min_col])
@@ -284,7 +285,7 @@ class Bozkurt:
 			# This part assigns the special case changes to standard variables,
 			# so that we can treat PD and PCD in the same way, as much as
 			# possible. 
-			peak_idxs = shift_idxs if (metric == 'pd') else peak_idxs
+			peak_idxs = shift_idxs if (metric == 'pD') else peak_idxs
 			tonic_freq = tonic_freq if (metric == 'pcd') else tonic_freq
 
 			# Distance vector is generated. In the mode_estimate() function
@@ -292,7 +293,7 @@ class Bozkurt:
 			# handles the special cases such as zero-padding. The mode is
 			# already known, so there is only one model to be compared. Each
 			# entry corresponds to one tonic candidate.
-			distance_vector = mf.tonic_estimate(distrib, peak_idxs, model, distance_method=distance_method,
+			distance_vector = mF.tonic_estimate(distrib, peak_idxs, model, distance_method=distance_method,
 			                                    metric=metric, step_size=self.step_size)
 
 			# Distance vector is ready now. For each rank, the loop is iterated.
@@ -307,10 +308,10 @@ class Bozkurt:
 				# PCD and PD are treated differently here. 
 				# TODO: review here, this might be tedious due to 257th line.
 				if (metric == 'pcd'):
-					tonic_ranked[r] = (mf.cent_to_hz([distrib.bins[peak_idxs[idx]]],
+					tonic_ranked[r] = (mF.cent_to_hz([distrib.bins[peak_idxs[idx]]],
 					                                 tonic_freq)[0], distance_vector[idx])
-				elif (metric == 'pd'):
-					tonic_ranked[r] = (mf.cent_to_hz([shift_idxs[idx] * self.step_size],
+				elif (metric == 'pD'):
+					tonic_ranked[r] = (mF.cent_to_hz([shift_idxs[idx] * self.step_size],
 					                                 tonic_freq)[0], distance_vector[idx])
 				# Current minima is replaced with a value larger than maxima,
 				# so that we won't return the same estimate twice.
@@ -323,7 +324,7 @@ class Bozkurt:
 			# ModeFunctions handles the different approach required for
 			# PCD and PD. Since tonic is known, the distributions aren't
 			# shifted and are only compared to candidate mode models.
-			distance_vector = mf.mode_estimate(distrib, models, distance_method=distance_method, metric=metric,
+			distance_vector = mF.mode_estimate(distrib, models, distance_method=distance_method, metric=metric,
 			                                   step_size=self.step_size)
 
 			# Distance vector is ready now. For each rank, the loop is iterated.
