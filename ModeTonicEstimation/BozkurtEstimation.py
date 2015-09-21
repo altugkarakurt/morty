@@ -3,7 +3,6 @@ import numpy as np
 import os
 from ModeTonicEstimation import ModeFunctions as mf
 from ModeTonicEstimation import PitchDistribution as pd
-import extras.fileOperations as fo
 
 
 class BozkurtEstimation:
@@ -163,11 +162,11 @@ class BozkurtEstimation:
 
 		# parse mode input
 		try:
-			if os.path.isdir(mode_in): # folder
-				mode_files = fo.getFileNamesInDir(mode_in)[2]  # directory is given
+			# list of json files per mode
+			if all(os.path.isfile(m) for m in mode_in): 
 				est_mode = True  # do mode estimation
-				mode_names = [os.path.splitext(m)[0] for m in mode_files]
-				models = [pd.load(m) for m in mode_files]
+				mode_names = [os.path.splitext(m)[0] for m in mode_in]
+				models = [pd.load(m) for m in mode_in]
 			elif os.path.isfile(mode_in): # json file
 				est_mode = False # mode already known
 				model = pd.load(mode_in)
