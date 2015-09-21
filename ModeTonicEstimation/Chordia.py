@@ -4,6 +4,7 @@ from ModeTonicEstimation import ModeFunctions as mf
 from ModeTonicEstimation import PitchDistribution as p_d
 import json
 import os
+import random
 
 class Chordia:
 	"""-------------------------------------------------------------------------
@@ -135,10 +136,9 @@ class Chordia:
 
 		return pitch_distrib_list
 
-	def estimate(self, pitch_file, mode_names=[], mode_name='',
-		         mode_dir='./', est_mode=True,
+	def estimate(self, pitch_file, mode_names=[], mode_name='', mode_dir='./', est_mode=True,
 		         distance_method="euclidean", metric='pcd', tonic_freq=None,
-		         k_param=1):
+		         k_param=1, equalSamplePerMode = False):
 		"""-------------------------------------------------------------------------
 		In the estimation phase, the input pitch track is sliced into chunk and each
 		chunk is compared with each candidate mode's each sample model, i.e. with 
@@ -239,11 +239,12 @@ class Chordia:
 		# of each chunk to neighbors list.
 		for p in range(len(pts)):
 			neighbors[p] = self.chunk_estimate(pts[p], mode_names=mode_names,
-				                                 mode_name=mode_name, mode_dir=mode_dir,
-				                                 est_tonic=est_tonic, est_mode=est_mode,
-				                                 distance_method=distance_method,
-				                                 metric=metric, ref_freq=tonic_freq,
-				                                 min_cnt=min_cnt)
+			                                   mode_name=mode_name, mode_dir=mode_dir,
+				                               est_tonic=est_tonic, est_mode=est_mode,
+				                               distance_method=distance_method,
+				                               metric=metric, ref_freq=tonic_freq,
+				                               min_cnt=min_cnt,
+				                               equalSamplePerMode = equalSamplePerMode)
 		
 		### TODO: Clean up the spaghetti decision making part. The procedures
 		### are quite repetitive. Wrap them up with a separate function.
@@ -381,7 +382,7 @@ class Chordia:
 
 	def chunk_estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./',
 		                 est_tonic=True, est_mode=True, distance_method="euclidean",
-		                 metric='pcd', ref_freq=440, min_cnt=3):
+		                 metric='pcd', ref_freq=440, min_cnt=3, equalSamplePerMode = False):
 		"""-------------------------------------------------------------------------
 		This function is called by the wrapper estimate() function only. It gets a 
 		pitch track chunk, generates its pitch distribution and compares it with the
@@ -422,12 +423,21 @@ class Chordia:
 		# The model mode distribution(s) are loaded. If the mode is annotated and tonic
 		# is to be estimated, only the model of annotated mode is retrieved.
 		mode_collections = [self.load_collection(mode, dist_dir=mode_dir) for mode in mode_names]
-		mode_dists = [d for col in mode_collections for d in col]
-		mode_dist = self.load_collection(mode_name, dist_dir=mode_dir) if (mode_name!='') else None
+
+		if equalSamplePerMode:
+			minSamp = min([len(n) for n in mode_collections])
+			for i, m in enumerate(mode_collections):
+				mode_collections[i] = random.sample(m, minSamp)
+
 		# cum_lens (cummulative lengths) keeps track of number of chunks retrieved from
 		# each mode. So that we are able to find out which mode the best performed chunk
 		# belongs to.
 		cum_lens = np.cumsum([len(col) for col in mode_collections])
+
+		# load mode distribution
+		mode_dists = [d for col in mode_collections for d in col]
+		mode_dist = self.load_collection(mode_name, dist_dir=mode_dir) if (mode_name!='') else None
+
 		#Initializations of possible output parameters
 		tonic_list = [0 for x in range(min_cnt)]
 		mode_list = ['' for x in range(min_cnt)]
