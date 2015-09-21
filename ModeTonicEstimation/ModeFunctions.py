@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-import scipy as sp
 import numpy as np
 import math
 from scipy.spatial import distance
 from scipy.integrate import simps
+from scipy.stats import norm
 
 import PitchDistribution as pD
 
@@ -60,7 +60,7 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 
 	if smooth_factor > 0: # kernel density estimation (approximated)
 		# smooth the histogram
-		normal_dist = sp.stats.norm(loc = 0, scale = smooth_factor)
+		normal_dist = norm(loc = 0, scale = smooth_factor)
 		xn = np.concatenate([np.arange(0, - 5 * smooth_factor, -step_size)[::-1], 
 		    np.arange(step_size, 5 * smooth_factor, step_size)])
 		sampled_norm = normal_dist.pdf(xn)
@@ -174,13 +174,13 @@ def distance(vals_1, vals_2, method='euclidean'):
 	corr         : Correlation
 	-------------------------------------------------------------------------"""
 	if (method == 'euclidean'):
-		return sp.spatial.distance.euclidean(vals_1, vals_2)
+		return distance.euclidean(vals_1, vals_2)
 
 	elif (method == 'manhattan'):
-		return sp.spatial.distance.minkowski(vals_1, vals_2, 1)
+		return distance.minkowski(vals_1, vals_2, 1)
 
 	elif (method == 'l3'):
-		return sp.spatial.distance.minkowski(vals_1, vals_2, 3)
+		return distance.minkowski(vals_1, vals_2, 3)
 
 	elif (method == 'bhat'):
 		return -math.log(sum(np.sqrt(vals_1 * vals_2)))
