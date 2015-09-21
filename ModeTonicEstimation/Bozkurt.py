@@ -52,7 +52,7 @@ class Bozkurt:
 		self.chunk_size = chunk_size
 		self.frame_rate = frame_rate
 
-	def train(self, mode_name, pt_files, tonic_freqs, metric='pcd', save_dir=''):
+	def train(self, mode_name, pitch_files, tonic_freqs, metric='pcd', save_dir=''):
 		"""-------------------------------------------------------------------------
 		For the mode trainings, the requirements are a set of recordings with 
 		annotated tonics for each mode under consideration. This function only
@@ -66,7 +66,7 @@ class Bozkurt:
 		----------------------------------------------------------------------------
 		mode_name     : Name of the mode to be trained. This is only used for naming
 						the resultant JSON file, in the form "mode_name.json"
-		pt_files      : List of files with pitch tracks extracted from the recording
+		pitch_files   : List of files with pitch tracks extracted from the recording
 						(i.e. single-column files with frequencies)
 		tonic_freqs   : List of annotated tonic frequencies of recordings
 		metric        : Whether the model should be octave wrapped (Pitch Class
@@ -81,7 +81,7 @@ class Bozkurt:
 		# pitch distribution of this track is the mode's model distribution.
 
 		# Normalize the pitch tracks of the mode wrt the tonic frequency and concatenate
-		for pf, tonic in zip(pt_files, tonic_freqs):
+		for pf, tonic in zip(pitch_files, tonic_freqs):
 			pitch_track = np.loadtxt(pf)
 			if pitch_track.ndim > 1:  # assume the first col is time, the second is pitch and the rest is labels etc
 				pitch_track = pitch_track[:,1]
@@ -97,7 +97,7 @@ class Bozkurt:
 
 		# generate the pitch distribution
 		pitch_distrib = mf.generate_pd(mode_track, smooth_factor=self.smooth_factor,
-		                               step_size=self.step_size, source=pt_files, segment=seglen)
+		                               step_size=self.step_size, source=pitch_files, segment=seglen)
 		if metric == 'pcd':  # convert to pitch class distribution, if specified
 			pitch_distrib = mf.generate_pcd(pitch_distrib)
 
@@ -109,7 +109,7 @@ class Bozkurt:
 
 		return pitch_distrib
 
-	def estimate(self, pitch_track_file, mode_in='./', tonic_freq=None, rank=1,
+	def estimate(self, pitch_file, mode_in='./', tonic_freq=None, rank=1,
 	             distance_method="bhat", metric='pcd'):
 		"""-------------------------------------------------------------------------
 		This is the ultimate estimation function. There are three different types
@@ -134,7 +134,7 @@ class Bozkurt:
 		case mode_name parameter isn't used since the mode annotation is not
 		available. It can be ignored.
 		----------------------------------------------------------------------------
-		pitch_track_file: File in which the pitch track of the input recording 
+		pitch_file:     : File in which the pitch track of the input recording
 						whose tonic and/or mode is to be estimated. 
 		mode_in         : The mode input, If it is a filename or distribution object,
 						the mode is treated as known and only tonic will be estimated.
@@ -155,7 +155,7 @@ class Bozkurt:
 		-------------------------------------------------------------------------"""
 
 		# load pitch track 
-		pitch_track = np.loadtxt(pitch_track_file)
+		pitch_track = np.loadtxt(pitch_file)
 
 		# assume the first col is time, the second is pitch and the rest is labels etc.
 		pitch_track = pitch_track[:,1] if pitch_track.ndim > 1 else pitch_track

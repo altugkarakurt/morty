@@ -135,7 +135,7 @@ class Chordia:
 
 		return pitch_distrib_list
 
-	def estimate(self, pitch_track, mode_names=[], mode_name='',
+	def estimate(self, pitch_file, mode_names=[], mode_name='',
 		         mode_dir='./', est_tonic=True, est_mode=True,
 		         distance_method="euclidean", metric='pcd', ref_freq=440,
 		         k_param=1):
@@ -166,27 +166,33 @@ class Chordia:
 		case mode_name parameter isn't used since the mode annotation is not
 		available. It can be ignored.
 		----------------------------------------------------------------------------
-		pitch_track     : Pitch track of the input recording whose tonic and/or mode
-		                  is to be estimated. This is only a 1-D list of frequency
+		pitch_file      : File in which the pitch track of the input recording
+						whose tonic and/or mode is to be estimated.
 		mode_dir        : The directory where the mode models are stored. This is to
-		                  load the annotated mode or the candidate mode.
+						load the annotated mode or the candidate mode.
 		mode_names      : Names of the candidate modes. These are used when loading
-		                  the mode models. If the mode isn't estimated, this parameter
-		                  isn't used and can be ignored.
+						the mode models. If the mode isn't estimated, this parameter
+						isn't used and can be ignored.
 		mode_name       : Annotated mode of the recording. If it's not known and to be
-		                  estimated, this parameter isn't used and can be ignored.
+						estimated, this parameter isn't used and can be ignored.
 		est_tonic       : Whether tonic is to be estimated or not. If this flag is
-		                  False, ref_freq is treated as the annotated tonic.
+						False, ref_freq is treated as the annotated tonic.
 		est_mode        : Whether mode is to be estimated or not. If this flag is
-		                  False, mode_name is treated as the annotated mode.
+						False, mode_name is treated as the annotated mode.
 		k_param         : The k parameter of K Nearest Neighbors. 
 		distance_method : The choice of distance methods. See distance() in
-		                  ModeFunctions for more information.
+						ModeFunctions for more information.
 		metric          : Whether the model should be octave wrapped (Pitch Class
-		                  Distribution: PCD) or not (Pitch Distribution: PD)
+						Distribution: PCD) or not (Pitch Distribution: PD)
 		ref_freq        : Annotated tonic of the recording. If it's unknown, we use
-		                  an arbitrary value, so this can be ignored.
+						an arbitrary value, so this can be ignored.
 		-------------------------------------------------------------------------"""
+		# load pitch track
+		pitch_track = np.loadtxt(pitch_file)
+
+		# assume the first col is time, the second is pitch and the rest is labels etc.
+		pitch_track = pitch_track[:,1] if pitch_track.ndim > 1 else pitch_track
+
 		# Pitch track is sliced into chunks.
 		time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
 		pts, chunk_data = mf.slice(time_track, pitch_track, 'input', self.chunk_size,
