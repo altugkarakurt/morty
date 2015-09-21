@@ -136,8 +136,8 @@ class Chordia:
 		return pitch_distrib_list
 
 	def estimate(self, pitch_file, mode_names=[], mode_name='',
-		         mode_dir='./', est_tonic=True, est_mode=True,
-		         distance_method="euclidean", metric='pcd', ref_freq=440,
+		         mode_dir='./', est_mode=True,
+		         distance_method="euclidean", metric='pcd', tonic_freq=None,
 		         k_param=1):
 		"""-------------------------------------------------------------------------
 		In the estimation phase, the input pitch track is sliced into chunk and each
@@ -151,13 +151,13 @@ class Chordia:
 		Then, joint estimation estimates both of these parameters without any prior
 		knowledge about the recording.
 		To use this: est_mode and est_tonic flags should be True since both are to
-		be estimated. In this case ref_freq and mode_name parameters are not used,
+		be estimated. In this case tonic_freq and mode_name parameters are not used,
 		since these are used to pass the annotated data about the recording.
 
 		2) Tonic Estimation: The mode of the recording is known and tonic is to be
 		estimated. This is generally the most accurate estimation among the three.
 		To use this: est_tonic should be True and est_mode should be False. In this
-		case ref_freq  and mode_names parameters are not used since tonic isn't
+		case tonic_freq  and mode_names parameters are not used since tonic isn't
 		known a priori and mode is known and hence there is no candidate mode.
 
 		3) Mode Estimation: The tonic of the recording is known and mode is to be
@@ -176,7 +176,7 @@ class Chordia:
 		mode_name       : Annotated mode of the recording. If it's not known and to be
 						estimated, this parameter isn't used and can be ignored.
 		est_tonic       : Whether tonic is to be estimated or not. If this flag is
-						False, ref_freq is treated as the annotated tonic.
+						False, tonic_freq is treated as the annotated tonic.
 		est_mode        : Whether mode is to be estimated or not. If this flag is
 						False, mode_name is treated as the annotated mode.
 		k_param         : The k parameter of K Nearest Neighbors. 
@@ -184,7 +184,7 @@ class Chordia:
 						ModeFunctions for more information.
 		metric          : Whether the model should be octave wrapped (Pitch Class
 						Distribution: PCD) or not (Pitch Distribution: PD)
-		ref_freq        : Annotated tonic of the recording. If it's unknown, we use
+		tonic_freq        : Annotated tonic of the recording. If it's unknown, we use
 						an arbitrary value, so this can be ignored.
 		-------------------------------------------------------------------------"""
 		# load pitch track
@@ -215,6 +215,18 @@ class Chordia:
 		tonic_list = 0
 		mode_list = ''
 
+		# parse tonic input
+		if tonic_freq:  # tonic is already known;
+			est_tonic = False
+		else:
+			est_tonic = True
+			# take A4 as the dummy frequency value for cent conversion
+			tonic_freq = 440
+
+		if not (est_tonic or est_mode):
+			print "Both tonic and mode are known!"
+			return -1
+
 		if(est_tonic and est_mode):
 			neighbors = [ [mode_list, tonic_list] for i in range(len(chunk_data)) ]
 		elif(est_tonic):
@@ -230,7 +242,7 @@ class Chordia:
 				                                 mode_name=mode_name, mode_dir=mode_dir,
 				                                 est_tonic=est_tonic, est_mode=est_mode,
 				                                 distance_method=distance_method,
-				                                 metric=metric, ref_freq=ref_freq,
+				                                 metric=metric, ref_freq=tonic_freq,
 				                                 min_cnt=min_cnt)
 		
 		### TODO: Clean up the spaghetti decision making part. The procedures
