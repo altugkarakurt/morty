@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-import scipy as sp
 import numpy as np
 import math
-from sklearn.neighbors.kde import KernelDensity
 from scipy.spatial import distance
+from scipy.integrate import simps
+from scipy.stats import norm
 
 import PitchDistribution as pD
 
@@ -39,45 +39,38 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 
 	### TODO: filter out the NaN, -infinity and +infinity from the pitch track
 
-	# Do Kernel Density Estimation
-	if smooth_factor > 0:
+	# Finds the endpoints of the histogram edges. Histogram bins will be
+	# generated as the midpoints of these edges. 
+	min_edge = min(cent_track) - (step_size / 2.0)
+	max_edge = max(cent_track) + (step_size / 2.0)
+	pd_edges = np.concatenate([np.arange(-step_size/2.0, min_edge, -step_size)[::-1],
+	                           np.arange(step_size/2.0, max_edge, step_size)])
 
-		# Extra tails of size 3 std. deviations are added to two ends.
-		min_bin = (min(cent_track) - (min(cent_track) % smooth_factor)) - (5 * smooth_factor)
-		max_bin = (max(cent_track) + (smooth_factor - (max(cent_track) % smooth_factor))) + (5 * smooth_factor)
-		
-		# Generates pitch distribution bins. We make sure it crosses from 0
-		pd_bins = np.concatenate([np.arange(0, min_bin, -step_size)[::-1],
-								 np.arange(step_size, max_bin, step_size)])
-		
-		# An exceptional case is when min_bin and max_bin are both positive
-		# In this case, the 1st array will be empty, generating pd_bins in the
-		# range of [step_size, max_bin]. If so, a 0 is inserted to the head.
-		pd_bins = pd_bins if (0 in pd_bins) else np.insert(pd_bins, 0, 0)
-		
-		# Generates the kernel density estimate and evaluates it on pd_bins
-		kde = KernelDensity(kernel='gaussian', bandwidth=smooth_factor).fit(cent_track[:, np.newaxis])
-		pd_vals = np.exp(kde.score_samples(pd_bins[:, np.newaxis]))
+	# An exceptional case is when min_bin and max_bin are both positive
+	# In this case, pd_edges would be in the range of [step_size/2, max_bin].
+	# If so, a -step_size is inserted to the head, to make sure 0 would be
+	# in pd_bins. The same procedure is repeated for the case when both
+	# are negative. Then, step_size is inserted to the tail.
+	pd_edges = pd_edges if -step_size/2.0 in pd_edges else np.insert(pd_edges, 0, -step_size/2.0)
+	pd_edges = pd_edges if step_size/2.0 in pd_edges else np.append(pd_edges, step_size/2.0)
 
-	else:  # Zero smooth_factor is given: compute histogram.
-		# Finds the endpoints of the histogram edges. Histogram bins will be
-		# generated as the midpoints of these edges. 
-		min_edge = min(cent_track) - (step_size / 2.0)
-		max_edge = max(cent_track) + (step_size / 2.0)
-		pd_edges = np.concatenate([np.arange(-step_size/2.0, min_edge, -step_size)[::-1],
-		                           np.arange(step_size/2.0, max_edge, step_size)])
+	# Generates the histogram and bins (i.e. the midpoints of edges)
+	pd_vals, pd_edges = np.histogram(cent_track, bins=pd_edges, density=True)
+	pd_bins = np.convolve(pd_edges, [0.5,0.5])[1:-1]
 
-		# An exceptional case is when min_bin and max_bin are both positive
-		# In this case, pd_edges would be in the range of [step_size/2, max_bin].
-		# If so, a -step_size is inserted to the head, to make sure 0 would be
-		# in pd_bins. The same procedure is repeated for the case when both
-		# are negative. Then, step_size is inserted to the tail.
-		pd_edges = pd_edges if -step_size/2.0 in pd_edges else np.insert(pd_edges, 0, -step_size/2.0)
-		pd_edges = pd_edges if step_size/2.0 in pd_edges else np.append(pd_edges, step_size/2.0)
+	if smooth_factor > 0: # kernel density estimation (approximated)
+		# smooth the histogram
+		normal_dist = norm(loc = 0, scale = smooth_factor)
+		xn = np.concatenate([np.arange(0, - 5 * smooth_factor, -step_size)[::-1], 
+		    np.arange(step_size, 5 * smooth_factor, step_size)])
+		sampled_norm = normal_dist.pdf(xn)
 
-		# Generates the histogram and bins (i.e. the midpoints of edges)
-		pd_vals, pd_edges = np.histogram(cent_track, bins=pd_edges, density=True)
-		pd_bins = np.convolve(pd_edges, [0.5,0.5])[1:-1]
+		extra_num_bins = len(sampled_norm)/2 # convolution generates tails
+		pd_vals = np.convolve(pd_vals, sampled_norm)[extra_num_bins:-extra_num_bins]
+
+		# normalize the area under the curve
+		area = simps(pd_vals, dx=step_size)
+		pd_vals = pd_vals/area
 
 	# Sanity check. If the histogram bins and vals lengths are different, we
 	# are in trouble. This is an important assumption of higher level functions.
@@ -181,13 +174,13 @@ def distance(vals_1, vals_2, method='euclidean'):
 	corr         : Correlation
 	-------------------------------------------------------------------------"""
 	if (method == 'euclidean'):
-		return sp.spatial.distance.euclidean(vals_1, vals_2)
+		return distance.euclidean(vals_1, vals_2)
 
 	elif (method == 'manhattan'):
-		return sp.spatial.distance.minkowski(vals_1, vals_2, 1)
+		return distance.minkowski(vals_1, vals_2, 1)
 
 	elif (method == 'l3'):
-		return sp.spatial.distance.minkowski(vals_1, vals_2, 3)
+		return distance.minkowski(vals_1, vals_2, 3)
 
 	elif (method == 'bhat'):
 		return -math.log(sum(np.sqrt(vals_1 * vals_2)))
