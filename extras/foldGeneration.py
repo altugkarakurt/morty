@@ -2,7 +2,7 @@ import json
 import os
 from extras import fileOperations
 from sklearn import cross_validation
-
+import numpy
 
 def stratified_fold(data_dir, annotation_file, n_folds=10, savefile=''):
 	modes = fileOperations.getModeNames(data_dir)
@@ -21,7 +21,7 @@ def stratified_fold(data_dir, annotation_file, n_folds=10, savefile=''):
 
 	# get the stratified folds
 	mode_idx = [modes.index(m) for m in filemodes]
-	skf = cross_validation.StratifiedKFold(mode_idx, n_folds=n_folds)
+	skf = cross_validation.StratifiedKFold(mode_idx, n_folds=n_folds, shuffle=True)
 
 	folds = dict()
 	for ff, fold in enumerate(skf):
