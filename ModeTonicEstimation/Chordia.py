@@ -195,8 +195,14 @@ class Chordia:
 
 		# Pitch track is sliced into chunks.
 		time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
-		pts, chunk_data = mf.slice(time_track, pitch_track, 'input', self.chunk_size,
-			                 self.threshold, self.overlap)
+
+		if self.chunk_size == 0: # no slicing
+			pts = pitch_track
+			chunk_data = 'input_all'
+		else:
+			pts, chunk_data = mf.slice(time_track, pitch_track, 'input', self.chunk_size,
+				                 self.threshold, self.overlap)
+
 
 		# Here's a neat trick. In order to return an estimation about the entire
 		# recording based on our observations on individual chunks, we look at the
