@@ -100,8 +100,12 @@ class Chordia:
 			time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
 
 			# Current pitch track is sliced into chunks.
-			pts, chunk_data = mf.slice(time_track, pitch_track, pf, self.chunk_size,
-			                           self.threshold, self.overlap)
+			if self.chunk_size == 0: # no slicing
+				pts = [pitch_track]
+				chunk_data = [pf + '_all']
+			else:
+				pts, chunk_data = mf.slice(time_track, pitch_track, pf, self.chunk_size,
+				                           self.threshold, self.overlap)
 
 			# Each chunk is converted to cents
 			pts = [mf.hz_to_cent(k, ref_freq=tonic) for k in pts]
@@ -197,8 +201,8 @@ class Chordia:
 		time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
 
 		if self.chunk_size == 0: # no slicing
-			pts = pitch_track
-			chunk_data = 'input_all'
+			pts = [pitch_track]
+			chunk_data = ['input_all']
 		else:
 			pts, chunk_data = mf.slice(time_track, pitch_track, 'input', self.chunk_size,
 				                 self.threshold, self.overlap)
