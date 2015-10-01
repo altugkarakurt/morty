@@ -1,26 +1,49 @@
 # -*- coding: utf-8 -*-
+
 from compmusic.extractors.makam import pitch
-from extras.fileOperations import getFileNamesInDir
-import os
+from FileOperations import getFileNamesInDir
+import os 
 import json
-import math
 import numpy as np
+import sys
+import math
 
+# Number of decimal points to round the pitch track to.
+DECIMAL = 2
 
-def batch_extract_melody(audioDir, extension='.mp3'):
-	extractor = pitch.PitchExtractMakam()
+# get the input index
+if len(sys.argv) == 1:
+	idx = []
+elif len(sys.argv) == 2: # for paralelization
+	idx = int(sys.argv[1])
+else:
+	raise ValueError('Only accepts zero or one argument')
 
-	audioFiles = getFileNamesInDir(audioDir, extension=extension)[0]
-	txtfiles = [os.path.splitext(f)[0] + '.txt' for f in audioFiles]  # ooutput files
+print idx
 
-	for ii, audio in enumerate(audioFiles):
-		print ' '
-		print str(ii + 1) + ": " + os.path.basename(audio)
+extractor = pitch.PitchExtractMakam()
 
-		results = extractor.run(audio)
-		melody = np.array(json.loads(results['pitch']))[:, 1]
+audioDir = './' # audio folder and subfolders
 
-		# text file; only write until 2 decimal places to save from space
-		with open(txtfiles[ii], 'w') as f:
-			for i in melody:
+audioFiles = getFileNamesInDir(audioDir, audio_ext=".mp3")[0]
+txtFiles = [os.path.join(os.path.dirname(f), os.path.basename(os.path.splitext(f)[0])+'.pitch') for f in audioFiles] # text file; for sonic visualizer
+
+if idx: # if index is given
+	audioFiles = [audioFiles[idx]]
+	txtFiles = [txtFiles[idx]]
+
+for ii, mp3 in enumerate(audioFiles):
+	print ' '
+	print str(ii+1) + ": " + os.path.basename(mp3)
+
+	if os.path.isfile(txtFiles[ii]): # already exists
+		print "   > Already exist; skipped."
+	else:
+		results = extractor.run(mp3)
+		pitch = np.array(json.loads(results['pitch']))[:, [0, 1]]
+		pitch_track = np.array(json.loads(results['pitch']))[:, [0, 1]]
+		pitch_track = (np.around([i*math.pow(10,DECIMAL) \
+			          for i in pitch_track[:,1]]) / 100.0).tolist()
+		with open(txtFiles[ii], 'w') as f:
+			for i in pitch_track:
 				f.write("%.2f\n" % i)
