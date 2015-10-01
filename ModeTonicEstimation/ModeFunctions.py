@@ -146,14 +146,14 @@ def generate_distance_matrix(dist, peak_idxs, mode_dists, method='euclidean'):
 	result = np.zeros((len(peak_idxs), len(mode_dists)))
 
 	# Iterates over the peaks, i.e. the tonic candidates
-	for i in range(len(peak_idxs)):
-		trial = dist.shift(peak_idxs[i])
+	for i, cur_peak_idx in enumerate(peak_idxs):
+		trial = dist.shift(cur_peak_idx)
 
 		# Iterates over mode candidates
-		for j in range(len(mode_dists)):
+		for j, cur_mode_dist in enumerate(mode_dists):
 
 			# Calls the distance function for each entry of the matrix
-			result[i][j] = distance(trial.vals, mode_dists[j].vals, method=method)
+			result[i][j] = distance(trial.vals, cur_mode_dist.vals, method=method)
 	return np.array(result)
 
 
