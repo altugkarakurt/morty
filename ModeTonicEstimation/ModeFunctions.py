@@ -183,7 +183,7 @@ def distance(vals_1, vals_2, method='euclidean'):
 		return distance.minkowski(vals_1, vals_2, 3)
 
 	elif (method == 'bhat'):
-		return -math.log(sum(np.sqrt(vals_1 * vals_2)))
+		return -np.log(sum(np.sqrt(vals_1 * vals_2)))
 
 	# Since correlation and intersection are actually similarity measures,
 	# we take their inverse to be able to use them as distances. In other
