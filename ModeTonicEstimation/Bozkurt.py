@@ -146,21 +146,17 @@ class Bozkurt:
 		try:
 			# list of json files per mode
 			if all(os.path.isfile(m) for m in mode_in): 
-				est_mode = True  # do mode estimation
 				mode_names = [os.path.splitext(m)[0] for m in mode_in]
 				models = [pD.load(m) for m in mode_in]
 			elif os.path.isfile(mode_in): # json file
-				est_mode = False # mode already known
 				model = pD.load(mode_in)
 		except TypeError:
 			try:  # models
 				if isinstance(mode_in, pD.PitchDistribution):
 					# mode is loaded
-					est_mode = False  # mode already known
 					model = mode_in
 				elif all(isinstance(m, pD.PitchDistribution) for m in mode_in.values()):
 					# models of all modes are loaded
-					est_mode = True  # do mode estimation
 					mode_names = mode_in.keys()
 					models = [mode_in[m] for m in mode_names]
 			except:
@@ -274,21 +270,17 @@ class Bozkurt:
 		try:
 			# list of json files per mode
 			if all(os.path.isfile(m) for m in mode_in): 
-				est_mode = True  # do mode estimation
 				mode_names = [os.path.splitext(m)[0] for m in mode_in]
 				models = [pD.load(m) for m in mode_in]
 			elif os.path.isfile(mode_in): # json file
-				est_mode = False # mode already known
 				model = pD.load(mode_in)
 		except TypeError:
 			try:  # models
 				if isinstance(mode_in, pD.PitchDistribution):
 					# mode is loaded
-					est_mode = False  # mode already known
 					model = mode_in
 				elif all(isinstance(m, pD.PitchDistribution) for m in mode_in.values()):
 					# models of all modes are loaded
-					est_mode = True  # do mode estimation
 					mode_names = mode_in.keys()
 					models = [mode_in[m] for m in mode_names]
 			except:
@@ -315,11 +307,6 @@ class Bozkurt:
 			
 		# Preliminary steps for tonic identification	
 		if metric == 'pcd':
-			# If there happens to be a peak at the last (and first due to the circular
-			# nature of PCD) sample, it is considered as two peaks, one at the end and
-			# one at the beginning. To prevent this, we find the global minima (as it
-			# is easy to compute) of the distribution and make it the new reference
-			# frequency, i.e. shift it to the beginning.
 			shift_factor = distrib.vals.tolist().index(min(distrib.vals))
 			distrib = distrib.shift(shift_factor)
 
@@ -346,7 +333,7 @@ class Bozkurt:
 		peak_idxs = shift_idxs if (metric == 'pD') else peak_idxs
 		tonic_freq = tonic_freq if (metric == 'pcd') else tonic_freq
 
-		# Distance vector is generated. In the mode_estimate() function
+		# Distance vector is generated. In the tonic_estimate() function
 		# of ModeFunctions, PD and PCD are treated differently and it
 		# handles the special cases such as zero-padding. The mode is
 		# already known, so there is only one model to be compared. Each
@@ -354,17 +341,13 @@ class Bozkurt:
 		distance_vector = mF.tonic_estimate(distrib, peak_idxs, model, distance_method=distance_method,
 		                                    metric=metric, step_size=self.step_size)
 
-		# Distance vector is ready now. For each rank, the loop is iterated.
-		# When the first best estimate is found it's changed to be the worst,
-		# so in the next iteration, the estimate would be the second best
-		# and so on
 		for r in range(min(rank, len(peak_idxs))):
 			# Minima is found, corresponding tonic candidate is our current
 			# tonic estimate
 			idx = np.argmin(distance_vector)
 			# Due to the changed reference frequency in PCD's precaution step,
 			# PCD and PD are treated differently here. 
-			# TODO: review here, this might be tedious due to 257th line.
+			# TODO: review here
 			if (metric == 'pcd'):
 				tonic_ranked[r] = (mF.cent_to_hz([distrib.bins[peak_idxs[idx]]],
 				                                 tonic_freq)[0], distance_vector[idx])
@@ -447,10 +430,6 @@ class Bozkurt:
 			distance_vector = mF.mode_estimate(distrib, models, distance_method=distance_method, metric=metric,
 			                                   step_size=self.step_size)
 
-			# Distance vector is ready now. For each rank, the loop is iterated.
-			# When the first best estimate is found it's changed to be the worst,
-			# so in the next iteration, the estimate would be the second best
-			# and so on
 			for r in range(min(rank, len(mode_names))):
 				# Minima is found, corresponding mode candidate is our current
 				# mode estimate

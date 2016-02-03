@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from ModeTonicEstimation import ModeFunctions as mf
-from ModeTonicEstimation import PitchDistribution as p_d
+from ModeTonicEstimation import PitchDistribution as pD
 import json
 import os
 import random
@@ -63,7 +63,7 @@ class Chordia:
 		self.threshold = threshold
 		self.frame_rate = frame_rate
 
-	def train(self, mode_name, pt_files, tonic_freqs, metric='pcd', save_dir=''):
+	def train(self, mode_name, pitch_files, tonic_freqs, metric='pcd', save_dir=''):
 		"""-------------------------------------------------------------------------
 		For the mode trainings, the requirements are a set of recordings with 
 		annotated tonics for each mode under consideration. This function only
@@ -79,7 +79,7 @@ class Chordia:
 		----------------------------------------------------------------------------
 		mode_name     : Name of the mode to be trained. This is only used for naming
 		                the resultant JSON file, in the form "mode_name.json"
-		pt_files       : List of pitch tracks (i.e. 1-D list of frequencies)
+		pitch_files   : List of pitch tracks (i.e. 1-D list of frequencies)
 		tonic_freqs : List of annotated tonics of recordings
 		metric        : Whether the model should be octave wrapped (Pitch Class
 			            Distribution: PCD) or not (Pitch Distribution: PD)
@@ -647,7 +647,7 @@ def mode_estimate(self, pitch_file, tonic_freq, mode_names, mode_dir='./',
 		# List of dictionaries is is iterated over to initialize a list of
 		# PitchDistribution objects.
 		for d in dist_list:
-			obj_list.append(p_d.PitchDistribution(np.array(d['bins']),
+			obj_list.append(pD.PitchDistribution(np.array(d['bins']),
 				            np.array(d['vals']), kernel_width=d['kernel_width'],
 				            source=d['source'], ref_freq=d['ref_freq'],
 				            segment=d['segmentation'], overlap=d['overlap']))
