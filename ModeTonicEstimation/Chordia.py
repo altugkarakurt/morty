@@ -221,6 +221,8 @@ class Chordia:
 		# neighbors from the union of these from each chunk. This is quite an
 		# overshoot, we only need min_cnt >= k_param. 
 
+		min_cnt = len(pts) * k_param
+		
 		# parse tonic input
 		if tonic_freq:  # tonic is already known;
 			est_tonic = False
