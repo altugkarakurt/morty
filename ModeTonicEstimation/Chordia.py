@@ -100,7 +100,7 @@ class Chordia:
 			time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
 
 			# Current pitch track is sliced into chunks.
-			if self.chunk_size == 0: # no slicing
+			if not self.chunk_size: # no slicing
 				pts = [pitch_track]
 				chunk_data = [pf + '_all']
 			else:
@@ -141,8 +141,7 @@ class Chordia:
 		              'ref_freq':d.ref_freq.tolist(), 'segmentation':d.segmentation,
 		              'overlap':d.overlap} for d in dist_list]
 
-		with open(os.path.join(save_dir, mode_name + '.json'), 'w') as f:
-			json.dump(dist_json, f, indent=2)
+		json.dump(dist_json, open(os.path.join(save_dir, mode_name + '.json'), 'w'), indent=2)
 
 	def estimate(self, pitch_file, mode_names=[], mode_name='', mode_dir='./', est_mode=True,
 		         distance_method="euclidean", metric='pcd', tonic_freq=None,
@@ -204,7 +203,7 @@ class Chordia:
 		# Pitch track is sliced into chunks.
 		time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
 
-		if self.chunk_size == 0: # no slicing
+		if not self.chunk_size: # no slicing
 			pts = [pitch_track]
 			chunk_data = ['input_all']
 		else:
@@ -222,13 +221,6 @@ class Chordia:
 		# neighbors from the union of these from each chunk. This is quite an
 		# overshoot, we only need min_cnt >= k_param. 
 
-		### TODO: shrink this value as much as possible.
-		min_cnt = len(pts) * k_param
-
-		#Initializations
-		tonic_list = 0
-		mode_list = ''
-
 		# parse tonic input
 		if tonic_freq:  # tonic is already known;
 			est_tonic = False
@@ -238,15 +230,14 @@ class Chordia:
 			tonic_freq = 440
 
 		if not (est_tonic or est_mode):
-			print "Both tonic and mode are known!"
-			return -1
+			ValueError("Both tonic and mode are known!")
 
 		if(est_tonic and est_mode):
-			neighbors = [ [mode_list, tonic_list] for i in range(len(chunk_data)) ]
+			neighbors = [['', 0] for _ in chunk_data]
 		elif(est_tonic):
-			neighbors = [ tonic_list for i in range(len(chunk_data)) ]
+			neighbors = [0 for _ in chunk_data]
 		elif(est_mode):
-			neighbors = [ mode_list for i in range(len(chunk_data)) ]
+			neighbors = ['' for _ in chunk_data]
 
 		# chunk_estimate() generates the distributions of each chunk iteratively,
 		# then compares it with all candidates and returns min_cnt closest neighbors
@@ -260,19 +251,22 @@ class Chordia:
 				                               min_cnt=min_cnt,
 				                               equalSamplePerMode = equalSamplePerMode)
 		
-		### TODO: Clean up the spaghetti decision making part. The procedures
-		### are quite repetitive. Wrap them up with a separate function.
+		# The decision making about the entire recording starts here. neighbors
+		# parameter holds the nearest neighbors to each chunk. We need to process
+		# them as if they are from a single point in the space.
 
 		# Temporary variables used during the desicion making part.
+		# candidate_foo : the flattened list of all foos from chunks
+		# kn_foo : k nearest foos of candidate_foos. this is a subset of
+		#		   candidate_foo
+		# res_foo : foo attribute of final decision
 		candidate_distances, candidate_ests, candidate_sources, kn_distances, kn_ests, \
 		kn_sources, idx_counts, elem_counts, res_distances, res_sources = ([] for i in range(10))
 
 		# Joint estimation decision making. 
 		if(est_mode and est_tonic):
 			# Flattens the returned candidates and related data about them and
-			# stores them into candidate_* variables. candidate_distances stores
-			# the distance values, candidate_ests stores the mode/tonic pairs
-			# candidate_sources stores the sources of the nearest neighbors.
+			# stores them into candidate_*
 			for i in xrange(len(pts)):
 				for j in neighbors[i][1]:
 					candidate_distances.append(j)
@@ -280,119 +274,42 @@ class Chordia:
 					candidate_ests.append((neighbors[i][0][1][l], neighbors[i][0][0][l][0]))
 					candidate_sources.append(neighbors[i][0][0][l][1])
 
-			# Finds the nearest neighbors and fills all related data about
-			# them to kn_* variables. Each of these variables have length k.
-			# kn_distances stores the distance values, kn_ests stores
-			# mode/tonic pairs, kn_sources store the name/id of the distribution
-			# that gave rise to the corresponding distances.
-			for k in xrange(k_param):
-				idx = np.argmin(candidate_distances)
-				kn_distances.append(candidate_distances[idx])
-				kn_ests.append(candidate_ests[idx])
-				kn_sources.append(candidate_sources[idx])
-				candidate_distances[idx] = (np.amax(candidate_distances) + 1)
+		# Mode or Tonic estimation decision making
+		else:
+			# See the joint version of this loop for further explanation
+			for i in xrange(len(pts)):
+				for j in neighbors[i][1]:
+					candidate_distances.append(j)
+				for l in xrange(len(neighbors[i][0])):
+					candidate_ests.append(neighbors[i][0][l][0])
+					candidate_sources.append(neighbors[i][0][l][1])
+	
+		# Finds the nearest neighbors and fills all related data about
+		# them to kn_*. Each of these variables have length k. kn_distances
+		# stores the distance values, kn_ests stores mode/tonic pairs,
+		# kn_sources store the name/id of the distribution that gave rise
+		# to the corresponding distances.
+		for k in xrange(k_param):
+			idx = np.argmin(candidate_distances)
+			kn_distances.append(candidate_distances[idx])
+			kn_ests.append(candidate_ests[idx])
+			kn_sources.append(candidate_sources[idx])
+			candidate_distances[idx] = (np.amax(candidate_distances) + 1)
 			
-			# Counts the occurences of each candidate mode/tonic pair in
-			# the K nearest neighbors. The result is our estimation. 
-			for c in set(kn_ests):
-				idx_counts.append(kn_ests.count(c))
-				elem_counts.append(c)
-			joint_estimation = elem_counts[np.argmax(idx_counts)]
+		# Counts the occurences of each candidate mode/tonic pair in
+		# the K nearest neighbors. The result is our estimation.
+		elem_counts = [c for c in set(kn_ests)]
+		idx_counts = [kn_ests.count(c) for c in set(kn_ests)]
+		res_estimation = elem_counts[np.argmax(idx_counts)]
 
-			# We have concluded our estimation. Here, we retrieve the 
-			# relevant data to this estimation; the sources and coresponding
-			# distances.
-			for m in xrange(len(kn_ests)):
-				if (kn_ests[m] == joint_estimation):
-					res_sources.append(kn_sources[m])
-					res_distances.append(kn_distances[m])
-			result = [joint_estimation, res_sources, res_distances]
-
-		# Mode estimation decision making
-		elif(est_mode):
-			# Flattens the returned candidates and related data about them and
-			# stores them into candidate_* variables. candidate_distances stores
-			# the distance values, candidate_ests stores the candidate modes
-			# candidate_sources stores the sources of the nearest neighbors.
-			for i in xrange(len(pts)):
-				for j in neighbors[i][1]:
-					candidate_distances.append(j)
-				for l in xrange(len(neighbors[i][0])):
-					candidate_ests.append(neighbors[i][0][l][0])
-					candidate_sources.append(neighbors[i][0][l][1])
-
-			# Finds the nearest neighbors and fills all related data about
-			# them to kn_* variables. Each of these variables have length k.
-			# kn_distances stores the distance values, kn_ests stores
-			# mode names, kn_sources store the name/id of the distributions
-			# that gave rise to the corresponding distances.
-			for k in xrange(k_param):
-				idx = np.argmin(candidate_distances)
-				kn_distances.append(candidate_distances[idx])
-				kn_ests.append(candidate_ests[idx])
-				kn_sources.append(candidate_sources[idx])
-				candidate_distances[idx] = (np.amax(candidate_distances) + 1)
-
-			# Counts the occurences of each candidate mode name in
-			# the K nearest neighbors. The result is our estimation. 
-			for c in set(kn_ests):
-				idx_counts.append(kn_ests.count(c))
-				elem_counts.append(c)
-			mode_estimation = elem_counts[np.argmax(idx_counts)]
-
-			# We have concluded our estimation. Here, we retrieve the 
-			# relevant data to this estimation; the sources and coresponding
-			# distances.
-			for m in xrange(len(kn_ests)):
-				if (kn_ests[m] == mode_estimation):
-					res_sources.append(kn_sources[m])
-					res_distances.append(kn_distances[m])
-			result = [mode_estimation, res_sources, res_distances]
-
-
-		# Tonic estimation decision making
-		elif(est_tonic):
-			# Flattens the returned candidates and related data about them and
-			# stores them into candidate_* variables. candidate_distances stores
-			# the distance values, candidate_ests stores the candidate peak 
-			# frequencies, candidate_sources stores the sources of the nearest
-			# neighbors.
-			for i in xrange(len(pts)):
-				for j in neighbors[i][1]:
-					candidate_distances.append(j)
-				for l in xrange(len(neighbors[i][0])):
-					candidate_ests.append(neighbors[i][0][l][0])
-					candidate_sources.append(neighbors[i][0][l][1])
-
-			# Finds the nearest neighbors and fills all related data about
-			# them to kn_* variables. Each of these variables have length k.
-			# kn_distances stores the distance values, kn_ests stores
-			# peak frequencies, kn_sources store the name/id of the
-			# distributions that gave rise to the corresponding distances.
-			for k in xrange(k_param):
-				idx = np.argmin(candidate_distances)
-				kn_distances.append(candidate_distances[idx])
-				kn_ests.append(candidate_ests[idx])
-				kn_sources.append(candidate_sources[idx])
-				candidate_distances[idx] = (np.amax(candidate_distances) + 1)
-
-			# Counts the occurences of each candidate tonic frequency in
-			# the K nearest neighbors. The result is our estimation. 
-			for c in set(kn_ests):
-				idx_counts.append(kn_ests.count(c))
-				elem_counts.append(c)
-			tonic_estimation = elem_counts[np.argmax(idx_counts)]
-
-			# We have concluded our estimation. Here, we retrieve the 
-			# relevant data to this estimation; the sources and coresponding
-			# distances.
-			for m in xrange(len(kn_ests)):
-				if (kn_ests[m] == tonic_estimation):
-					res_sources.append(kn_sources[m])
-					res_distances.append(kn_distances[m])
-			result = [tonic_estimation, res_sources, res_distances]
-
-		return result
+		# We have concluded our estimation. Here, we retrieve the 
+		# relevant data to this estimation; the sources and coresponding
+		# distances.
+		for m, cur_est in enumerate(kn_ests):
+			if (cur_est == res_estimation):
+				res_sources.append(kn_sources[m])
+				res_distances.append(kn_distances[m])
+		return [res_estimation, res_sources, res_distances]
 
 	def chunk_estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./',
 		                 est_tonic=True, est_mode=True, distance_method="euclidean",
@@ -438,14 +355,16 @@ class Chordia:
 		# is to be estimated, only the model of annotated mode is retrieved.
 		mode_collections = [self.load_collection(mode, dist_dir=mode_dir) for mode in mode_names]
 
+		# This is used when we want to use equal number of points as model
+		# per each candidate mode. This comes in handy if the numbers of 
+		# chunks in trained mode model aren't close to each other.
 		if equalSamplePerMode:
 			minSamp = min([len(n) for n in mode_collections])
 			for i, m in enumerate(mode_collections):
 				mode_collections[i] = random.sample(m, minSamp)
 
 		# cum_lens (cummulative lengths) keeps track of number of chunks retrieved from
-		# each mode. So that we are able to find out which mode the best performed chunk
-		# belongs to.
+		# each mode. So that we are able to find out which is the mode of the closest chunk.
 		cum_lens = np.cumsum([len(col) for col in mode_collections])
 
 		# load mode distribution
@@ -461,21 +380,23 @@ class Chordia:
 		# regardless of the process being a joint estimation of a tonic estimation.
 		if(est_tonic):
 			if(metric=='pcd'):
-				# This is a precaution step, just to be on the safe side. If there
-				# happens to be a peak at the last (and first due to the circular nature
-				# of PCD) sample, it is considered as two peaks, one at the end and
-				# one at the beginning. To prevent this, we find the global minima
-				# of the distribution and shift it to the beginning, i.e. make it the
-				# new reference frequency. This new reference could have been any other
-				# as long as there is no peak there, but minima is fairly easy to find.
+				# This is a precaution. If there happens to be a peak at the last
+				# (and first due to the circular nature of PCD) sample, it's
+				# considered as two peaks, one at the end and one at the beginning.
+				# To prevent this, we find the global minima of the distribution and
+				# shift it to the beginning, i.e. make it the new reference frequency.
+				# This new reference could have been any other as long as there is no
+				# peak there, but minima is fairly easy to find.
 				shift_factor = dist.vals.tolist().index(min(dist.vals))
 				dist = dist.shift(shift_factor)
-				# anti-freq is the new reference frequency after shift, as mentioned
+
+				# new_ref_freq is the new reference frequency after shift, as mentioned
 				# above.
-				anti_freq = mf.cent_to_hz([dist.bins[shift_factor]], ref_freq=ref_freq)[0]
+				new_ref_freq = mf.cent_to_hz([dist.bins[shift_factor]], ref_freq=ref_freq)[0]
 				# Peaks of the distribution are found and recorded. These will be treated
 				# as tonic candidates.
 				peak_idxs, peak_vals = dist.detect_peaks()
+				
 			elif(metric=='pd'):
 				# Since PD isn't circular, the precaution in PCD is unnecessary here.
 				# Peaks of the distribution are found and recorded. These will be treated
@@ -501,79 +422,63 @@ class Chordia:
 				# tonic_estimate() of ModeFunctions just does that. It can handle only
 				# a single column, so the columns of the matrix are iteratively generated
 				dist_mat = np.zeros((len(shift_idxs), len(mode_dists)))
-				for m in xrange(len(mode_dists)):
-					dist_mat[:,m] = mf.tonic_estimate(dist, shift_idxs, mode_dists[m],
+				for m, cur_mode_dist in enumerate(mode_dists):
+					dist_mat[:,m] = mf.tonic_estimate(dist, shift_idxs, cur_mode_dist,
 						                              distance_method=distance_method,
 						                              metric=metric, step_size=self.step_size)
 
-			# Distance matrix is ready now. Since we need to report min_cnt many
-			# nearest neighbors, the loop is iterated min_cnt times and returns
-			# one neighbor at each iteration, from closest to futher. When first
-			# nearest neighbor is found it's changed to the worst, so in the
-			# next iteration, the nearest would be the second nearest and so on.
+			# Since we need to report min_cnt many nearest neighbors, the loop 
+			# is iterated min_cnt times and returns a neighbor at each iteration,
+			# from closest to futher. When first nearest neighbor is found it's
+			# changed to be the furthest, so in the next iteration, the nearest
+			# would be the second nearest and so on.
 			for r in xrange(min_cnt):
 				# The minima of the distance matrix is found. This is to find
 				# the current nearest neighbor chunk.
 				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
 				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
 				# Due to the precaution step of PCD, the reference frequency is
-				# changed. That's why it's treated differently than PD. Here,
-				# the cent value of the tonic estimate is converted back to Hz.	
+				# changed. The cent value of the tonic estimate is converted back to Hz.	
 				if(metric=='pcd'):
 					tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_row]]],
-						                          anti_freq)[0]
+						                          new_ref_freq)[0]
 				elif(metric=='pd'):
 					tonic_list[r] = mf.cent_to_hz([shift_idxs[min_row] * self.step_size],
 						                          ref_freq)[0]
 				# We have found out which chunk is our nearest now. Here, we find out
-				# which mode it belongs to, from cum_lens.
+				# which mode it belongs to, using cum_lens. The -6 index is for cleaning
+				# '.pitch' extension of the pitch track file's name
 				mode_list[r] = (mode_names[min(np.where((cum_lens > min_col))[0])],
 					           mode_dists[min_col].source[:-6])
-				# To observe how close these neighbors are, we report their distances.
-				# This doesn't affect the computation at all and it's just for the 
-				# evaluating and understanding the behvaviour of the system. 
+				# We report their distances just for forensics. They don't affect
+				# the estimation. 
 				min_distance_list[r] = dist_mat[min_row][min_col]
-				# The minimum value is replaced with a value larger than maximum,
-				# so we can easily find the second nearest neighbor.
+				# The minimum value is replaced to be the max as explained above
 				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
 			return [[mode_list, tonic_list], min_distance_list.tolist()]
 
 		# Tonic Estimation
 		elif(est_tonic):
 			# This part assigns the special case changes to standard variables,
-			# so that we can treat PD and PCD in the same way, as much as
-			# possible.
+			# so PD and PCD can be treated in the same way.
 			peak_idxs = shift_idxs if metric=='pd' else peak_idxs
-			anti_freq = ref_freq if metric=='pd' else anti_freq
+			new_ref_freq = ref_freq if metric=='pd' else new_ref_freq
 
-			# Distance matrix is generated. In the mode_estimate() function
-			# of ModeFunctions, PD and PCD are treated differently and it
-			# handles the special cases such as zero-padding. The mode is
-			# already known, so there is only one mode collection, i.e.
-			# set of chunk distributions that belong to the same mode, to
-			# be compared. Each column is a chunk distribution and each
-			# row is a tonic candidate.
-			dist_mat = [mf.tonic_estimate(dist, peak_idxs, d,
-				                          distance_method=distance_method,
+			# Distance matrix is generated. The mode is already known,
+			# so there is only one mode collection, i.e. set of chunk 
+			# distributions belong to the same mode. Each column is for 
+			# a chunk distribution and each row is for a tonic candidate.
+			dist_mat = [mf.tonic_estimate(dist, peak_idxs, d, distance_method=distance_method,
 				                          metric=metric, step_size=self.step_size) for d in mode_dist]
 
-			# Distance matrix is ready now. Since we need to report min_cnt many
-			# nearest neighbors, the loop is iterated min_cnt times and returns
-			# one neighbor at each iteration, from closest to futher. When first
-			# nearest neighbor is found it's changed to the worst, so in the
-			# next iteration, the nearest would be the second nearest and so on.
+			# See the joint estimation version of this loop for further
+			# explanations
 			for r in xrange(min_cnt):
-				# The minima of the distance matrix is found. This is to find
-				# the current nearest neighbor chunk.
 				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
 				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
-				# The corresponding tonic candidate is found, based on the
-				# current nearest neighbor and it's distance is recorded
 				tonic_list[r] = (mf.cent_to_hz([dist.bins[peak_idxs[min_col]]],
-					                           anti_freq)[0], mode_dist[min_row].source[:-6])
+					                           new_ref_freq)[0], mode_dist[min_row].source[:-6])
 				min_distance_list[r] = dist_mat[min_row][min_col]
-				# The minimum value is replaced with a value larger than maximum,
-				# so we can easily find the second nearest neighbor.
 				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
 			return [tonic_list, min_distance_list.tolist()]
 
@@ -581,37 +486,20 @@ class Chordia:
 		elif(est_mode):
 			# Only in mode estimation, the distance matrix is actually a vector.
 			# Since the tonic is annotated, the distribution isn't shifted and
-			# compared to each chunk distribution of each candidate mode.
-			# Again, mode_estimate() of ModeFunctions handles the different
-			# approach required for PCD and PD.
+			# compared to each chunk distribution in each candidate mode model.
 			distance_vector = mf.mode_estimate(dist, mode_dists,
 				                               distance_method=distance_method,
 				                               metric=metric, step_size=self.step_size)
 			
-			# Distance matrix is ready now. Since we need to report min_cnt many
-			# nearest neighbors, the loop is iterated min_cnt times and returns
-			# one neighbor at each iteration, from closest to futher. When first
-			# nearest neighbor is found it's changed to the worst, so in the
-			# next iteration, the nearest would be the second nearest and so on.
+			# See the joint estimation version of this loop for further
+			# explanations.
 			for r in xrange(min_cnt):
-				# The minima of the distance matrix is found. This is to find
-				# the current nearest neighbor chunk.
 				idx = np.argmin(distance_vector)
-				# We have found out which chunk is our nearest now. Here, we find out
-				# which mode it belongs to, from cum_lens.
 				mode_list[r] = (mode_names[min(np.where((cum_lens > idx))[0])],
 					                                    mode_dists[idx].source[:-6])
-				# The distance of the current nearest neighbors recorded. The details
-				# of this step is explained in the end of the analogous loop in joint
-				# estimation of thşs function.
 				min_distance_list[r] = distance_vector[idx]
-				# The minimum value is replaced with a value larger than maximum,
-				# so we can easily find the second nearest neighbor.
 				distance_vector[idx] = (np.amax(distance_vector) + 1) 
 			return [mode_list, min_distance_list.tolist()]
-
-		else:
-			return 0
 
 	def train_chunks(self, pts, chunk_data, ref_freq, metric='pcd'):
 		"""-------------------------------------------------------------------------

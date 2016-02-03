@@ -229,7 +229,8 @@ class Bozkurt:
 
 				# Find the peaks of the distribution. These are the tonic candidates.
 				peak_idxs, peak_vals = distrib.detect_peaks()
-			elif metric == 'pD':
+				
+			elif metric == 'pd':
 				# Find the peaks of the distribution. These are the tonic candidates
 				peak_idxs, peak_vals = distrib.detect_peaks()
 
@@ -240,7 +241,7 @@ class Bozkurt:
 
 		# Joint Estimation
 		if (est_tonic and est_mode):
-			if (metric == 'pD'):
+			if (metric == 'pd'):
 				# Since PD lengths aren't equal, we zero-pad the distributions for comparison
 				# tonic_estimate() of ModeFunctions just does that. It can handle only
 				# a single column, so the columns of the matrix are iteratively generated
@@ -270,7 +271,7 @@ class Bozkurt:
 				if (metric == 'pcd'):
 					tonic_ranked[r] = (mF.cent_to_hz([distrib.bins[peak_idxs[min_row]]],
 					                                 tonic_freq)[0], dist_mat[min_row][min_col])
-				elif (metric == 'pD'):
+				elif (metric == 'pd'):
 					tonic_ranked[r] = (mF.cent_to_hz([shift_idxs[min_row] * self.step_size],
 					                                 tonic_freq)[0], dist_mat[min_row][min_col])
 				# Current mode estimate is recorded.
@@ -340,7 +341,3 @@ class Bozkurt:
 				# so that we won't return the same estimate twice.
 				distance_vector[idx] = (np.amax(distance_vector) + 1)
 			return mode_ranked
-
-		else:
-			# Nothing is expected to be estimated.
-			return 0

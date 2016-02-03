@@ -4,6 +4,13 @@ from ModeTonicEstimation import ModeFunctions as mf
 
 class Evaluator:
 
+	"""----------------------------------------------------------------
+	This class is used for evaluating the validity of our estimations.
+	We return a dictionary entry as our evaluation result. See the 
+	return statements in each function to see which attributes are
+	being reported.
+	----------------------------------------------------------------"""
+
 	def __init__(self, tonic_tolerance=25):
 		self.tolerance = tonic_tolerance
 		self.CENT_PER_OCTAVE = 1200
