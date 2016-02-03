@@ -143,9 +143,9 @@ class Chordia:
 
 		json.dump(dist_json, open(os.path.join(save_dir, mode_name + '.json'), 'w'), indent=2)
 
-	def estimate(self, pitch_file, mode_names=[], mode_name='', mode_dir='./', est_mode=True,
-		         distance_method="euclidean", metric='pcd', tonic_freq=None,
-		         k_param=1, equalSamplePerMode = False):
+	def joint_estimate(self, pitch_file, mode_names=[], mode_dir='./', 
+		               distance_method="euclidean", metric='pcd', k_param=1, 
+		               equalSamplePerMode = False):
 		"""-------------------------------------------------------------------------
 		In the estimation phase, the input pitch track is sliced into chunk and each
 		chunk is compared with each candidate mode's each sample model, i.e. with 
@@ -154,24 +154,12 @@ class Chordia:
 		estimation process. Internally, segment estimate is called for generation of
 		distance matrices and detecting neighbor distributions.
 
-		1) Joint Estimation: Neither the tonic nor the mode of the recording is known.
+		Joint Estimation: Neither the tonic nor the mode of the recording is known.
 		Then, joint estimation estimates both of these parameters without any prior
 		knowledge about the recording.
 		To use this: est_mode and est_tonic flags should be True since both are to
 		be estimated. In this case tonic_freq and mode_name parameters are not used,
 		since these are used to pass the annotated data about the recording.
-
-		2) Tonic Estimation: The mode of the recording is known and tonic is to be
-		estimated. This is generally the most accurate estimation among the three.
-		To use this: est_tonic should be True and est_mode should be False. In this
-		case tonic_freq  and mode_names parameters are not used since tonic isn't
-		known a priori and mode is known and hence there is no candidate mode.
-
-		3) Mode Estimation: The tonic of the recording is known and mode is to be
-		estimated.
-		To use this: est_mode should be True and est_tonic should be False. In this
-		case mode_name parameter isn't used since the mode annotation is not
-		available. It can be ignored.
 		----------------------------------------------------------------------------
 		pitch_file      : File in which the pitch track of the input recording
 						whose tonic and/or mode is to be estimated.
@@ -182,10 +170,6 @@ class Chordia:
 						isn't used and can be ignored.
 		mode_name       : Annotated mode of the recording. If it's not known and to be
 						estimated, this parameter isn't used and can be ignored.
-		est_tonic       : Whether tonic is to be estimated or not. If this flag is
-						False, tonic_freq is treated as the annotated tonic.
-		est_mode        : Whether mode is to be estimated or not. If this flag is
-						False, mode_name is treated as the annotated mode.
 		k_param         : The k parameter of K Nearest Neighbors. 
 		distance_method : The choice of distance methods. See distance() in
 						ModeFunctions for more information.
@@ -194,6 +178,7 @@ class Chordia:
 		tonic_freq        : Annotated tonic of the recording. If it's unknown, we use
 						an arbitrary value, so this can be ignored.
 		-------------------------------------------------------------------------"""
+		
 		# load pitch track
 		pitch_track = np.loadtxt(pitch_file)
 
@@ -223,34 +208,16 @@ class Chordia:
 
 		min_cnt = len(pts) * k_param
 		
-		# parse tonic input
-		if tonic_freq:  # tonic is already known;
-			est_tonic = False
-		else:
-			est_tonic = True
-			# take A4 as the dummy frequency value for cent conversion
-			tonic_freq = 440
-
-		if not (est_tonic or est_mode):
-			ValueError("Both tonic and mode are known!")
-
-		if(est_tonic and est_mode):
-			neighbors = [['', 0] for _ in chunk_data]
-		elif(est_tonic):
-			neighbors = [0 for _ in chunk_data]
-		elif(est_mode):
-			neighbors = ['' for _ in chunk_data]
-
+		neighbors = [['', 0] for _ in chunk_data]
+		
 		# chunk_estimate() generates the distributions of each chunk iteratively,
 		# then compares it with all candidates and returns min_cnt closest neighbors
 		# of each chunk to neighbors list.
-		for p in range(len(pts)):
+		for p, _ in enumerate(pts):
 			neighbors[p] = self.chunk_estimate(pts[p], mode_names=mode_names,
-			                                   mode_name=mode_name, mode_dir=mode_dir,
-				                               est_tonic=est_tonic, est_mode=est_mode,
-				                               distance_method=distance_method,
-				                               metric=metric, ref_freq=tonic_freq,
-				                               min_cnt=min_cnt,
+			                                   mode_dir=mode_dir, est_tonic=True, 
+			                                   est_mode=True, distance_method=distance_method,
+				                               metric=metric, min_cnt=min_cnt,
 				                               equalSamplePerMode = equalSamplePerMode)
 		
 		# The decision making about the entire recording starts here. neighbors
@@ -265,33 +232,22 @@ class Chordia:
 		candidate_distances, candidate_ests, candidate_sources, kn_distances, kn_ests, \
 		kn_sources, idx_counts, elem_counts, res_distances, res_sources = ([] for i in range(10))
 
-		# Joint estimation decision making. 
-		if(est_mode and est_tonic):
-			# Flattens the returned candidates and related data about them and
-			# stores them into candidate_*
-			for i in xrange(len(pts)):
-				for j in neighbors[i][1]:
-					candidate_distances.append(j)
-				for l in xrange(len(neighbors[i][0][1])):
-					candidate_ests.append((neighbors[i][0][1][l], neighbors[i][0][0][l][0]))
-					candidate_sources.append(neighbors[i][0][0][l][1])
-
-		# Mode or Tonic estimation decision making
-		else:
-			# See the joint version of this loop for further explanation
-			for i in xrange(len(pts)):
-				for j in neighbors[i][1]:
-					candidate_distances.append(j)
-				for l in xrange(len(neighbors[i][0])):
-					candidate_ests.append(neighbors[i][0][l][0])
-					candidate_sources.append(neighbors[i][0][l][1])
-	
+		# Joint estimation decision making.
+		# Flattens the returned candidates and related data about them and
+		# stores them into candidate_*
+		for i, _ in enumerate(pts):
+			for j in neighbors[i][1]:
+				candidate_distances.append(j)
+			for l, _ in enumerate(neighbors[i][0][1]):
+				candidate_ests.append((neighbors[i][0][1][l], neighbors[i][0][0][l][0]))
+				candidate_sources.append(neighbors[i][0][0][l][1])
+		
 		# Finds the nearest neighbors and fills all related data about
 		# them to kn_*. Each of these variables have length k. kn_distances
 		# stores the distance values, kn_ests stores mode/tonic pairs,
 		# kn_sources store the name/id of the distribution that gave rise
 		# to the corresponding distances.
-		for k in xrange(k_param):
+		for k in range(k_param):
 			idx = np.argmin(candidate_distances)
 			kn_distances.append(candidate_distances[idx])
 			kn_ests.append(candidate_ests[idx])
@@ -312,10 +268,146 @@ class Chordia:
 				res_sources.append(kn_sources[m])
 				res_distances.append(kn_distances[m])
 		return [res_estimation, res_sources, res_distances]
+		
+	def tonic_estimate(self, pitch_file, mode_name, mode_dir='./', distance_method="bhat", 
+		               metric='pcd', k_param=1, equalSamplePerMode=False):
+		"""-------------------------------------------------------------------------
+		Tonic Estimation: The mode of the recording is known and tonic is to be
+		estimated. This is generally the most accurate estimation among the three.
+		To use this: est_tonic should be True and est_mode should be False. In this
+		case tonic_freq  and mode_names parameters are not used since tonic isn't
+		known a priori and mode is known and hence there is no candidate mode.
+		----------------------------------------------------------------------------
+		See joint_estimate() for details. The I/O part of *_estimate() functions
+		are identical.
+		-------------------------------------------------------------------------"""
+		# load pitch track
+		pitch_track = np.loadtxt(pitch_file)
+
+		# assume the first col is time, the second is pitch and the rest is labels etc.
+		pitch_track = pitch_track[:,1] if pitch_track.ndim > 1 else pitch_track
+
+		# Pitch track is sliced into chunks.
+		time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
+
+		if not self.chunk_size: # no slicing
+			pts = [pitch_track]
+			chunk_data = ['input_all']
+		else:
+			pts, chunk_data = mf.slice(time_track, pitch_track, 'input', self.chunk_size,
+				                 self.threshold, self.overlap)
+
+		min_cnt = len(pts) * k_param
+		
+		neighbors = [0 for _ in chunk_data]
+		
+		for p, _ in enumerate(pts):
+			neighbors[p] = self.chunk_estimate(pts[p], mode_name=mode_name, mode_dir=mode_dir,
+				                               est_tonic=True, est_mode=False,
+				                               distance_method=distance_method,
+				                               metric=metric, min_cnt=min_cnt,
+				                               equalSamplePerMode = equalSamplePerMode)
+		
+		candidate_distances, candidate_ests, candidate_sources, kn_distances, kn_ests, \
+		kn_sources, idx_counts, elem_counts, res_distances, res_sources = ([] for i in range(10))
+		
+		# See the joint version of this loop for further explanation
+		for i in range(len(pts)):
+			for j in neighbors[i][1]:
+				candidate_distances.append(j)
+			for l, _ in enumerate(neighbors[i][0]):
+				candidate_ests.append(neighbors[i][0][l][0])
+				candidate_sources.append(neighbors[i][0][l][1])
+				
+		for k in range(k_param):
+			idx = np.argmin(candidate_distances)
+			kn_distances.append(candidate_distances[idx])
+			kn_ests.append(candidate_ests[idx])
+			kn_sources.append(candidate_sources[idx])
+			candidate_distances[idx] = (np.amax(candidate_distances) + 1)
+			
+		elem_counts = [c for c in set(kn_ests)]
+		idx_counts = [kn_ests.count(c) for c in set(kn_ests)]
+		res_estimation = elem_counts[np.argmax(idx_counts)]
+		
+		for m, cur_est in enumerate(kn_ests):
+			if (cur_est == res_estimation):
+				res_sources.append(kn_sources[m])
+				res_distances.append(kn_distances[m])
+		return [res_estimation, res_sources, res_distances]
+
+def mode_estimate(self, pitch_file, tonic_freq, mode_names, mode_dir='./', 
+	              st_mode=True, distance_method="bhat", metric='pcd', 
+	              k_param=1, equalSamplePerMode = False):
+		"""-------------------------------------------------------------------------
+		Mode Estimation: The tonic of the recording is known and mode is to be
+		estimated.
+		To use this: est_mode should be True and est_tonic should be False. In this
+		case mode_name parameter isn't used since the mode annotation is not
+		available. It can be ignored.
+		----------------------------------------------------------------------------
+		See joint_estimate() for details. The I/O part of *_estimate() functions
+		are identical.
+		-------------------------------------------------------------------------"""
+		# load pitch track
+		pitch_track = np.loadtxt(pitch_file)
+
+		# assume the first col is time, the second is pitch and the rest is labels etc.
+		pitch_track = pitch_track[:,1] if pitch_track.ndim > 1 else pitch_track
+
+		# Pitch track is sliced into chunks.
+		time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
+
+		if not self.chunk_size: # no slicing
+			pts = [pitch_track]
+			chunk_data = ['input_all']
+		else:
+			pts, chunk_data = mf.slice(time_track, pitch_track, 'input', self.chunk_size,
+				                 self.threshold, self.overlap)
+
+		min_cnt = len(pts) * k_param
+
+		neighbors = ['' for _ in chunk_data]
+
+		for p, _ in enumerate(pts):
+			neighbors[p] = self.chunk_estimate(pts[p], mode_names=mode_names,
+			                                   mode_dir=mode_dir, est_tonic=False, 
+			                                   est_mode=True, distance_method=distance_method,
+				                               metric=metric, ref_freq=tonic_freq,
+				                               min_cnt=min_cnt,
+				                               equalSamplePerMode = equalSamplePerMode)
+		
+		candidate_distances, candidate_ests, candidate_sources, kn_distances, kn_ests, \
+		kn_sources, idx_counts, elem_counts, res_distances, res_sources = ([] for i in range(10))
+
+		# See the joint version of this loop for further explanation
+		for i, _ in enumerate(pts):
+			for j in neighbors[i][1]:
+				candidate_distances.append(j)
+			for l, _ in enumerate(neighbors[i][0]):
+				candidate_ests.append(neighbors[i][0][l][0])
+				candidate_sources.append(neighbors[i][0][l][1])
+	
+		for k in range(k_param):
+			idx = np.argmin(candidate_distances)
+			kn_distances.append(candidate_distances[idx])
+			kn_ests.append(candidate_ests[idx])
+			kn_sources.append(candidate_sources[idx])
+			candidate_distances[idx] = (np.amax(candidate_distances) + 1)
+			
+		elem_counts = [c for c in set(kn_ests)]
+		idx_counts = [kn_ests.count(c) for c in set(kn_ests)]
+		res_estimation = elem_counts[np.argmax(idx_counts)]
+
+		for m, cur_est in enumerate(kn_ests):
+			if (cur_est == res_estimation):
+				res_sources.append(kn_sources[m])
+				res_distances.append(kn_distances[m])
+		return [res_estimation, res_sources, res_distances]
 
 	def chunk_estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./',
-		                 est_tonic=True, est_mode=True, distance_method="euclidean",
-		                 metric='pcd', ref_freq=440, min_cnt=3, equalSamplePerMode = False):
+		               est_tonic=True, est_mode=True, distance_method="euclidean",
+		               metric='pcd', ref_freq=440, min_cnt=3, equalSamplePerMode = False):
 		"""-------------------------------------------------------------------------
 		This function is called by the wrapper estimate() function only. It gets a 
 		pitch track chunk, generates its pitch distribution and compares it with the
@@ -434,7 +526,7 @@ class Chordia:
 			# from closest to futher. When first nearest neighbor is found it's
 			# changed to be the furthest, so in the next iteration, the nearest
 			# would be the second nearest and so on.
-			for r in xrange(min_cnt):
+			for r in range(min_cnt):
 				# The minima of the distance matrix is found. This is to find
 				# the current nearest neighbor chunk.
 				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
@@ -475,7 +567,7 @@ class Chordia:
 
 			# See the joint estimation version of this loop for further
 			# explanations
-			for r in xrange(min_cnt):
+			for r in range(min_cnt):
 				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
 				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
 				tonic_list[r] = (mf.cent_to_hz([dist.bins[peak_idxs[min_col]]],
@@ -495,7 +587,7 @@ class Chordia:
 			
 			# See the joint estimation version of this loop for further
 			# explanations.
-			for r in xrange(min_cnt):
+			for r in range(min_cnt):
 				idx = np.argmin(distance_vector)
 				mode_list[r] = (mode_names[min(np.where((cum_lens > idx))[0])],
 					                                    mode_dists[idx].source[:-6])
@@ -523,7 +615,7 @@ class Chordia:
 		-------------------------------------------------------------------------"""
 		dist_list = []
 		# Iterates over the pitch tracks of a recording
-		for idx in range(len(pts)):
+		for idx, _ in enumerate(pts):
 			# Retrieves the relevant information about the current chunk
 			src = chunk_data[idx][0]
 			interval = (chunk_data[idx][1], chunk_data[idx][2])
