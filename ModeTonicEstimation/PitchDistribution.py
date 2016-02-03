@@ -11,12 +11,11 @@ def load(fname):
 	----------------------------------------------------------------------------
 	fname    : The filename of the JSON file
 	-------------------------------------------------------------------------"""
-	with open(fname) as f:
-		dist = json.load(f)
+	dist = json.load(open(fname, 'r'))
 
 	return PitchDistribution(np.array(dist[0]['bins']), np.array(dist[0]['vals']),
 		                     kernel_width=dist[0]['kernel_width'],
-		                     source=dist[0]['source'], ref_freq=dist[0]['ref_freq'],
+		                     source=dist[0]['source'], ref_freq=np.array(dist[0]['ref_freq']),
 		                     segment=dist[0]['segmentation'], overlap=dist[0]['overlap'])
 
 class PitchDistribution:
