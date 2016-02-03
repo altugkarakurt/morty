@@ -61,20 +61,18 @@ class PitchDistribution:
 		temp_ss = self.bins[1] - self.bins[0]
 		self.step_size = temp_ss if (temp_ss == (round(temp_ss * 10) / 10)) else (round(temp_ss * 10) / 10)
 
-	def save(self, fname, save_dir='./'):
+	def save(self, fpath):
 		"""-------------------------------------------------------------------------
 		Saves the PitchDistribution object to a JSON file.
 		----------------------------------------------------------------------------
-		fname    : The name of the JSON file to be created.
-		save_dir : Pathway of where the JSON would saved
+		fpath    : The file path of the JSON file to be created.
 		-------------------------------------------------------------------------"""
 		dist_json = [{'bins':self.bins.tolist(), 'vals':self.vals.tolist(),
 		              'kernel_width':self.kernel_width, 'source':self.source,
-		              'ref_freq':self.ref_freq, 'segmentation':self.segmentation,
+		              'ref_freq':self.ref_freq.tolist(), 'segmentation':self.segmentation,
 		              'overlap':self.overlap, 'step_size':self.step_size}]
-		with open(os.path.join(save_dir, fname), 'w') as f:
-			json.dump(dist_json, f, indent=2)
-			f.close()
+		
+		json.dump(dist_json, open(fpath, 'w'), indent=4)
 
 	def is_pcd(self):
 		"""-------------------------------------------------------------------------
