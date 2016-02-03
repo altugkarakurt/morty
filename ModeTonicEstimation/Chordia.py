@@ -92,7 +92,7 @@ class Chordia:
 		# individually, then appended to pitch_distrib_list. Notice that although we treat
 		# each chunk individually, we use a single tonic annotation for each recording
 		# so we assume that the tonic doesn't change throughout a recording.
-
+		tonic_freqs = [np.array(tonic) for tonic in tonic_freqs]
 		for pf, tonic in zip(pt_files, tonic_freqs):
 			pitch_track = np.loadtxt(pf)
 			if pitch_track.ndim > 1:  # assume the first col is time, the second is pitch and the rest is labels etc
@@ -126,19 +126,23 @@ class Chordia:
 
 		# save the model to a file, if requested
 		if save_dir:
-			if not os.path.exists(save_dir):
-				os.makedirs(save_dir)
-
-			# Dump the list of dictionaries in a JSON file.
-			dist_json = [{'bins':d.bins.tolist(), 'vals':d.vals.tolist(),
-			              'kernel_width':d.kernel_width, 'source':d.source,
-			              'ref_freq':d.ref_freq, 'segmentation':d.segmentation,
-			              'overlap':d.overlap} for d in pitch_distrib_list]
-
-			with open(os.path.join(save_dir, mode_name + '.json'), 'w') as f:
-				json.dump(dist_json, f, indent=2)
-
+			Chordia.save_model(pitch_distrib_list, save_dir, mode_name)
+	
 		return pitch_distrib_list
+
+	@classmethod
+	def save_model(cls, dist_list, save_dir, mode_name):
+		if not os.path.exists(save_dir):
+			os.makedirs(save_dir)
+
+		# Dump the list of dictionaries in a JSON file.
+		dist_json = [{'bins':d.bins.tolist(), 'vals':d.vals.tolist(),
+		              'kernel_width':d.kernel_width, 'source':d.source,
+		              'ref_freq':d.ref_freq.tolist(), 'segmentation':d.segmentation,
+		              'overlap':d.overlap} for d in dist_list]
+
+		with open(os.path.join(save_dir, mode_name + '.json'), 'w') as f:
+			json.dump(dist_json, f, indent=2)
 
 	def estimate(self, pitch_file, mode_names=[], mode_name='', mode_dir='./', est_mode=True,
 		         distance_method="euclidean", metric='pcd', tonic_freq=None,
