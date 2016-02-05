@@ -29,7 +29,7 @@ class Bozkurt:
 	tasks and the other does the estimation once the trainings are completed.
 	-------------------------------------------------------------------------"""
 
-	def __init__(self, step_size=7.5, smooth_factor=7.5, chunk_size=0, frame_rate=128.0 / 44110):
+	def __init__(self, step_size=7.5, smooth_factor=7.5, chunk_size=0, frame_rate=128.0 / 44100):
 		"""------------------------------------------------------------------------
 		These attributes are wrapped as an object since these are used in both 
 		training and estimation stages and must be consistent in both processes.
