@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from ModeTonicEstimation import ModeFunctions as mf
-from ModeTonicEstimation import PitchDistribution as pD
+from ModeTonicEstimation import PitchDistribution as pd
 import json
 import os
 import random
@@ -137,9 +137,8 @@ class Chordia:
 
 		# Dump the list of dictionaries in a JSON file.
 		dist_json = [{'bins':d.bins.tolist(), 'vals':d.vals.tolist(),
-		              'kernel_width':d.kernel_width, 'source':d.source,
-		              'ref_freq':d.ref_freq.tolist(), 'segmentation':d.segmentation,
-		              'overlap':d.overlap} for d in dist_list]
+		              'kernel_width':d.kernel_width,
+		              'ref_freq':d.ref_freq.tolist()} for d in dist_list]
 
 		json.dump(dist_json, open(os.path.join(save_dir, mode_name + '.json'), 'w'), indent=2)
 
@@ -228,9 +227,7 @@ class Chordia:
 		# candidate_foo : the flattened list of all foos from chunks
 		# kn_foo : k nearest foos of candidate_foos. this is a subset of
 		#		   candidate_foo
-		# res_foo : foo attribute of final decision
-		candidate_distances, candidate_ests, candidate_sources, kn_distances, kn_ests, \
-		kn_sources, idx_counts, elem_counts, res_distances, res_sources = ([] for i in range(10))
+		candidate_distances, candidate_ests, kn_distances, kn_ests,  = ([] for _ in range(4))
 
 		# Joint estimation decision making.
 		# Flattens the returned candidates and related data about them and
@@ -240,34 +237,21 @@ class Chordia:
 				candidate_distances.append(j)
 			for l, _ in enumerate(neighbors[i][0][1]):
 				candidate_ests.append((neighbors[i][0][1][l], neighbors[i][0][0][l][0]))
-				candidate_sources.append(neighbors[i][0][0][l][1])
 		
 		# Finds the nearest neighbors and fills all related data about
 		# them to kn_*. Each of these variables have length k. kn_distances
-		# stores the distance values, kn_ests stores mode/tonic pairs,
-		# kn_sources store the name/id of the distribution that gave rise
-		# to the corresponding distances.
+		# stores the distance values, kn_ests stores mode/tonic pairs.
 		for k in range(k_param):
 			idx = np.argmin(candidate_distances)
 			kn_distances.append(candidate_distances[idx])
 			kn_ests.append(candidate_ests[idx])
-			kn_sources.append(candidate_sources[idx])
 			candidate_distances[idx] = (np.amax(candidate_distances) + 1)
 			
 		# Counts the occurences of each candidate mode/tonic pair in
 		# the K nearest neighbors. The result is our estimation.
 		elem_counts = [c for c in set(kn_ests)]
 		idx_counts = [kn_ests.count(c) for c in set(kn_ests)]
-		res_estimation = elem_counts[np.argmax(idx_counts)]
-
-		# We have concluded our estimation. Here, we retrieve the 
-		# relevant data to this estimation; the sources and coresponding
-		# distances.
-		for m, cur_est in enumerate(kn_ests):
-			if (cur_est == res_estimation):
-				res_sources.append(kn_sources[m])
-				res_distances.append(kn_distances[m])
-		return [res_estimation, res_sources, res_distances]
+		return elem_counts[np.argmax(idx_counts)]
 		
 	def tonic_estimate(self, pitch_file, mode_name, mode_dir='./', distance_method="bhat", 
 		               metric='pcd', k_param=1, equalSamplePerMode=False):
@@ -647,7 +631,7 @@ class Chordia:
 		# List of dictionaries is is iterated over to initialize a list of
 		# PitchDistribution objects.
 		for d in dist_list:
-			obj_list.append(pD.PitchDistribution(np.array(d['bins']),
+			obj_list.append(pd.PitchDistribution(np.array(d['bins']),
 				            np.array(d['vals']), kernel_width=d['kernel_width'],
 				            source=d['source'], ref_freq=d['ref_freq'],
 				            segment=d['segmentation'], overlap=d['overlap']))
