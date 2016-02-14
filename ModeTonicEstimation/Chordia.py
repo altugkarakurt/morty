@@ -372,7 +372,7 @@ class Chordia:
 		return elem_counts[np.argmax(idx_counts)]
 
 	def chunk_estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./',
-		               est_tonic=True, est_mode=True, distance_method="euclidean",
+		               est_tonic=True, est_mode=True, distance_method="bhat",
 		               metric='pcd', ref_freq=440, min_cnt=3, equalSamplePerMode = False):
 		"""-------------------------------------------------------------------------
 		This function is called by the wrapper estimate() function only. It gets a 
@@ -587,7 +587,7 @@ class Chordia:
 			interval = (chunk_data[idx][1], chunk_data[idx][2])
 			# PitchDistribution of the current chunk is generated
 			dist = mf.generate_pd(pts[idx], ref_freq=ref_freq, smooth_factor=self.smooth_factor,
-			                      step_size=self.step_size, source=src, segment=interval, overlap=self.overlap)
+			                      step_size=self.step_size)
 			if(metric=='pcd'):
 				dist = mf.generate_pcd(dist)
 			# The resultant pitch distributions are filled in the list to be returned
@@ -607,14 +607,12 @@ class Chordia:
 		-------------------------------------------------------------------------"""
 		obj_list = []
 		fname = mode_name + '.json'
-		with open(os.path.join(dist_dir, fname)) as f:
-			dist_list = json.load(f)
+		dist_list = json.load(open(os.path.join(dist_dir, fname)))
 
 		# List of dictionaries is is iterated over to initialize a list of
 		# PitchDistribution objects.
 		for d in dist_list:
 			obj_list.append(pd.PitchDistribution(np.array(d['bins']),
 				            np.array(d['vals']), kernel_width=d['kernel_width'],
-				            source=d['source'], ref_freq=d['ref_freq'],
-				            segment=d['segmentation'], overlap=d['overlap']))
+				            ref_freq=d['ref_freq']))
 		return obj_list
