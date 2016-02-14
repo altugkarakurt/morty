@@ -54,9 +54,8 @@ class PitchDistribution:
 		fpath    : The file path of the JSON file to be created.
 		-------------------------------------------------------------------------"""
 		dist_json = [{'bins':self.bins.tolist(), 'vals':self.vals.tolist(),
-		              'kernel_width':self.kernel_width, 'source':self.source,
-		              'ref_freq':self.ref_freq.tolist(), 'segmentation':self.segmentation,
-		              'overlap':self.overlap, 'step_size':self.step_size}]
+		              'kernel_width':self.kernel_width, 'ref_freq':self.ref_freq.tolist(),
+		              'step_size':self.step_size}]
 		
 		json.dump(dist_json, open(fpath, 'w'), indent=4)
 
