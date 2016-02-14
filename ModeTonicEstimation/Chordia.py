@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from ModeTonicEstimation import ModeFunctions as mf
-from ModeTonicEstimation import PitchDistribution as pd
+import ModeFunctions as mf
+import PitchDistribution as pd
 import json
 import os
 import random

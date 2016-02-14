@@ -5,7 +5,21 @@ from scipy.spatial import distance
 from scipy.integrate import simps
 from scipy.stats import norm
 
-import PitchDistribution as pD
+import PitchDistribution as pd
+
+def parse_pitch(pitch_tracks):
+	"""-------------------------------------------------------------------------
+	This function parses all types of pitch inputs that are fed into Chordia and
+	Bozkurt functions. It can parse inputs of the following form:
+	* A (list of) pitch track list(s)
+	* A (list of) filename(s) for pitch track(s)
+	* A (list of) PitchDistribution object(s)
+	
+	This is where we do the type checking to provide the correct input format to
+	higher order functions. It returns to things, the cleaned input pitch track
+	or pitch distribution.
+	-------------------------------------------------------------------------"""
+	pass
 
 def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 				source='', segment='all', overlap='-'):
