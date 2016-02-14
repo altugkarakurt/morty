@@ -20,7 +20,7 @@ def load(fname):
 
 class PitchDistribution:
 	
-	def __init__(self, pd_bins, pd_vals, kernel_width=7.5, source='', ref_freq=440, segment='all', overlap='-'):
+	def __init__(self, pd_bins, pd_vals, kernel_width=7.5, ref_freq=440):
 		"""------------------------------------------------------------------------
 		The main data structure that wraps all the relevant information about a 
 		pitch distribution.
@@ -34,24 +34,11 @@ class PitchDistribution:
 		               this is variable that stores it.
 		kernel_width : The std. deviation of the Gaussian kernel. See generate_pd()
 		               of ModeFunctions for more detail.
-		segmentation : Which part of the recording this distribution belongs to.
-		               It can be 'all', or a list like [30,60]. The latter means the
-		               chunk between 30th and 60th seconds of the recording
-		source       : The source of the recording, i.e. its name/id.
-		overlap      : Whether the distribution is overlapping with other chunks of
-		               the recording. It can be '-' or a number between 0 and 1. If
-		               '-', it's the distribution of the entire recording as in 'all'
-		               case of segmentation. If 0.5, it is a chunk of recording,
-		               sliced with 0.5 overlapping. See slice() of ModeFunctions for
-		               more details. 
 		-------------------------------------------------------------------------"""
 		self.bins = pd_bins
 		self.vals = pd_vals
 		self.ref_freq = ref_freq
 		self.kernel_width = kernel_width
-		self.segmentation = segment
-		self.source = source
-		self.overlap = overlap
 
 		### Due to the floating point issues in Python, the step_size might not be
 		### exactly equal to (for example) 7.5, but 7.4999... In such cases the 
@@ -123,12 +110,10 @@ class PitchDistribution:
 					shifted_vals = np.concatenate((np.zeros(abs(shift_idx)), self.vals[:shift_idx]))
 
 			return PitchDistribution(self.bins, shifted_vals, kernel_width=self.kernel_width,
-				                     source=self.source, ref_freq=self.ref_freq,
-				                     segment=self.segmentation, overlap=self.overlap)
+				                     ref_freq=self.ref_freq)
 		
 		# If a zero sample shift is requested, a copy of the original distribution
 		# is returned
 		else:
 			return PitchDistribution(self.bins, self.vals, kernel_width=self.kernel_width,
-				                     source=self.source, ref_freq=self.ref_freq,
-				                     segment=self.segmentation, overlap=self.overlap)
+				                     ref_freq=self.ref_freq)

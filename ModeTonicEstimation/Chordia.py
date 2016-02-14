@@ -336,7 +336,7 @@ class Chordia:
 				res_distances.append(kn_distances[m])
 		return [res_estimation, res_sources, res_distances]
 
-def mode_estimate(self, pitch_file, tonic_freq, mode_names, mode_dir='./', 
+	def mode_estimate(self, pitch_file, tonic_freq, mode_names, mode_dir='./', 
 	              st_mode=True, distance_method="bhat", metric='pcd', 
 	              k_param=1, equalSamplePerMode = False):
 		"""-------------------------------------------------------------------------
