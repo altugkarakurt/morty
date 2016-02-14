@@ -292,8 +292,7 @@ class Chordia:
 				                               metric=metric, min_cnt=min_cnt,
 				                               equalSamplePerMode = equalSamplePerMode)
 		
-		candidate_distances, candidate_ests, candidate_sources, kn_distances, kn_ests, \
-		kn_sources, idx_counts, elem_counts, res_distances, res_sources = ([] for i in range(10))
+		candidate_distances, candidate_ests, kn_distances, kn_ests = ([] for _ in range(4))
 		
 		# See the joint version of this loop for further explanation
 		for i in range(len(pts)):
@@ -301,24 +300,16 @@ class Chordia:
 				candidate_distances.append(j)
 			for l, _ in enumerate(neighbors[i][0]):
 				candidate_ests.append(neighbors[i][0][l][0])
-				candidate_sources.append(neighbors[i][0][l][1])
 				
 		for k in range(k_param):
 			idx = np.argmin(candidate_distances)
 			kn_distances.append(candidate_distances[idx])
 			kn_ests.append(candidate_ests[idx])
-			kn_sources.append(candidate_sources[idx])
 			candidate_distances[idx] = (np.amax(candidate_distances) + 1)
 			
 		elem_counts = [c for c in set(kn_ests)]
 		idx_counts = [kn_ests.count(c) for c in set(kn_ests)]
-		res_estimation = elem_counts[np.argmax(idx_counts)]
-		
-		for m, cur_est in enumerate(kn_ests):
-			if (cur_est == res_estimation):
-				res_sources.append(kn_sources[m])
-				res_distances.append(kn_distances[m])
-		return [res_estimation, res_sources, res_distances]
+		return elem_counts[np.argmax(idx_counts)]
 
 	def mode_estimate(self, pitch_file, tonic_freq, mode_names, mode_dir='./', 
 	              st_mode=True, distance_method="bhat", metric='pcd', 
@@ -361,8 +352,7 @@ class Chordia:
 				                               min_cnt=min_cnt,
 				                               equalSamplePerMode = equalSamplePerMode)
 		
-		candidate_distances, candidate_ests, candidate_sources, kn_distances, kn_ests, \
-		kn_sources, idx_counts, elem_counts, res_distances, res_sources = ([] for i in range(10))
+		candidate_distances, candidate_ests, kn_distances, kn_ests, = ([] for _ in range(4))
 
 		# See the joint version of this loop for further explanation
 		for i, _ in enumerate(pts):
@@ -370,24 +360,16 @@ class Chordia:
 				candidate_distances.append(j)
 			for l, _ in enumerate(neighbors[i][0]):
 				candidate_ests.append(neighbors[i][0][l][0])
-				candidate_sources.append(neighbors[i][0][l][1])
 	
 		for k in range(k_param):
 			idx = np.argmin(candidate_distances)
 			kn_distances.append(candidate_distances[idx])
 			kn_ests.append(candidate_ests[idx])
-			kn_sources.append(candidate_sources[idx])
 			candidate_distances[idx] = (np.amax(candidate_distances) + 1)
 			
 		elem_counts = [c for c in set(kn_ests)]
 		idx_counts = [kn_ests.count(c) for c in set(kn_ests)]
-		res_estimation = elem_counts[np.argmax(idx_counts)]
-
-		for m, cur_est in enumerate(kn_ests):
-			if (cur_est == res_estimation):
-				res_sources.append(kn_sources[m])
-				res_distances.append(kn_distances[m])
-		return [res_estimation, res_sources, res_distances]
+		return elem_counts[np.argmax(idx_counts)]
 
 	def chunk_estimate(self, pitch_track, mode_names=[], mode_name='', mode_dir='./',
 		               est_tonic=True, est_mode=True, distance_method="euclidean",
