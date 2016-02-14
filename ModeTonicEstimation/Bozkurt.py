@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import os
-from ModeTonicEstimation import ModeFunctions as mF
-from ModeTonicEstimation import PitchDistribution as pD
+from ModeTonicEstimation import ModeFunctions as mf
+from ModeTonicEstimation import PitchDistribution as pd
 
 
 class Bozkurt:
@@ -29,7 +29,7 @@ class Bozkurt:
 	tasks and the other does the estimation once the trainings are completed.
 	-------------------------------------------------------------------------"""
 
-	def __init__(self, step_size=7.5, smooth_factor=7.5, chunk_size=0, frame_rate=128.0 / 44100):
+	def __init__(self, step_size=7.5, smooth_factor=7.5):
 		"""------------------------------------------------------------------------
 		These attributes are wrapped as an object since these are used in both 
 		training and estimation stages and must be consistent in both processes.
@@ -38,19 +38,9 @@ class Bozkurt:
 		smooth_factor : Std. deviation of the gaussian kernel used to smoothen the
 						distributions. For further details, see generate_pd() of
 						ModeFunctions.
-		chunk_size    : The size of the recording to be considered. If zero, the
-						entire recording will be used to generate the pitch
-						distributions. If this is t, then only the first t seconds
-						of the recording is used only and remaining is discarded.
-		frame_rate     : The frame rate of the pitch tracks. Default is
-						(128 = hopSize of the pitch extractor in pycompmusic)
-						divided by 44100 audio sampling frequency. This is used
-						to slice the pitch tracks according to the given chunk_size.
 		------------------------------------------------------------------------"""
 		self.smooth_factor = smooth_factor
 		self.step_size = step_size
-		self.chunk_size = chunk_size
-		self.frame_rate = frame_rate
 
 	def train(self, mode_name, pitch_files, tonic_freqs, metric='pcd', save_dir=''):
 		"""-------------------------------------------------------------------------
@@ -86,20 +76,13 @@ class Bozkurt:
 			if pitch_track.ndim > 1:  # assume the first col is time, the second is pitch and the rest is labels etc
 				pitch_track = pitch_track[:,1]
 
-			if self.chunk_size == 0:  # use the complete pitch track
-				mode_track = mF.hz_to_cent(pitch_track, ref_freq=tonic)
-			else:  # slice and used the start of the pitch track
-				time_track = np.arange(0, self.frame_rate * len(pitch_track), self.frame_rate)
-				pitch_track, segs = mF.slice(time_track, pitch_track, mode_name, self.chunk_size)
-				mode_track = mF.hz_to_cent(pitch_track[0], ref_freq=tonic)
-
-		seglen = 'all' if self.chunk_size == 0 else (segs[0][1], segs[0][2])
+			mode_track = mf.hz_to_cent(pitch_track, ref_freq=tonic)
 
 		# generate the pitch distribution
-		pitch_distrib = mF.generate_pd(mode_track, smooth_factor=self.smooth_factor,
-		                               step_size=self.step_size, source=pitch_files, segment=seglen)
+		pitch_distrib = mf.generate_pd(mode_track, smooth_factor=self.smooth_factor,
+		                               step_size=self.step_size)
 		if metric == 'pcd':  # convert to pitch class distribution, if specified
-			pitch_distrib = mF.generate_pcd(pitch_distrib)
+			pitch_distrib = mf.generate_pcd(pitch_distrib)
 
 		# save the model to a file, if requested
 		if save_dir:
@@ -147,35 +130,30 @@ class Bozkurt:
 			# list of json files per mode
 			if all(os.path.isfile(m) for m in mode_in): 
 				mode_names = [os.path.splitext(m)[0] for m in mode_in]
-				models = [pD.load(m) for m in mode_in]
+				models = [pd.load(m) for m in mode_in]
 			elif os.path.isfile(mode_in): # json file
-				model = pD.load(mode_in)
+				model = pd.load(mode_in)
 		except TypeError:
 			try:  # models
-				if isinstance(mode_in, pD.PitchDistribution):
+				if isinstance(mode_in, pd.PitchDistribution):
 					# mode is loaded
 					model = mode_in
-				elif all(isinstance(m, pD.PitchDistribution) for m in mode_in.values()):
+				elif all(isinstance(m, pd.PitchDistribution) for m in mode_in.values()):
 					# models of all modes are loaded
 					mode_names = mode_in.keys()
 					models = [mode_in[m] for m in mode_names]
 			except:
 				ValueError("Unknown mode input!")
 
-		# slice the pitch track if specified
-		if self.chunk_size > 0:
-			time_track = np.arange(0, self.frame_rate * len(pitch_track), self.frame_rate)
-			pitch_track, segs = mF.slice(time_track, pitch_track, '', self.chunk_size)
-
 		# normalize pitch track according to the given tonic frequency
-		cent_track = mF.hz_to_cent(pitch_track, ref_freq=tonic_freq)
+		cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
 
 		# Pitch distribution of the input recording is generated
-		distrib = mF.generate_pd(cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
+		distrib = mf.generate_pd(cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
 		                         step_size=self.step_size)
 
 		# convert to PCD, if specified
-		distrib = mF.generate_pcd(distrib) if (metric == 'pcd') else distrib
+		distrib = mf.generate_pcd(distrib) if (metric == 'pcd') else distrib
 
 		# Saved mode models are loaded and output variables are initiated
 		tonic_ranked = [('', 0) for x in range(rank)]
@@ -192,7 +170,7 @@ class Bozkurt:
 			distrib = distrib.shift(shift_factor)
 
 			# update to the new reference frequency after shift
-			tonic_freq = mF.cent_to_hz([distrib.bins[shift_factor]], ref_freq=tonic_freq)[0]
+			tonic_freq = mf.cent_to_hz([distrib.bins[shift_factor]], ref_freq=tonic_freq)[0]
 
 			# Find the peaks of the distribution. These are the tonic candidates.
 			peak_idxs, peak_vals = distrib.detect_peaks()
@@ -213,12 +191,12 @@ class Bozkurt:
 			# a single column, so the columns of the matrix are iteratively generated
 			dist_mat = np.zeros((len(shift_idxs), len(models)))
 			for m, model in enumerate(models):
-				dist_mat[:, m] = mF.tonic_estimate(distrib, shift_idxs, model, distance_method=distance_method,
+				dist_mat[:, m] = mf.tonic_estimate(distrib, shift_idxs, model, distance_method=distance_method,
 				                                   metric=metric, step_size=self.step_size)
 		elif (metric == 'pcd'):
 			# PCD doesn't require any preliminary steps. Generate the distance matrix.
 			# The rows are tonic candidates and columns are mode candidates.
-		dist_mat = mF.generate_distance_matrix(distrib, peak_idxs, models, method=distance_method)
+			dist_mat = mf.generate_distance_matrix(distrib, peak_idxs, models, method=distance_method)
 
 		# Distance matrix is ready now. For each rank, (or each pair of
 		# tonic-mode estimate pair) the loop is iterated. When the first
@@ -235,10 +213,10 @@ class Bozkurt:
 			# changed. That's why it's treated differently than PD. Here,
 			# the cent value of the tonic estimate is converted back to Hz.
 			if (metric == 'pcd'):
-				tonic_ranked[r] = (mF.cent_to_hz([distrib.bins[peak_idxs[min_row]]],
+				tonic_ranked[r] = (mf.cent_to_hz([distrib.bins[peak_idxs[min_row]]],
 				                                 tonic_freq)[0], dist_mat[min_row][min_col])
 			elif (metric == 'pd'):
-				tonic_ranked[r] = (mF.cent_to_hz([shift_idxs[min_row] * self.step_size],
+				tonic_ranked[r] = (mf.cent_to_hz([shift_idxs[min_row] * self.step_size],
 				                                 tonic_freq)[0], dist_mat[min_row][min_col])
 			# Current mode estimate is recorded.
 			mode_ranked[r] = (mode_names[min_col], dist_mat[min_row][min_col])
@@ -271,35 +249,30 @@ class Bozkurt:
 			# list of json files per mode
 			if all(os.path.isfile(m) for m in mode_in): 
 				mode_names = [os.path.splitext(m)[0] for m in mode_in]
-				models = [pD.load(m) for m in mode_in]
+				models = [pd.load(m) for m in mode_in]
 			elif os.path.isfile(mode_in): # json file
-				model = pD.load(mode_in)
+				model = pd.load(mode_in)
 		except TypeError:
 			try:  # models
-				if isinstance(mode_in, pD.PitchDistribution):
+				if isinstance(mode_in, pd.PitchDistribution):
 					# mode is loaded
 					model = mode_in
-				elif all(isinstance(m, pD.PitchDistribution) for m in mode_in.values()):
+				elif all(isinstance(m, pd.PitchDistribution) for m in mode_in.values()):
 					# models of all modes are loaded
 					mode_names = mode_in.keys()
 					models = [mode_in[m] for m in mode_names]
 			except:
 				ValueError("Unknown mode input!")
-		
-		# slice the pitch track if specified
-		if self.chunk_size > 0:
-			time_track = np.arange(0, self.frame_rate * len(pitch_track), self.frame_rate)
-			pitch_track, segs = mF.slice(time_track, pitch_track, '', self.chunk_size)
 
 		# normalize pitch track according to the given tonic frequency
-		cent_track = mF.hz_to_cent(pitch_track, ref_freq=tonic_freq)
+		cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
 
 		# Pitch distribution of the input recording is generated
-		distrib = mF.generate_pd(cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
+		distrib = mf.generate_pd(cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
 		                         step_size=self.step_size)
 
 		# convert to PCD, if specified
-		distrib = mF.generate_pcd(distrib) if (metric == 'pcd') else distrib
+		distrib = mf.generate_pcd(distrib) if (metric == 'pcd') else distrib
 
 		# Saved mode models are loaded and output variables are initiated
 		tonic_ranked = [('', 0) for x in range(rank)]
@@ -311,7 +284,7 @@ class Bozkurt:
 			distrib = distrib.shift(shift_factor)
 
 			# update to the new reference frequency after shift
-			tonic_freq = mF.cent_to_hz([distrib.bins[shift_factor]], ref_freq=tonic_freq)[0]
+			tonic_freq = mf.cent_to_hz([distrib.bins[shift_factor]], ref_freq=tonic_freq)[0]
 
 			# Find the peaks of the distribution. These are the tonic candidates.
 			peak_idxs, peak_vals = distrib.detect_peaks()
@@ -330,7 +303,7 @@ class Bozkurt:
 		# This part assigns the special case changes to standard variables,
 		# so that we can treat PD and PCD in the same way, as much as
 		# possible. 
-		peak_idxs = shift_idxs if (metric == 'pD') else peak_idxs
+		peak_idxs = shift_idxs if (metric == 'pd') else peak_idxs
 		tonic_freq = tonic_freq if (metric == 'pcd') else tonic_freq
 
 		# Distance vector is generated. In the tonic_estimate() function
@@ -338,7 +311,7 @@ class Bozkurt:
 		# handles the special cases such as zero-padding. The mode is
 		# already known, so there is only one model to be compared. Each
 		# entry corresponds to one tonic candidate.
-		distance_vector = mF.tonic_estimate(distrib, peak_idxs, model, distance_method=distance_method,
+		distance_vector = mf.tonic_estimate(distrib, peak_idxs, model, distance_method=distance_method,
 		                                    metric=metric, step_size=self.step_size)
 
 		for r in range(min(rank, len(peak_idxs))):
@@ -349,10 +322,10 @@ class Bozkurt:
 			# PCD and PD are treated differently here. 
 			# TODO: review here
 			if (metric == 'pcd'):
-				tonic_ranked[r] = (mF.cent_to_hz([distrib.bins[peak_idxs[idx]]],
+				tonic_ranked[r] = (mf.cent_to_hz([distrib.bins[peak_idxs[idx]]],
 				                                 tonic_freq)[0], distance_vector[idx])
 			elif (metric == 'pD'):
-				tonic_ranked[r] = (mF.cent_to_hz([shift_idxs[idx] * self.step_size],
+				tonic_ranked[r] = (mf.cent_to_hz([shift_idxs[idx] * self.step_size],
 				                                 tonic_freq)[0], distance_vector[idx])
 			# Current minima is replaced with a value larger than maxima,
 			# so that we won't return the same estimate twice.
@@ -384,38 +357,33 @@ class Bozkurt:
 			if all(os.path.isfile(m) for m in mode_in): 
 				est_mode = True  # do mode estimation
 				mode_names = [os.path.splitext(m)[0] for m in mode_in]
-				models = [pD.load(m) for m in mode_in]
+				models = [pd.load(m) for m in mode_in]
 			elif os.path.isfile(mode_in): # json file
 				est_mode = False # mode already known
-				model = pD.load(mode_in)
+				model = pd.load(mode_in)
 		except TypeError:
 			try:  # models
-				if isinstance(mode_in, pD.PitchDistribution):
+				if isinstance(mode_in, pd.PitchDistribution):
 					# mode is loaded
 					est_mode = False  # mode already known
 					model = mode_in
-				elif all(isinstance(m, pD.PitchDistribution) for m in mode_in.values()):
+				elif all(isinstance(m, pd.PitchDistribution) for m in mode_in.values()):
 					# models of all modes are loaded
 					est_mode = True  # do mode estimation
 					mode_names = mode_in.keys()
 					models = [mode_in[m] for m in mode_names]
 			except:
 				ValueError("Unknown mode input!")
-		
-		# slice the pitch track if specified
-		if self.chunk_size > 0:
-			time_track = np.arange(0, self.frame_rate * len(pitch_track), self.frame_rate)
-			pitch_track, segs = mF.slice(time_track, pitch_track, '', self.chunk_size)
 
 		# normalize pitch track according to the given tonic frequency
-		cent_track = mF.hz_to_cent(pitch_track, ref_freq=tonic_freq)
+		cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
 
 		# Pitch distribution of the input recording is generated
-		distrib = mF.generate_pd(cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
+		distrib = mf.generate_pd(cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
 		                         step_size=self.step_size)
 
 		# convert to PCD, if specified
-		distrib = mF.generate_pcd(distrib) if (metric == 'pcd') else distrib
+		distrib = mf.generate_pcd(distrib) if (metric == 'pcd') else distrib
 
 		# Saved mode models are loaded and output variables are initiated
 		tonic_ranked = [('', 0) for x in range(rank)]
