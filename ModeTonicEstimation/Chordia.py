@@ -93,10 +93,8 @@ class Chordia:
 		# each chunk individually, we use a single tonic annotation for each recording
 		# so we assume that the tonic doesn't change throughout a recording.
 		tonic_freqs = [np.array(tonic) for tonic in tonic_freqs]
-		for pf, tonic in zip(pt_files, tonic_freqs):
-			pitch_track = np.loadtxt(pf)
-			if pitch_track.ndim > 1:  # assume the first col is time, the second is pitch and the rest is labels etc
-				pitch_track = pitch_track[:,1]
+		pitch_tracks = mf.parse_pitch_track(pitch_files)
+		for pitch_track, tonic in zip(pitch_tracks, tonic_freqs):
 			time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
 
 			# Current pitch track is sliced into chunks.
@@ -178,11 +176,8 @@ class Chordia:
 						an arbitrary value, so this can be ignored.
 		-------------------------------------------------------------------------"""
 		
-		# load pitch track
-		pitch_track = np.loadtxt(pitch_file)
-
-		# assume the first col is time, the second is pitch and the rest is labels etc.
-		pitch_track = pitch_track[:,1] if pitch_track.ndim > 1 else pitch_track
+		# load pitch track 
+		pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
 
 		# Pitch track is sliced into chunks.
 		time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
@@ -265,11 +260,8 @@ class Chordia:
 		See joint_estimate() for details. The I/O part of *_estimate() functions
 		are identical.
 		-------------------------------------------------------------------------"""
-		# load pitch track
-		pitch_track = np.loadtxt(pitch_file)
-
-		# assume the first col is time, the second is pitch and the rest is labels etc.
-		pitch_track = pitch_track[:,1] if pitch_track.ndim > 1 else pitch_track
+		# load pitch track 
+		pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
 
 		# Pitch track is sliced into chunks.
 		time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
@@ -324,11 +316,8 @@ class Chordia:
 		See joint_estimate() for details. The I/O part of *_estimate() functions
 		are identical.
 		-------------------------------------------------------------------------"""
-		# load pitch track
-		pitch_track = np.loadtxt(pitch_file)
-
-		# assume the first col is time, the second is pitch and the rest is labels etc.
-		pitch_track = pitch_track[:,1] if pitch_track.ndim > 1 else pitch_track
+		# load pitch track 
+		pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
 
 		# Pitch track is sliced into chunks.
 		time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)

@@ -71,11 +71,8 @@ class Bozkurt:
 		# pitch distribution of this track is the mode's model distribution.
 
 		# Normalize the pitch tracks of the mode wrt the tonic frequency and concatenate
-		for pf, tonic in zip(pitch_files, tonic_freqs):
-			pitch_track = np.loadtxt(pf)
-			if pitch_track.ndim > 1:  # assume the first col is time, the second is pitch and the rest is labels etc
-				pitch_track = pitch_track[:,1]
-
+		pitch_track = mf.parse_pitch_track(pitch_files, multiple=True)
+		for pf, tonic in zip(pitch_track, tonic_freqs):
 			mode_track = mf.hz_to_cent(pitch_track, ref_freq=tonic)
 
 		# generate the pitch distribution
@@ -120,10 +117,7 @@ class Bozkurt:
 		-------------------------------------------------------------------------"""
 		
 		# load pitch track 
-		pitch_track = np.loadtxt(pitch_file)
-
-		# assume the first col is time, the second is pitch and the rest is labels etc.
-		pitch_track = pitch_track[:,1] if pitch_track.ndim > 1 else pitch_track
+		mf.parse_pitch_track(pitch_file)
 
 		# parse mode input
 		try:
@@ -239,10 +233,7 @@ class Bozkurt:
 		-------------------------------------------------------------------------"""
 		
 		# load pitch track 
-		pitch_track = np.loadtxt(pitch_file)
-
-		# assume the first col is time, the second is pitch and the rest is labels etc.
-		pitch_track = pitch_track[:,1] if pitch_track.ndim > 1 else pitch_track
+		pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
 
 		# parse mode input
 		try:
@@ -346,10 +337,7 @@ class Bozkurt:
 		-------------------------------------------------------------------------"""
 
 		# load pitch track 
-		pitch_track = np.loadtxt(pitch_file)
-
-		# assume the first col is time, the second is pitch and the rest is labels etc.
-		pitch_track = pitch_track[:,1] if pitch_track.ndim > 1 else pitch_track
+		pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
 
 		# parse mode input
 		try:

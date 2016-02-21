@@ -73,7 +73,7 @@ class PitchDistribution:
 		# Peak detection is handled by Essentia
 		detector = std.PeakDetection()
 		peak_bins, peak_vals = detector(essentia.array(self.vals))
-
+		
 		# Essentia normalizes the positions to 1, they are converted here
 		# to actual index values to be used in bins.
 		peak_idxs = [round(bn * (len(self.bins) - 1)) for bn in peak_bins]
