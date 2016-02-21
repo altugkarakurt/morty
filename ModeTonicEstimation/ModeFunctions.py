@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import math
+import os
 from scipy.spatial import distance
 from scipy.integrate import simps
 from scipy.stats import norm
 
 import PitchDistribution as pd
 
-def parse_pitch(pitch_tracks):
+def parse_pitch_track(pitch_track, multiple=False):
 	"""-------------------------------------------------------------------------
 	This function parses all types of pitch inputs that are fed into Chordia and
 	Bozkurt functions. It can parse inputs of the following form:
@@ -19,7 +20,25 @@ def parse_pitch(pitch_tracks):
 	higher order functions. It returns to things, the cleaned input pitch track
 	or pitch distribution.
 	-------------------------------------------------------------------------"""
-	pass
+	# Multiple pitch tracks
+	if(multiple):
+		return [parse_pitch_track(track, multiple=False) for track in pitch_track]
+		
+	# Single pitch track
+	else:
+		# Path to the pitch track
+		if(type(pitch_track) == str):
+			if(os.path.exists(pitch_track)):
+				result = np.loadtxt(pitch_track)
+				# Strip the time track
+				return result[:,1] if result.ndim > 1 else result
+			# Non-path string
+			else:
+				raise ValueError("Path doesn't exist: " + pitch_track)
+		
+		#Loaded pitch track passed
+		elif((type(pitch_track) == np.ndarray) or (type(pitch_track) == list)):
+			return np.array(pitch_track)
 
 def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 				source='', segment='all', overlap='-'):
