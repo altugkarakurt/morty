@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import ModeFunctions as mf
-import PitchDistribution as pd
+from PitchDistribution import PitchDistribution
 import json
 import os
 import random
+import pdb
 
 class Chordia:
 	"""-------------------------------------------------------------------------
@@ -93,25 +94,24 @@ class Chordia:
 		# each chunk individually, we use a single tonic annotation for each recording
 		# so we assume that the tonic doesn't change throughout a recording.
 		tonic_freqs = [np.array(tonic) for tonic in tonic_freqs]
-		pitch_tracks = mf.parse_pitch_track(pitch_files)
+		pitch_tracks = mf.parse_pitch_track(pitch_files, multiple=True)
 		for pitch_track, tonic in zip(pitch_tracks, tonic_freqs):
 			time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
 
 			# Current pitch track is sliced into chunks.
 			if not self.chunk_size: # no slicing
-				pts = [pitch_track]
-				chunk_data = [pf + '_all']
+				chunks = [pitch_track]
 			else:
-				pts, chunk_data = mf.slice(time_track, pitch_track, pf, self.chunk_size,
+				chunks = mf.slice(time_track, pitch_track, self.chunk_size,
 				                           self.threshold, self.overlap)
 
 			# Each chunk is converted to cents
-			pts = [mf.hz_to_cent(k, ref_freq=tonic) for k in pts]
+			chunks = [mf.hz_to_cent(k, ref_freq=tonic) for k in chunks]
 
 			# This is a wrapper function. It iteratively generates the distribution
 			# for each chunk and return it as a list. After this point, we only
 			# need to save it. God bless modular programming!
-			temp_list = self.train_chunks(pts, chunk_data, tonic, metric)
+			temp_list = self.train_chunks(chunks, tonic, metric)
 
 			# The list is composed of lists of PitchDistributions. So,
 			# each list in temp_list corresponds to a recording and each
@@ -141,7 +141,7 @@ class Chordia:
 		json.dump(dist_json, open(os.path.join(save_dir, mode_name + '.json'), 'w'), indent=2)
 
 	def joint_estimate(self, pitch_file, mode_names=[], mode_dir='./', 
-		               distance_method="euclidean", metric='pcd', k_param=1, 
+		               distance_method="bhat", metric='pcd', k_param=3, 
 		               equalSamplePerMode = False):
 		"""-------------------------------------------------------------------------
 		In the estimation phase, the input pitch track is sliced into chunk and each
@@ -183,10 +183,9 @@ class Chordia:
 		time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
 
 		if not self.chunk_size: # no slicing
-			pts = [pitch_track]
-			chunk_data = ['input_all']
+			chunks = [pitch_track]
 		else:
-			pts, chunk_data = mf.slice(time_track, pitch_track, 'input', self.chunk_size,
+			chunks = mf.slice(time_track, pitch_track, self.chunk_size,
 				                 self.threshold, self.overlap)
 
 
@@ -200,15 +199,15 @@ class Chordia:
 		# neighbors from the union of these from each chunk. This is quite an
 		# overshoot, we only need min_cnt >= k_param. 
 
-		min_cnt = len(pts) * k_param
+		min_cnt = len(chunks) * k_param
 		
-		neighbors = [['', 0] for _ in chunk_data]
+		neighbors = [['', 0] for _ in chunks]
 		
 		# chunk_estimate() generates the distributions of each chunk iteratively,
 		# then compares it with all candidates and returns min_cnt closest neighbors
 		# of each chunk to neighbors list.
-		for p, _ in enumerate(pts):
-			neighbors[p] = self.chunk_estimate(pts[p], mode_names=mode_names,
+		for p, _ in enumerate(chunks):
+			neighbors[p] = self.chunk_estimate(chunks[p], mode_names=mode_names,
 			                                   mode_dir=mode_dir, est_tonic=True, 
 			                                   est_mode=True, distance_method=distance_method,
 				                               metric=metric, min_cnt=min_cnt,
@@ -223,16 +222,15 @@ class Chordia:
 		# kn_foo : k nearest foos of candidate_foos. this is a subset of
 		#		   candidate_foo
 		candidate_distances, candidate_ests, kn_distances, kn_ests,  = ([] for _ in range(4))
-
+		
 		# Joint estimation decision making.
 		# Flattens the returned candidates and related data about them and
 		# stores them into candidate_*
-		for i, _ in enumerate(pts):
-			for j in neighbors[i][1]:
-				candidate_distances.append(j)
+		for i, _ in enumerate(chunks):
+			candidate_distances.extend(neighbors[i][1])
 			for l, _ in enumerate(neighbors[i][0][1]):
-				candidate_ests.append((neighbors[i][0][1][l], neighbors[i][0][0][l][0]))
-		
+				candidate_ests.append((neighbors[i][0][1][l], neighbors[i][0][0][l]))
+
 		# Finds the nearest neighbors and fills all related data about
 		# them to kn_*. Each of these variables have length k. kn_distances
 		# stores the distance values, kn_ests stores mode/tonic pairs.
@@ -249,7 +247,7 @@ class Chordia:
 		return elem_counts[np.argmax(idx_counts)]
 		
 	def tonic_estimate(self, pitch_file, mode_name, mode_dir='./', distance_method="bhat", 
-		               metric='pcd', k_param=1, equalSamplePerMode=False):
+		               metric='pcd', k_param=3, equalSamplePerMode=False):
 		"""-------------------------------------------------------------------------
 		Tonic Estimation: The mode of the recording is known and tonic is to be
 		estimated. This is generally the most accurate estimation among the three.
@@ -267,18 +265,17 @@ class Chordia:
 		time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
 
 		if not self.chunk_size: # no slicing
-			pts = [pitch_track]
-			chunk_data = ['input_all']
+			chunks = [pitch_track]
 		else:
-			pts, chunk_data = mf.slice(time_track, pitch_track, 'input', self.chunk_size,
+			chunks = mf.slice(time_track, pitch_track, self.chunk_size,
 				                 self.threshold, self.overlap)
 
-		min_cnt = len(pts) * k_param
+		min_cnt = len(chunks) * k_param
 		
-		neighbors = [0 for _ in chunk_data]
+		neighbors = [0 for _ in chunks]
 		
-		for p, _ in enumerate(pts):
-			neighbors[p] = self.chunk_estimate(pts[p], mode_name=mode_name, mode_dir=mode_dir,
+		for p, _ in enumerate(chunks):
+			neighbors[p] = self.chunk_estimate(chunks[p], mode_name=mode_name, mode_dir=mode_dir,
 				                               est_tonic=True, est_mode=False,
 				                               distance_method=distance_method,
 				                               metric=metric, min_cnt=min_cnt,
@@ -287,11 +284,9 @@ class Chordia:
 		candidate_distances, candidate_ests, kn_distances, kn_ests = ([] for _ in range(4))
 		
 		# See the joint version of this loop for further explanation
-		for i in range(len(pts)):
-			for j in neighbors[i][1]:
-				candidate_distances.append(j)
-			for l, _ in enumerate(neighbors[i][0]):
-				candidate_ests.append(neighbors[i][0][l][0])
+		for i in range(len(chunks)):
+			candidate_distances.extend(neighbors[i][1])
+			candidate_ests.extend(neighbors[i][0])
 				
 		for k in range(k_param):
 			idx = np.argmin(candidate_distances)
@@ -304,8 +299,8 @@ class Chordia:
 		return elem_counts[np.argmax(idx_counts)]
 
 	def mode_estimate(self, pitch_file, tonic_freq, mode_names, mode_dir='./', 
-	              st_mode=True, distance_method="bhat", metric='pcd', 
-	              k_param=1, equalSamplePerMode = False):
+	              distance_method="bhat", metric='pcd', 
+	              k_param=3, equalSamplePerMode = False):
 		"""-------------------------------------------------------------------------
 		Mode Estimation: The tonic of the recording is known and mode is to be
 		estimated.
@@ -323,18 +318,17 @@ class Chordia:
 		time_track = np.arange(0, (self.frame_rate*len(pitch_track)), self.frame_rate)
 
 		if not self.chunk_size: # no slicing
-			pts = [pitch_track]
-			chunk_data = ['input_all']
+			chunks = [pitch_track]
 		else:
-			pts, chunk_data = mf.slice(time_track, pitch_track, 'input', self.chunk_size,
+			chunks = mf.slice(time_track, pitch_track, self.chunk_size,
 				                 self.threshold, self.overlap)
 
-		min_cnt = len(pts) * k_param
+		min_cnt = len(chunks) * k_param
 
-		neighbors = ['' for _ in chunk_data]
+		neighbors = ['' for _ in chunks]
 
-		for p, _ in enumerate(pts):
-			neighbors[p] = self.chunk_estimate(pts[p], mode_names=mode_names,
+		for p, _ in enumerate(chunks):
+			neighbors[p] = self.chunk_estimate(chunks[p], mode_names=mode_names,
 			                                   mode_dir=mode_dir, est_tonic=False, 
 			                                   est_mode=True, distance_method=distance_method,
 				                               metric=metric, ref_freq=tonic_freq,
@@ -344,11 +338,9 @@ class Chordia:
 		candidate_distances, candidate_ests, kn_distances, kn_ests, = ([] for _ in range(4))
 
 		# See the joint version of this loop for further explanation
-		for i, _ in enumerate(pts):
-			for j in neighbors[i][1]:
-				candidate_distances.append(j)
-			for l, _ in enumerate(neighbors[i][0]):
-				candidate_ests.append(neighbors[i][0][l][0])
+		for i, _ in enumerate(chunks):
+			candidate_distances.extend(neighbors[i][1])
+			candidate_ests.extend(neighbors[i][0])
 	
 		for k in range(k_param):
 			idx = np.argmin(candidate_distances)
@@ -497,8 +489,8 @@ class Chordia:
 				# We have found out which chunk is our nearest now. Here, we find out
 				# which mode it belongs to, using cum_lens. The -6 index is for cleaning
 				# '.pitch' extension of the pitch track file's name
-				mode_list[r] = (mode_names[min(np.where((cum_lens > min_col))[0])],
-					           mode_dists[min_col].source[:-6])
+				mode_list[r] = mode_names[min(np.where((cum_lens > min_col))[0])]
+					
 				# We report their distances just for forensics. They don't affect
 				# the estimation. 
 				min_distance_list[r] = dist_mat[min_row][min_col]
@@ -525,8 +517,8 @@ class Chordia:
 			for r in range(min_cnt):
 				min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
 				min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
-				tonic_list[r] = (mf.cent_to_hz([dist.bins[peak_idxs[min_col]]],
-					                           new_ref_freq)[0], mode_dist[min_row].source[:-6])
+				tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_col]]],
+					                           new_ref_freq)[0]
 				min_distance_list[r] = dist_mat[min_row][min_col]
 				dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
 			return [tonic_list, min_distance_list.tolist()]
@@ -544,13 +536,12 @@ class Chordia:
 			# explanations.
 			for r in range(min_cnt):
 				idx = np.argmin(distance_vector)
-				mode_list[r] = (mode_names[min(np.where((cum_lens > idx))[0])],
-					                                    mode_dists[idx].source[:-6])
+				mode_list[r] = mode_names[min(np.where((cum_lens > idx))[0])]
 				min_distance_list[r] = distance_vector[idx]
 				distance_vector[idx] = (np.amax(distance_vector) + 1) 
 			return [mode_list, min_distance_list.tolist()]
 
-	def train_chunks(self, pts, chunk_data, ref_freq, metric='pcd'):
+	def train_chunks(self, pts, ref_freq, metric='pcd'):
 		"""-------------------------------------------------------------------------
 		Gets the pitch track chunks of a recording, generates its pitch distribution
 		and returns the PitchDistribution objects as a list. This function is called
@@ -560,9 +551,6 @@ class Chordia:
 		pts        : List of pitch tracks of chunks that belong to the same mode.
 		             The pitch distributions of these are iteratively generated to
 		             use as the sample points of the mode model
-		chunk_data : The relevant data about the chunks; source, initial timestamp
-		             and final timestamp. The format is the same as slice() of
-		             ModeFunctions.
 		ref_freq   : Reference frequency to be used in PD/PCD generation. Since this
 		             the training function, this should be the annotated tonic of the
 		             recording
@@ -571,9 +559,6 @@ class Chordia:
 		dist_list = []
 		# Iterates over the pitch tracks of a recording
 		for idx, _ in enumerate(pts):
-			# Retrieves the relevant information about the current chunk
-			src = chunk_data[idx][0]
-			interval = (chunk_data[idx][1], chunk_data[idx][2])
 			# PitchDistribution of the current chunk is generated
 			dist = mf.generate_pd(pts[idx], ref_freq=ref_freq, smooth_factor=self.smooth_factor,
 			                      step_size=self.step_size)
@@ -601,7 +586,7 @@ class Chordia:
 		# List of dictionaries is is iterated over to initialize a list of
 		# PitchDistribution objects.
 		for d in dist_list:
-			obj_list.append(pd.PitchDistribution(np.array(d['bins']),
+			obj_list.append(PitchDistribution(np.array(d['bins']),
 				            np.array(d['vals']), kernel_width=d['kernel_width'],
 				            ref_freq=d['ref_freq']))
 		return obj_list

@@ -15,8 +15,7 @@ def load(fname):
 
 	return PitchDistribution(np.array(dist[0]['bins']), np.array(dist[0]['vals']),
 		                     kernel_width=dist[0]['kernel_width'],
-		                     source=dist[0]['source'], ref_freq=np.array(dist[0]['ref_freq']),
-		                     segment=dist[0]['segmentation'], overlap=dist[0]['overlap'])
+		                     ref_freq=np.array(dist[0]['ref_freq']))
 
 class PitchDistribution:
 	
@@ -54,14 +53,14 @@ class PitchDistribution:
 		fpath    : The file path of the JSON file to be created.
 		-------------------------------------------------------------------------"""
 		dist_json = [{'bins':self.bins.tolist(), 'vals':self.vals.tolist(),
-		              'kernel_width':self.kernel_width, 'ref_freq':self.ref_freq.tolist(),
+		              'kernel_width':self.kernel_width, 'ref_freq':self.ref_freq,
 		              'step_size':self.step_size}]
 		
 		json.dump(dist_json, open(fpath, 'w'), indent=4)
 
 	def is_pcd(self):
 		"""-------------------------------------------------------------------------
-		The boolean flag of whethwe the instance is PCD or not.
+		The boolean flag of whether the instance is PCD or not.
 		-------------------------------------------------------------------------"""
 		return (max(self.bins) == (1200 - self.step_size) and min(self.bins) == 0)
 

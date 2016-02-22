@@ -2,11 +2,11 @@
 import numpy as np
 import math
 import os
-from scipy.spatial import distance
+from scipy.spatial import distance as spdistance
 from scipy.integrate import simps
 from scipy.stats import norm
 
-import PitchDistribution as pd
+from PitchDistribution import PitchDistribution
 
 def parse_pitch_track(pitch_track, multiple=False):
 	"""-------------------------------------------------------------------------
@@ -27,7 +27,7 @@ def parse_pitch_track(pitch_track, multiple=False):
 	# Single pitch track
 	else:
 		# Path to the pitch track
-		if(type(pitch_track) == str):
+		if((type(pitch_track) == str) or (type(pitch_track) == unicode)):
 			if(os.path.exists(pitch_track)):
 				result = np.loadtxt(pitch_track)
 				# Strip the time track
@@ -111,8 +111,7 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 		raise ValueError('Lengths of bins and Vals are different')
 
 	# Initializes the PitchDistribution object and returns it.
-	return pD.PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, source=source, ref_freq=ref_freq,
-	                             segment=segment, overlap=overlap)
+	return PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor, ref_freq=ref_freq)
 
 def generate_pcd(pd):
 	"""-------------------------------------------------------------------------
@@ -133,8 +132,7 @@ def generate_pcd(pd):
 		pcd_vals[idx] += pd.vals[k]
 
 	# Initializes the PitchDistribution object and returns it.
-	return pD.PitchDistribution(pcd_bins, pcd_vals, kernel_width=pd.kernel_width, source=pd.source,
-	                             ref_freq=pd.ref_freq, segment=pd.segmentation, overlap=pd.overlap)
+	return PitchDistribution(pcd_bins, pcd_vals, kernel_width=pd.kernel_width, ref_freq=pd.ref_freq)
 
 
 def hz_to_cent(hz_track, ref_freq):
@@ -145,7 +143,7 @@ def hz_to_cent(hz_track, ref_freq):
 	ref_freq	: Reference frequency for cent conversion
 	-------------------------------------------------------------------------"""
 	hz_track = np.array(hz_track)
-
+	
 	# The 0 Hz values are removed, not only because they are meaningless,
 	# but also logarithm of 0 is problematic.
 	return np.log2(hz_track[hz_track>0] / ref_freq) * 1200.0
@@ -207,13 +205,13 @@ def distance(vals_1, vals_2, method='euclidean'):
 	corr         : Correlation
 	-------------------------------------------------------------------------"""
 	if (method == 'euclidean'):
-		return distance.euclidean(vals_1, vals_2)
+		return spdistance.euclidean(vals_1, vals_2)
 
 	elif (method == 'manhattan'):
-		return distance.minkowski(vals_1, vals_2, 1)
+		return spdistance.minkowski(vals_1, vals_2, 1)
 
 	elif (method == 'l3'):
-		return distance.minkowski(vals_1, vals_2, 3)
+		return spdistance.minkowski(vals_1, vals_2, 3)
 
 	elif (method == 'bhat'):
 		return -np.log(sum(np.sqrt(vals_1 * vals_2)))
@@ -345,16 +343,13 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd', s
 	return distance_vector
 
 
-def slice(time_track, pitch_track, pt_source, chunk_size, threshold=0.5, overlap=0):
+def slice(time_track, pitch_track, chunk_size, threshold=0.5, overlap=0):
 	"""-------------------------------------------------------------------------
 	Slices a pitch track into equal chunks of desired length.
 	----------------------------------------------------------------------------
 	time_track  : The timestamps of the pitch track. This is used to determine
 	              the samples to cut the pitch track. 1-D list
 	pitch_track : The pitch track's frequency entries. 1-D list
-	pt_source   : The source (i.e. name/id of the recording) of the pitch track
-	              This info is used by higher order functions to keep track of
-	              where the pitch track chunks come from.
 	chunk_size  : The sizes of the chunks.
 	threshold   : This is the ratio of smallest acceptable chunk to chunk_size.
 	              When a pitch track is sliced the remaining tail at its end is
@@ -367,21 +362,14 @@ def slice(time_track, pitch_track, pt_source, chunk_size, threshold=0.5, overlap
 	              (chunk_size*threshold)th sample of the previous chunk.
 	----------------------------------------------------------------------------
 	chunks      : List of the pitch track chunks
-	chunk_info  : The list of tuples that contain relevant information about
-	              chunks. Its indexing is parallel to the chunks list, so
-	              the information of ith chunk in chunks, is in the ith tuple
-	              in chunk_info. The structure is: (source, start time, end time)
 	-------------------------------------------------------------------------"""
 	chunks = []
-	chunk_info = []
 	last = 0
 
 	# Main slicing loop
 	for k in np.arange(1, (int(max(time_track) / chunk_size) + 1)):
 		cur = 1 + max(np.where(time_track < chunk_size * k)[0])
 		chunks.append(pitch_track[last:(cur - 1)])
-		chunk_info.append((pt_source, int(round(time_track[last])),
-		                 int(round(time_track[cur - 1]))))  # 0 - source, 1 - init, 2 - final
 		
 		# This variable keep track of where the first sample of the
 		# next iteration should start from.
@@ -390,10 +378,8 @@ def slice(time_track, pitch_track, pt_source, chunk_size, threshold=0.5, overlap
 	# Checks if the remaining tail should be discarded or not.
 	if ((max(time_track) - time_track[last]) >= (chunk_size * threshold)):
 		chunks.append(pitch_track[last:])
-		chunk_info.append((pt_source, int(round(time_track[last])), int(round(time_track[len(time_track) - 1]))))
 
 	# If the runtime of the entire track is below the threshold, keep it as it is
 	elif (last == 0):  
 		chunks.append(pitch_track)
-		chunk_info.append((pt_source, 0, int(round(time_track[len(time_track) - 1]))))
-	return chunks, chunk_info
+	return chunks

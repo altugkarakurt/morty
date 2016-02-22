@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import os
-from ModeTonicEstimation import ModeFunctions as mf
-from ModeTonicEstimation import PitchDistribution as pd
-
+import ModeFunctions as mf
+import PitchDistribution as pd
 
 class Bozkurt:
 	"""-------------------------------------------------------------------------
@@ -72,9 +71,9 @@ class Bozkurt:
 
 		# Normalize the pitch tracks of the mode wrt the tonic frequency and concatenate
 		pitch_track = mf.parse_pitch_track(pitch_files, multiple=True)
-		for pf, tonic in zip(pitch_track, tonic_freqs):
-			mode_track = mf.hz_to_cent(pitch_track, ref_freq=tonic)
-
+		for track, tonic in zip(pitch_track, tonic_freqs):
+			mode_track = mf.hz_to_cent(track, ref_freq=tonic)
+			
 		# generate the pitch distribution
 		pitch_distrib = mf.generate_pd(mode_track, smooth_factor=self.smooth_factor,
 		                               step_size=self.step_size)
@@ -85,11 +84,11 @@ class Bozkurt:
 		if save_dir:
 			if not os.path.exists(save_dir):
 				os.makedirs(save_dir)
-			pitch_distrib.save(mode_name + '.json', save_dir=save_dir)
+			pitch_distrib.save(save_dir + mode_name + '.json')
 
 		return pitch_distrib
 
-	def joint_estimate(self, pitch_file, mode_in='./', tonic_freq=None, rank=1,
+	def joint_estimate(self, pitch_file, mode_in='./', tonic_freq=440, rank=1,
 	             distance_method="bhat", metric='pcd'):
 		"""-------------------------------------------------------------------------
 		Joint Estimation: Neither the tonic nor the mode of the recording is known.
@@ -117,7 +116,7 @@ class Bozkurt:
 		-------------------------------------------------------------------------"""
 		
 		# load pitch track 
-		mf.parse_pitch_track(pitch_file)
+		pitch_track = mf.parse_pitch_track(pitch_file)
 
 		# parse mode input
 		try:
@@ -207,19 +206,19 @@ class Bozkurt:
 			# changed. That's why it's treated differently than PD. Here,
 			# the cent value of the tonic estimate is converted back to Hz.
 			if (metric == 'pcd'):
-				tonic_ranked[r] = (mf.cent_to_hz([distrib.bins[peak_idxs[min_row]]],
-				                                 tonic_freq)[0], dist_mat[min_row][min_col])
+				tonic_ranked[r] = mf.cent_to_hz([distrib.bins[peak_idxs[min_row]]],
+				                                 tonic_freq)[0]
 			elif (metric == 'pd'):
-				tonic_ranked[r] = (mf.cent_to_hz([shift_idxs[min_row] * self.step_size],
-				                                 tonic_freq)[0], dist_mat[min_row][min_col])
+				tonic_ranked[r] = mf.cent_to_hz([shift_idxs[min_row] * self.step_size],
+				                                 tonic_freq)[0]
 			# Current mode estimate is recorded.
-			mode_ranked[r] = (mode_names[min_col], dist_mat[min_row][min_col])
+			mode_ranked[r] = mode_names[min_col]
 			# The minimum value is replaced with a value larger than maximum,
 			# so we won't return this estimate pair twice.
 			dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
 		return mode_ranked, tonic_ranked
 
-	def tonic_estimate(self, pitch_file, mode_in='./', tonic_freq=None, rank=1,
+	def tonic_estimate(self, pitch_file, mode_in='./', tonic_freq=440, rank=1,
 	                   distance_method="bhat", metric='pcd'):
 		"""-------------------------------------------------------------------------
 		Tonic Estimation: The mode of the recording is known and tonic is to be
@@ -313,11 +312,11 @@ class Bozkurt:
 			# PCD and PD are treated differently here. 
 			# TODO: review here
 			if (metric == 'pcd'):
-				tonic_ranked[r] = (mf.cent_to_hz([distrib.bins[peak_idxs[idx]]],
-				                                 tonic_freq)[0], distance_vector[idx])
-			elif (metric == 'pD'):
-				tonic_ranked[r] = (mf.cent_to_hz([shift_idxs[idx] * self.step_size],
-				                                 tonic_freq)[0], distance_vector[idx])
+				tonic_ranked[r] = mf.cent_to_hz([distrib.bins[peak_idxs[idx]]],
+				                                 tonic_freq)[0]
+			elif (metric == 'pd'):
+				tonic_ranked[r] = mf.cent_to_hz([shift_idxs[idx] * self.step_size],
+				                                 tonic_freq)[0]
 			# Current minima is replaced with a value larger than maxima,
 			# so that we won't return the same estimate twice.
 			distance_vector[idx] = (np.amax(distance_vector) + 1)
@@ -376,21 +375,21 @@ class Bozkurt:
 		# Saved mode models are loaded and output variables are initiated
 		tonic_ranked = [('', 0) for x in range(rank)]
 		mode_ranked = [('', 0) for x in range(rank)]
-		
+
 		# Mode Estimation
-		elif (est_mode):
+		if(est_mode):
 			# Distance vector is generated. Again, mode_estimate() of
 			# ModeFunctions handles the different approach required for
 			# PCD and PD. Since tonic is known, the distributions aren't
 			# shifted and are only compared to candidate mode models.
-			distance_vector = mF.mode_estimate(distrib, models, distance_method=distance_method, metric=metric,
+			distance_vector = mf.mode_estimate(distrib, models, distance_method=distance_method, metric=metric,
 			                                   step_size=self.step_size)
 
 			for r in range(min(rank, len(mode_names))):
 				# Minima is found, corresponding mode candidate is our current
 				# mode estimate
 				idx = np.argmin(distance_vector)
-				mode_ranked[r] = (mode_names[idx], distance_vector[idx])
+				mode_ranked[r] = mode_names[idx]
 				# Current minima is replaced with a value larger than maxima,
 				# so that we won't return the same estimate twice.
 				distance_vector[idx] = (np.amax(distance_vector) + 1)

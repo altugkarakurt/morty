@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ModeTonicEstimation import ModeFunctions as mf
+import ModeFunctions as mf
 
 
 class Evaluator:
