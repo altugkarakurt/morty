@@ -5,7 +5,6 @@ from PitchDistribution import PitchDistribution
 import json
 import os
 import random
-import pdb
 
 class Chordia:
 	"""-------------------------------------------------------------------------
