@@ -1,7 +1,10 @@
 # Mode & Tonic Recognition
 Python scripts for training and recognizing modes in a modal music piece. Given the predominant melody of a piece, it estimates its mode and tonic.
 
-### Description and Usage
+### Usage
+Please refer to the jupyter notebooks for the basic usage and an interactive demo.
+
+### Description
 This project expects the pitch track (or predominant melody) of audio recordings as the input and generates pitch distributions (PD) and
 pitch class distributions (PCD) from them. These distributions are used as the parameters for estimation and training.
 
