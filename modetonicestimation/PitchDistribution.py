@@ -13,13 +13,13 @@ def load(fname):
     -------------------------------------------------------------------------"""
     dist = json.load(open(fname, 'r'))
 
-    return PitchDistribution(np.array(dist[0]['bins']), np.array(dist[0]['vals']),
+    return PitchDistribution(dist[0]['bins'], dist[0]['vals'],
                              kernel_width=dist[0]['kernel_width'],
-                             ref_freq=np.array(dist[0]['ref_freq']))
+                             ref_freq=dist[0]['ref_freq'])
 
 
 class PitchDistribution:
-    def __init__(self, pd_bins, pd_vals, kernel_width=7.5, ref_freq=np.array(440.0)):
+    def __init__(self, pd_bins, pd_vals, kernel_width=7.5, ref_freq=440.0):
         """------------------------------------------------------------------------
         The main data structure that wraps all the relevant information about a
         pitch distribution.
@@ -34,17 +34,17 @@ class PitchDistribution:
         kernel_width : The std. deviation of the Gaussian kernel. See generate_pd()
                        of ModeFunctions for more detail.
         -------------------------------------------------------------------------"""
-        self.bins = pd_bins
-        self.vals = pd_vals
-        self.ref_freq = ref_freq
+        self.bins = np.array(pd_bins)  # force numpy array
+        self.vals = np.array(pd_vals)  # force numpy array
         self.kernel_width = kernel_width
+        self.ref_freq = np.array(ref_freq)  # force numpy array
 
         # Due to the floating point issues in Python, the step_size might not be
         # exactly equal to (for example) 7.5, but 7.4999... In such cases the
         # bin generation of pitch distributions include 1200 cents too and chaos
         # reigns. We fix it here.
         temp_ss = self.bins[1] - self.bins[0]
-        self.step_size = temp_ss if (temp_ss == (round(temp_ss * 10) / 10)) else (round(temp_ss * 10) / 10)
+        self.step_size = temp_ss if temp_ss == (round(temp_ss * 10) / 10) else round(temp_ss * 10) / 10
 
     def save(self, fpath):
         """-------------------------------------------------------------------------
@@ -53,7 +53,7 @@ class PitchDistribution:
         fpath    : The file path of the JSON file to be created.
         -------------------------------------------------------------------------"""
         dist_json = [{'bins': self.bins.tolist(), 'vals': self.vals.tolist(),
-                      'kernel_width': self.kernel_width, 'ref_freq': self.ref_freq,
+                      'kernel_width': self.kernel_width, 'ref_freq': self.ref_freq.tolist(),
                       'step_size': self.step_size}]
 
         json.dump(dist_json, open(fpath, 'w'), indent=4)
@@ -88,7 +88,7 @@ class PitchDistribution:
         shift_idx : The number of samples that the distribution is tı be shifted
         -------------------------------------------------------------------------"""
         # If the shift index is non-zero, do the shifting procedure
-        if (shift_idx):
+        if shift_idx:
 
             # If distribution is a PCD, we do a circular shift
             if self.is_pcd():
@@ -98,7 +98,6 @@ class PitchDistribution:
             # pd_zero_pad() of ModeFunctions is always applied beforehand to make
             # sure that no non-zero values are dropped.
             else:
-
                 # Shift towards left
                 if shift_idx > 0:
                     shifted_vals = np.concatenate((self.vals[shift_idx:], np.zeros(shift_idx)))
