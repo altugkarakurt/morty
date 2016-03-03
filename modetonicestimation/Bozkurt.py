@@ -2,7 +2,7 @@
 import numpy as np
 import os
 import ModeFunctions as mf
-import PitchDistribution as pd
+from PitchDistribution import PitchDistribution
 
 
 class Bozkurt:
@@ -124,15 +124,15 @@ class Bozkurt:
             # list of json files per mode
             if all(os.path.isfile(m) for m in mode_in):
                 mode_names = [os.path.splitext(m)[0] for m in mode_in]
-                models = [pd.load(m) for m in mode_in]
+                models = [PitchDistribution.load(m) for m in mode_in]
             elif os.path.isfile(mode_in):  # json file
-                model = pd.load(mode_in)
+                model = PitchDistribution.load(mode_in)
         except TypeError:
             try:  # models
-                if isinstance(mode_in, pd.PitchDistribution):
+                if isinstance(mode_in, PitchDistribution):
                     # mode is loaded
                     model = mode_in
-                elif all(isinstance(m, pd.PitchDistribution) for m in mode_in.values()):
+                elif all(isinstance(m, PitchDistribution) for m in mode_in.values()):
                     # models of all modes are loaded
                     mode_names = mode_in.keys()
                     models = [mode_in[m] for m in mode_names]
@@ -240,15 +240,15 @@ class Bozkurt:
             # list of json files per mode
             if all(os.path.isfile(m) for m in mode_in):
                 mode_names = [os.path.splitext(m)[0] for m in mode_in]
-                models = [pd.load(m) for m in mode_in]
+                models = [PitchDistribution.load(m) for m in mode_in]
             elif os.path.isfile(mode_in):  # json file
-                model = pd.load(mode_in)
+                model = PitchDistribution.load(mode_in)
         except TypeError:
             try:  # models
-                if isinstance(mode_in, pd.PitchDistribution):
+                if isinstance(mode_in, PitchDistribution):
                     # mode is loaded
                     model = mode_in
-                elif all(isinstance(m, pd.PitchDistribution) for m in mode_in.values()):
+                elif all(isinstance(m, PitchDistribution) for m in mode_in.values()):
                     # models of all modes are loaded
                     mode_names = mode_in.keys()
                     models = [mode_in[m] for m in mode_names]
@@ -346,17 +346,17 @@ class Bozkurt:
             if all(os.path.isfile(m) for m in mode_in):
                 est_mode = True  # do mode estimation
                 mode_names = [os.path.splitext(m)[0] for m in mode_in]
-                models = [pd.load(m) for m in mode_in]
+                models = [PitchDistribution.load(m) for m in mode_in]
             elif os.path.isfile(mode_in):  # json file
                 est_mode = False  # mode already known
-                model = pd.load(mode_in)
+                model = PitchDistribution.load(mode_in)
         except TypeError:
             try:  # models
-                if isinstance(mode_in, pd.PitchDistribution):
+                if isinstance(mode_in, PitchDistribution):
                     # mode is loaded
                     est_mode = False  # mode already known
                     model = mode_in
-                elif all(isinstance(m, pd.PitchDistribution) for m in mode_in.values()):
+                elif all(isinstance(m, PitchDistribution) for m in mode_in.values()):
                     # models of all modes are loaded
                     est_mode = True  # do mode estimation
                     mode_names = mode_in.keys()

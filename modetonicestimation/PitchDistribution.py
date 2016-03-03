@@ -5,19 +5,6 @@ import numpy as np
 import json
 
 
-def load(fname):
-    """-------------------------------------------------------------------------
-    Loads a PitchDistribution object from JSON file.
-    ----------------------------------------------------------------------------
-    fname    : The filename of the JSON file
-    -------------------------------------------------------------------------"""
-    dist = json.load(open(fname, 'r'))
-
-    return PitchDistribution(dist[0]['bins'], dist[0]['vals'],
-                             kernel_width=dist[0]['kernel_width'],
-                             ref_freq=dist[0]['ref_freq'])
-
-
 class PitchDistribution:
     def __init__(self, pd_bins, pd_vals, kernel_width=7.5, ref_freq=440.0):
         """------------------------------------------------------------------------
@@ -45,6 +32,19 @@ class PitchDistribution:
         # reigns. We fix it here.
         temp_ss = self.bins[1] - self.bins[0]
         self.step_size = temp_ss if temp_ss == (round(temp_ss * 10) / 10) else round(temp_ss * 10) / 10
+
+    @classmethod
+    def load(cls, file_name):
+        """-------------------------------------------------------------------------
+        Loads a PitchDistribution object from JSON file.
+        ----------------------------------------------------------------------------
+        fname    : The filename of the JSON file
+        -------------------------------------------------------------------------"""
+        dist = json.load(open(file_name, 'r'))
+
+        return PitchDistribution(dist[0]['bins'], dist[0]['vals'],
+                                 kernel_width=dist[0]['kernel_width'],
+                                 ref_freq=dist[0]['ref_freq'])
 
     def save(self, fpath):
         """-------------------------------------------------------------------------

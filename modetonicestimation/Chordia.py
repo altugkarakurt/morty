@@ -129,14 +129,38 @@ class Chordia:
         return pitch_distrib_list
 
     @classmethod
-    def save_model(cls, dist_list, save_dir, mode_name):
+    def load_model(cls, mode_name, dist_dir='./'):
+        """-------------------------------------------------------------------------
+        Since each mode model consists of a list of PitchDistribution objects, the
+        load() function from that class can't be used directly. This function loads
+        JSON files that contain a list of PitchDistribution objects. This is used
+        for retrieving the mode models in the beginning of estimation process.
+        ----------------------------------------------------------------------------
+        mode_name : Name of the mode to be loaded. The name of the JSON file is
+                    expected to be "mode_name.json"
+        dist_dir  : Directory where the JSON file is stored.
+        -------------------------------------------------------------------------"""
+        obj_list = []
+        fname = mode_name + '.json'
+        dist_list = json.load(open(os.path.join(dist_dir, fname)))
+
+        # List of dictionaries is is iterated over to initialize a list of
+        # PitchDistribution objects.
+        for d in dist_list:
+            obj_list.append(PitchDistribution(np.array(d['bins']),
+                                              np.array(d['vals']), kernel_width=d['kernel_width'],
+                                              ref_freq=d['ref_freq']))
+        return obj_list
+
+    @classmethod
+    def save_model(cls, distribution_list, save_dir, mode_name):
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 
         # Dump the list of dictionaries in a JSON file.
         dist_json = [{'bins': d.bins.tolist(), 'vals': d.vals.tolist(),
                       'kernel_width': d.kernel_width,
-                      'ref_freq': d.ref_freq.tolist()} for d in dist_list]
+                      'ref_freq': d.ref_freq.tolist()} for d in distribution_list]
 
         json.dump(dist_json, open(os.path.join(save_dir, mode_name + '.json'), 'w'), indent=2)
 
@@ -393,7 +417,7 @@ class Chordia:
         dist = mf.generate_pcd(dist) if metric == 'pcd' else dist
         # The model mode distribution(s) are loaded. If the mode is annotated and tonic
         # is to be estimated, only the model of annotated mode is retrieved.
-        mode_collections = [self.load_collection(mode, dist_dir=mode_dir) for mode in mode_names]
+        mode_collections = [Chordia.load_model(mode, dist_dir=mode_dir) for mode in mode_names]
 
         # This is used when we want to use equal number of points as model
         # per each candidate mode. This comes in handy if the numbers of 
@@ -409,7 +433,7 @@ class Chordia:
 
         # load mode distribution
         mode_dists = [d for col in mode_collections for d in col]
-        mode_dist = self.load_collection(mode_name, dist_dir=mode_dir) if mode_name != '' else None
+        mode_dist = Chordia.load_model(mode_name, dist_dir=mode_dir) if mode_name != '' else None
 
         # Initializations of possible output parameters
         tonic_list = [0 for x in range(min_cnt)]
@@ -566,26 +590,3 @@ class Chordia:
             # The resultant pitch distributions are filled in the list to be returned
             dist_list.append(dist)
         return dist_list
-
-    def load_collection(self, mode_name, dist_dir='./'):
-        """-------------------------------------------------------------------------
-        Since each mode model consists of a list of PitchDistribution objects, the
-        load() function from that class can't be used directly. This function loads
-        JSON files that contain a list of PitchDistribution objects. This is used
-        for retrieving the mode models in the beginning of estimation process.
-        ----------------------------------------------------------------------------
-        mode_name : Name of the mode to be loaded. The name of the JSON file is
-                    expected to be "mode_name.json" 
-        dist_dir  : Directory where the JSON file is stored.
-        -------------------------------------------------------------------------"""
-        obj_list = []
-        fname = mode_name + '.json'
-        dist_list = json.load(open(os.path.join(dist_dir, fname)))
-
-        # List of dictionaries is is iterated over to initialize a list of
-        # PitchDistribution objects.
-        for d in dist_list:
-            obj_list.append(PitchDistribution(np.array(d['bins']),
-                                              np.array(d['vals']), kernel_width=d['kernel_width'],
-                                              ref_freq=d['ref_freq']))
-        return obj_list
