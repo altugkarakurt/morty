@@ -1,23 +1,23 @@
 # Mode & Tonic Recognition
 Python scripts for training and recognizing modes in a modal music piece. Given the predominant melody of a piece, it estimates its mode and tonic.
 
-### Usage
-Please refer to the jupyter notebooks for the basic usage and an interactive demo.
-
 ### Description
 This project expects the pitch track (or predominant melody) of audio recordings as the input and generates pitch distributions (PD) and
 pitch class distributions (PCD) from them. These distributions are used as the parameters for estimation and training.
 
 The algorithms can be used for both **estimating tonic and mode of a piece**. However, if either is known and this information could be
-fed into the system, and hence the estimation of other would be more accurate.
+fed into the system, and hence the estimation of the other would be more accurate.
 
 For the estimation:
 * Train the candidate modes by using the collections of pitch tracks of respective modes.
 * Feed the piece's pitch track and if any the known attribute (tonic or mode) into the system and you're done.
 
-If the pitch track of a piece isn't available, [melodyExtraction.py](https://github.com/altugkarakurt/ModeTonicEstimation/blob/master/extras/melodyExtraction.py) function in the extras package can be used to obtain the pitch tracks automatically. The pitch track is expected to be in given as a .txt file, that consists of a single column of values of the pitch track in Hertz, time information isn't required. This function is a wrapper around the [predominantmelodymakam](https://github.com/sertansenturk/predominantmelodymakam) package to store the pitch track in the desired format.
-
 Since the training a supervised machine learning process, a dataset for each mode, including pieces with annotated tonic frequencies, is preliminary.
+
+### Usage
+Please refer to the jupyter notebooks for the basic usage and an interactive demo.
+
+If the pitch track of a piece isn't available, [melodyExtraction.py](https://github.com/altugkarakurt/ModeTonicEstimation/blob/master/extras/melodyExtraction.py) function in the extras package can be used to obtain the pitch tracks automatically. The pitch track is expected to be in given as a .txt file, that consists of a single column of values of the pitch track in Hertz, time information isn't required. This function is a wrapper around the [predominantmelodymakam](https://github.com/sertansenturk/predominantmelodymakam) package to store the pitch track in the desired format.
 
 ### Installation
 
