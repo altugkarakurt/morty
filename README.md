@@ -19,8 +19,7 @@ If the pitch track of a piece isn't available, [melodyExtraction.py](https://git
 
 Since the training a supervised machine learning process, a dataset for each mode, including pieces with annotated tonic frequencies, is preliminary.
 
-Installation
-============
+### Installation
 
 If you want to install the repository, it is recommended to install the package and dependencies into a virtualenv. In the terminal, do the following:
 
