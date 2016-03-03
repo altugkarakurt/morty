@@ -1,0 +1,5 @@
+git+https://github.com/sertansenturk/fileoperations_python.git
+
+networkx
+numpy
+scipy
