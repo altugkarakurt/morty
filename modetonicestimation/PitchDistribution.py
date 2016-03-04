@@ -33,6 +33,9 @@ class PitchDistribution:
         temp_ss = self.bins[1] - self.bins[0]
         self.step_size = temp_ss if temp_ss == (round(temp_ss * 10) / 10) else round(temp_ss * 10) / 10
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
     @classmethod
     def load(cls, file_name):
         """-------------------------------------------------------------------------
