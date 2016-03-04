@@ -12,6 +12,8 @@ install:
 script: 
   - nosetests unittests/modefunctiontest.py
 
+sudo: required
+
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq libatlas-dev libatlas-base-dev liblapack-dev gfortran
