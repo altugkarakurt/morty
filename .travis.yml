@@ -8,6 +8,6 @@ python:
 install:
   - pip install -r unittests/requirements
 
-# command to run tests
+# command to run tests.
 script: 
   - nosetests unittests/modefunctiontest.py
