@@ -1,0 +1,26 @@
+# we only need to point to python for the tests to run
+language: python
+python:
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+
+# command before installation
+#before_install:
+#  - pip install codecov
+
+# command to install dependencies
+install:
+  - pip install -r requirements
+  - pip install flake8
+#  - pip install coveralls
+
+# command to run before the tests
+before_script:
+  - "flake8 modetonicestimation --ignore=E501,W291,W293"
+
+# command to run tests
+script:
+  - nosetests unittests
+#  - nosetests --with-coverage
