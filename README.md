@@ -34,10 +34,6 @@ install the repository like this instead
 
 The algorithm uses several modules in Essentia. Follow the [instructions](essentia.upf.edu/documentation/installing.html) to install the library.
 
-Now you can install the rest of the dependencies:
-
-    pip install -r requirements
-
 For the functionalities in extras package, you can install the optional dependencies as:
 
     pip install -r optional_requirements
