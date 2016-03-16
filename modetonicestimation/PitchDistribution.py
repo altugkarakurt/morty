@@ -245,7 +245,6 @@ class PitchDistribution:
         else:
             raise ValueError('The pcd should have the bin unit as "cent".')
 
-
     def shift(self, shift_idx):
         """--------------------------------------------------------------------
         Shifts the distribution by the given number of samples
