@@ -5,7 +5,7 @@ from scipy.spatial import distance as spdistance
 from scipy.integrate import simps
 from scipy.stats import norm
 
-from PitchDistribution import PitchDistribution
+from modetonicestimation.PitchDistribution import PitchDistribution
 
 
 def parse_pitch_track(pitch_track, multiple=False):
@@ -66,10 +66,10 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
 
     # Some extra interval is added to the beginning and end since the
     # superposed Gaussian for smooth_factor would introduce some tails in the
-    # ends. These vanish after 3 sigmas(=smmoth_factor).
+    # ends. These vanish after 3 sigmas(=smooth_factor).
 
     # The limits are also quantized to be a multiple of chosen step-size
-    # smooth_factor = standard deviation fo the gaussian kernel
+    # smooth_factor = standard deviation of the gaussian kernel
 
     # TODO: filter out the NaN, -infinity and +infinity from the pitch track
 
@@ -98,6 +98,11 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5,
         xn = np.concatenate([np.arange(0, - 5 * smooth_factor, -step_size)[::-1],
                              np.arange(step_size, 5 * smooth_factor, step_size)])
         sampled_norm = normal_dist.pdf(xn)
+        if(len(sampled_norm) <= 1):
+            raise ValueError("the smoothing factor is too small compared to the step size,\
+                             such that the convolution kernel returns a single point gaussian.\
+                             Either increase the value to at least (step size/3) or assign \
+                             smooth factor to 0, for no smoothing.")
 
         extra_num_bins = len(sampled_norm) / 2  # convolution generates tails
         pd_vals = np.convolve(pd_vals, sampled_norm)[extra_num_bins:-extra_num_bins]
