@@ -155,13 +155,16 @@ class PitchDistribution:
         file_name    : The filename of the JSON file
         --------------------------------------------------------------------
         """
-        dist = json.load(open(file_name, 'r'))
+        try:
+            dist = json.load(open(file_name, 'r'))
+        except IOError:  # json string
+            dist = json.loads(file_name)
 
         return PitchDistribution(dist[0]['bins'], dist[0]['vals'],
                                  kernel_width=dist[0]['kernel_width'],
                                  ref_freq=dist[0]['ref_freq'])
 
-    def save(self, fpath):
+    def save(self, fpath=None):
         """--------------------------------------------------------------------
         Saves the PitchDistribution object to a JSON file.
         -----------------------------------------------------------------------
@@ -172,7 +175,10 @@ class PitchDistribution:
                       'ref_freq': self.ref_freq.tolist(),
                       'step_size': self.step_size}]
 
-        json.dump(dist_json, open(fpath, 'w'), indent=4)
+        if fpath is None:
+            json.dumps(dist_json, indent=4)
+        else:
+            json.dump(dist_json, open(fpath, 'w'), indent=4)
 
     def is_pcd(self):
         """--------------------------------------------------------------------
