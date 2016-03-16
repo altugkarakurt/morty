@@ -5,6 +5,7 @@ import numpy as np
 import json
 from scipy.stats import norm
 from scipy.integrate import simps
+from ModeFunctions import hz_to_cent
 
 
 class PitchDistribution:
@@ -121,6 +122,14 @@ class PitchDistribution:
         # Initializes the PitchDistribution object and returns it.
         return PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor,
                                  ref_freq=ref_freq)
+
+    @staticmethod
+    def from_hz_pitch(hz_track, ref_freq=440, smooth_factor=7.5,
+                      step_size=7.5):
+        cent_track = hz_to_cent(hz_track, ref_freq)
+        return PitchDistribution.from_cent_pitch(
+            cent_track, ref_freq=ref_freq, smooth_factor=smooth_factor,
+            step_size=step_size)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__

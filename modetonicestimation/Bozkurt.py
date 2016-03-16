@@ -151,12 +151,9 @@ class Bozkurt:
             except:
                 ValueError("Unknown mode input!")
 
-        # normalize pitch track according to the given tonic frequency
-        cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
-
         # Pitch distribution of the input recording is generated
-        distrib = PitchDistribution.from_cent_pitch(
-            cent_track, ref_freq=tonic_freq,
+        distrib = PitchDistribution.from_hz_pitch(
+            pitch_track, ref_freq=tonic_freq,
             smooth_factor=self.smooth_factor, step_size=self.step_size)
 
         # convert to PCD, if specified
@@ -271,12 +268,9 @@ class Bozkurt:
             except:
                 ValueError("Unknown mode input!")
 
-        # normalize pitch track according to the given tonic frequency
-        cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
-
         # Pitch distribution of the input recording is generated
-        distrib = PitchDistribution.from_cent_pitch(
-            cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
+        distrib = PitchDistribution.from_hz_pitch(
+            pitch_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
 
         # convert to PCD, if specified
@@ -378,12 +372,9 @@ class Bozkurt:
             except:
                 ValueError("Unknown mode input!")
 
-        # normalize pitch track according to the given tonic frequency
-        cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
-
         # Pitch distribution of the input recording is generated
-        distrib = PitchDistribution.from_cent_pitch(
-            cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
+        distrib = PitchDistribution.from_hz_pitch(
+            pitch_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
 
         # convert to PCD, if specified
