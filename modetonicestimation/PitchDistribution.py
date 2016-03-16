@@ -236,14 +236,14 @@ class PitchDistribution:
             self.bins = Converter.hz_to_cent(self.bins, ref_freq)
             self.ref_freq = ref_freq
         else:
-            raise ValueError('The pcd should have the bin unit as "hz".')
+            raise ValueError('The bin unit should be "hz".')
 
     def cent_to_hz(self):
         if self.has_cent_bin():
             self.bins = Converter.cent_to_hz(self.bins, self.ref_freq)
             self.ref_freq = None
         else:
-            raise ValueError('The pcd should have the bin unit as "cent".')
+            raise ValueError('The bin unit should be "cent".')
 
     def shift(self, shift_idx):
         """--------------------------------------------------------------------
