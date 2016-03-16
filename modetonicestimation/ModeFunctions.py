@@ -2,9 +2,6 @@
 import numpy as np
 import os
 from scipy.spatial import distance as spdistance
-from scipy.integrate import simps
-from scipy.stats import norm
-
 from modetonicestimation.PitchDistribution import PitchDistribution
 
 
@@ -40,117 +37,6 @@ def parse_pitch_track(pitch_track, multiple=False):
         # Loaded pitch track passed
         elif (type(pitch_track) == np.ndarray) or (type(pitch_track) == list):
             return np.array(pitch_track)
-
-
-def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5):
-    """------------------------------------------------------------------------
-    Given the pitch track in the unit of cents, generates the Pitch
-    Distribution of it. the pitch track from a text file. 0th column is the
-    time-stamps and
-    1st column is the corresponding frequency values.
-    ---------------------------------------------------------------------------
-    cent_track:     1-D array of frequency values in cents.
-    ref_freq:       Reference frequency used while converting Hz values to
-                    cents.
-                    This number isn't used in the computations, but is to be
-                    recorded in the PitchDistribution object.
-    smooth_factor:  The standard deviation of the gaussian kernel, used in
-                    Kernel Density Estimation. If 0, a histogram is given
-    step_size:      The step size of the Pitch Distribution bins.
-    source:         The source information (i.e. recording name/id) to be
-                    stored in PitchDistribution object.
-    segment:        Stores which part of the recording, the distribution
-                    belongs to. It stores the endpoints in seconds, such as
-                    [0,60].
-                    This is only useful for Chordia Estimation.
-    overlap:        The ratio of overlap (hop size / chunk size) to be stored.
-                    This is only useful for Chordia Estimation.
-    ------------------------------------------------------------------------"""
-
-    # Some extra interval is added to the beginning and end since the
-    # superposed Gaussian for smooth_factor would introduce some tails in the
-    # ends. These vanish after 3 sigmas(=smooth_factor).
-
-    # The limits are also quantized to be a multiple of chosen step-size
-    # smooth_factor = standard deviation of the gaussian kernel
-
-    # TODO: filter out the NaN, -infinity and +infinity from the pitch track
-
-    # Finds the endpoints of the histogram edges. Histogram bins will be
-    # generated as the midpoints of these edges.
-    min_edge = min(cent_track) - (step_size / 2.0)
-    max_edge = max(cent_track) + (step_size / 2.0)
-    pd_edges = np.concatenate(
-        [np.arange(-step_size / 2.0, min_edge, -step_size)[::-1],
-         np.arange(step_size / 2.0, max_edge, step_size)])
-
-    # An exceptional case is when min_bin and max_bin are both positive
-    # In this case, pd_edges would be in the range of [step_size/2, max_bin].
-    # If so, a -step_size is inserted to the head, to make sure 0 would be
-    # in pd_bins. The same procedure is repeated for the case when both
-    # are negative. Then, step_size is inserted to the tail.
-    pd_edges = pd_edges if -step_size / 2.0 in pd_edges else np.insert(
-        pd_edges, 0, -step_size / 2.0)
-    pd_edges = pd_edges if step_size / 2.0 in pd_edges else np.append(
-        pd_edges, step_size / 2.0)
-
-    # Generates the histogram and bins (i.e. the midpoints of edges)
-    pd_vals, pd_edges = np.histogram(cent_track, bins=pd_edges, density=True)
-    pd_bins = np.convolve(pd_edges, [0.5, 0.5])[1:-1]
-
-    if smooth_factor > 0:  # kernel density estimation (approximated)
-        # smooth the histogram
-        normal_dist = norm(loc=0, scale=smooth_factor)
-        xn = np.concatenate(
-            [np.arange(0, - 5 * smooth_factor, -step_size)[::-1],
-             np.arange(step_size, 5 * smooth_factor, step_size)])
-        sampled_norm = normal_dist.pdf(xn)
-        if len(sampled_norm) <= 1:
-            raise ValueError("the smoothing factor is too small compared to "
-                             "the step size, such that the convolution "
-                             "kernel returns a single point gaussian. Either "
-                             "increase the value to at least (step size/3) "
-                             "or assign smooth factor to 0, for no smoothing.")
-
-        extra_num_bins = len(sampled_norm) / 2  # convolution generates tails
-        pd_vals = np.convolve(pd_vals,
-                              sampled_norm)[extra_num_bins:-extra_num_bins]
-
-        # normalize the area under the curve
-        area = simps(pd_vals, dx=step_size)
-        pd_vals = pd_vals / area
-
-    # Sanity check. If the histogram bins and vals lengths are different, we
-    # are in trouble. This is an important assumption of higher level functions
-    if len(pd_bins) != len(pd_vals):
-        raise ValueError('Lengths of bins and Vals are different')
-
-    # Initializes the PitchDistribution object and returns it.
-    return PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor,
-                             ref_freq=ref_freq)
-
-
-def generate_pcd(pd):
-    """------------------------------------------------------------------------
-    Given the pitch distribution of a recording, generates its pitch class
-    distribution, by octave wrapping.
-    ---------------------------------------------------------------------------
-    pD: PitchDistribution object. Its attributes include everything we need
-    ------------------------------------------------------------------------"""
-
-    # Initializations
-    pcd_bins = np.arange(0, 1200, pd.step_size)
-    pcd_vals = np.zeros(len(pcd_bins))
-
-    # Octave wrapping
-    for k in range(len(pd.bins)):
-        idx = int((pd.bins[k] % 1200) / pd.step_size)
-        idx = idx if idx != 160 else 0
-        pcd_vals[idx] += pd.vals[k]
-
-    # Initializes the PitchDistribution object and returns it.
-    return PitchDistribution(pcd_bins, pcd_vals, kernel_width=pd.kernel_width,
-                             ref_freq=pd.ref_freq)
 
 
 def hz_to_cent(hz_track, ref_freq):

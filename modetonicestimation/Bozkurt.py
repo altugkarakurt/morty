@@ -88,12 +88,13 @@ class Bozkurt:
             mode_track.extend(mf.hz_to_cent(track, ref_freq=tonic))
 
         # generate the pitch distribution
-        pitch_distrib = mf.generate_pd(
+        pitch_distrib = PitchDistribution.from_cent_pitch(
             mode_track, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
+
         if metric == 'pcd':  # convert to pitch class distribution, if
             # specified
-            pitch_distrib = mf.generate_pcd(pitch_distrib)
+            pitch_distrib = pitch_distrib.to_pcd()
 
         # save the model to a file, if requested
         if save_dir:
@@ -151,16 +152,13 @@ class Bozkurt:
             except:
                 ValueError("Unknown mode input!")
 
-        # normalize pitch track according to the given tonic frequency
-        cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
-
         # Pitch distribution of the input recording is generated
-        distrib = mf.generate_pd(
-            cent_track, ref_freq=tonic_freq,
+        distrib = PitchDistribution.from_hz_pitch(
+            pitch_track, ref_freq=tonic_freq,
             smooth_factor=self.smooth_factor, step_size=self.step_size)
 
         # convert to PCD, if specified
-        distrib = mf.generate_pcd(distrib) if metric == 'pcd' else distrib
+        distrib = distrib.to_pcd() if metric == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
         tonic_ranked = [('', 0) for x in range(rank)]
@@ -271,16 +269,13 @@ class Bozkurt:
             except:
                 ValueError("Unknown mode input!")
 
-        # normalize pitch track according to the given tonic frequency
-        cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
-
         # Pitch distribution of the input recording is generated
-        distrib = mf.generate_pd(
-            cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
+        distrib = PitchDistribution.from_hz_pitch(
+            pitch_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
 
         # convert to PCD, if specified
-        distrib = mf.generate_pcd(distrib) if metric == 'pcd' else distrib
+        distrib = distrib.to_pcd() if metric == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
         tonic_ranked = [('', 0) for x in range(rank)]
@@ -378,16 +373,13 @@ class Bozkurt:
             except:
                 ValueError("Unknown mode input!")
 
-        # normalize pitch track according to the given tonic frequency
-        cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
-
         # Pitch distribution of the input recording is generated
-        distrib = mf.generate_pd(
-            cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
+        distrib = PitchDistribution.from_hz_pitch(
+            pitch_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
 
         # convert to PCD, if specified
-        distrib = mf.generate_pcd(distrib) if metric == 'pcd' else distrib
+        distrib = distrib.to_pcd() if metric == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
         mode_ranked = [('', 0) for x in range(rank)]
