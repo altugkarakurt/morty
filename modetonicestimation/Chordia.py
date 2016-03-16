@@ -483,9 +483,9 @@ class Chordia:
         # Preliminaries before the estimations
         # Cent-to-Hz covnersion is done and pitch distributions are generated
         cent_track = mf.hz_to_cent(pitch_track, ref_freq)
-        dist = mf.generate_pd(cent_track, ref_freq=ref_freq,
-                              smooth_factor=self.smooth_factor,
-                              step_size=self.step_size)
+        dist = PitchDistribution.from_cent_pitch(
+            cent_track, ref_freq=ref_freq, smooth_factor=self.smooth_factor,
+            step_size=self.step_size)
         dist = dist.to_pcd() if metric == 'pcd' else dist
         # The model mode distribution(s) are loaded. If the mode is annotated
         # and tonic is to be estimated, only the model of annotated mode is
@@ -677,7 +677,7 @@ class Chordia:
         # Iterates over the pitch tracks of a recording
         for idx, _ in enumerate(pts):
             # PitchDistribution of the current chunk is generated
-            dist = mf.generate_pd(
+            dist = PitchDistribution.from_cent_pitch(
                 pts[idx], ref_freq=ref_freq, smooth_factor=self.smooth_factor,
                 step_size=self.step_size)
             if metric == 'pcd':

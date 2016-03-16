@@ -87,9 +87,10 @@ class Bozkurt:
             mode_track = mf.hz_to_cent(track, ref_freq=tonic)
 
         # generate the pitch distribution
-        pitch_distrib = mf.generate_pd(
+        pitch_distrib = PitchDistribution.from_cent_pitch(
             mode_track, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
+
         if metric == 'pcd':  # convert to pitch class distribution, if
             # specified
             pitch_distrib = pitch_distrib.to_pcd()
@@ -154,7 +155,7 @@ class Bozkurt:
         cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
 
         # Pitch distribution of the input recording is generated
-        distrib = mf.generate_pd(
+        distrib = PitchDistribution.from_cent_pitch(
             cent_track, ref_freq=tonic_freq,
             smooth_factor=self.smooth_factor, step_size=self.step_size)
 
@@ -274,7 +275,7 @@ class Bozkurt:
         cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
 
         # Pitch distribution of the input recording is generated
-        distrib = mf.generate_pd(
+        distrib = PitchDistribution.from_cent_pitch(
             cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
 
@@ -381,7 +382,7 @@ class Bozkurt:
         cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
 
         # Pitch distribution of the input recording is generated
-        distrib = mf.generate_pd(
+        distrib = PitchDistribution.from_cent_pitch(
             cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
 
