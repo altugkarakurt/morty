@@ -320,7 +320,7 @@ class Bozkurt:
         # entry corresponds to one tonic candidate.
         distance_vector = mf.tonic_estimate(
             distrib, peak_idxs, model, distance_method=distance_method,
-            metric=metric, step_size=self.step_size)
+            metric=metric)
 
         for r in range(min(rank, len(peak_idxs))):
             # Minima is found, corresponding tonic candidate is our current
@@ -391,7 +391,7 @@ class Bozkurt:
         # shifted and are only compared to candidate mode models.
         distance_vector = mf.mode_estimate(
             distrib, models, distance_method=distance_method,
-            metric=metric, step_size=self.step_size)
+            metric=metric)
 
         for r in range(min(rank, len(mode_names))):
             # Minima is found, corresponding mode candidate is our current
