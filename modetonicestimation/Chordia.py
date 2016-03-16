@@ -486,7 +486,7 @@ class Chordia:
         dist = mf.generate_pd(cent_track, ref_freq=ref_freq,
                               smooth_factor=self.smooth_factor,
                               step_size=self.step_size)
-        dist = mf.generate_pcd(dist) if metric == 'pcd' else dist
+        dist = dist.to_pcd() if metric == 'pcd' else dist
         # The model mode distribution(s) are loaded. If the mode is annotated
         # and tonic is to be estimated, only the model of annotated mode is
         # retrieved.
@@ -681,7 +681,7 @@ class Chordia:
                 pts[idx], ref_freq=ref_freq, smooth_factor=self.smooth_factor,
                 step_size=self.step_size)
             if metric == 'pcd':
-                dist = mf.generate_pcd(dist)
+                dist = dist.to_pcd()
 
             # The resultant pitch distributions are filled in the list to be
             # returned

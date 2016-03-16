@@ -92,7 +92,7 @@ class Bozkurt:
             step_size=self.step_size)
         if metric == 'pcd':  # convert to pitch class distribution, if
             # specified
-            pitch_distrib = mf.generate_pcd(pitch_distrib)
+            pitch_distrib = pitch_distrib.to_pcd()
 
         # save the model to a file, if requested
         if save_dir:
@@ -159,7 +159,7 @@ class Bozkurt:
             smooth_factor=self.smooth_factor, step_size=self.step_size)
 
         # convert to PCD, if specified
-        distrib = mf.generate_pcd(distrib) if metric == 'pcd' else distrib
+        distrib = distrib.to_pcd() if metric == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
         tonic_ranked = [('', 0) for x in range(rank)]
@@ -279,7 +279,7 @@ class Bozkurt:
             step_size=self.step_size)
 
         # convert to PCD, if specified
-        distrib = mf.generate_pcd(distrib) if metric == 'pcd' else distrib
+        distrib = distrib.to_pcd() if metric == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
         tonic_ranked = [('', 0) for x in range(rank)]
@@ -386,7 +386,7 @@ class Bozkurt:
             step_size=self.step_size)
 
         # convert to PCD, if specified
-        distrib = mf.generate_pcd(distrib) if metric == 'pcd' else distrib
+        distrib = distrib.to_pcd() if metric == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
         mode_ranked = [('', 0) for x in range(rank)]

@@ -130,29 +130,6 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5):
                              ref_freq=ref_freq)
 
 
-def generate_pcd(pd):
-    """------------------------------------------------------------------------
-    Given the pitch distribution of a recording, generates its pitch class
-    distribution, by octave wrapping.
-    ---------------------------------------------------------------------------
-    pD: PitchDistribution object. Its attributes include everything we need
-    ------------------------------------------------------------------------"""
-
-    # Initializations
-    pcd_bins = np.arange(0, 1200, pd.step_size)
-    pcd_vals = np.zeros(len(pcd_bins))
-
-    # Octave wrapping
-    for k in range(len(pd.bins)):
-        idx = int((pd.bins[k] % 1200) / pd.step_size)
-        idx = idx if idx != 160 else 0
-        pcd_vals[idx] += pd.vals[k]
-
-    # Initializes the PitchDistribution object and returns it.
-    return PitchDistribution(pcd_bins, pcd_vals, kernel_width=pd.kernel_width,
-                             ref_freq=pd.ref_freq)
-
-
 def hz_to_cent(hz_track, ref_freq):
     """------------------------------------------------------------------------
     Converts an array of Hertz values into cents.

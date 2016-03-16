@@ -88,6 +88,33 @@ class PitchDistribution:
             peak_vals = np.delete(peak_vals, [len(peak_vals) - 1])
         return peak_idxs, peak_vals
 
+    def to_pcd(self):
+        """------------------------------------------------------------------------
+        Given the pitch distribution of a recording, generates its pitch class
+        distribution, by octave wrapping.
+        ---------------------------------------------------------------------------
+        pD: PitchDistribution object. Its attributes include everything we need
+        ------------------------------------------------------------------------"""
+        if self.is_pcd():
+            return PitchDistribution(self.bins, self.vals,
+                                     kernel_width=self.kernel_width,
+                                     ref_freq=self.ref_freq)
+        else:
+            # Initializations
+            pcd_bins = np.arange(0, 1200, self.step_size)
+            pcd_vals = np.zeros(len(pcd_bins))
+
+            # Octave wrapping
+            for k in range(len(self.bins)):
+                idx = int((self.bins[k] % 1200) / self.step_size)
+                idx = idx if idx != 160 else 0
+                pcd_vals[idx] += self.vals[k]
+
+            # Initializes the PitchDistribution object and returns it.
+            return PitchDistribution(pcd_bins, pcd_vals,
+                                     kernel_width=self.kernel_width,
+                                     ref_freq=self.ref_freq)
+
     def shift(self, shift_idx):
         """--------------------------------------------------------------------
         Shifts the distribution by the given number of samples
