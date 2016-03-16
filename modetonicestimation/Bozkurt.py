@@ -82,19 +82,18 @@ class Bozkurt:
 
         # Normalize the pitch tracks of the mode wrt the tonic frequency and
         # concatenate
-        pitch_tracks = mf.parse_pitch_track(pitch_files, multiple=True)
+        pitch_track = mf.parse_pitch_track(pitch_files, multiple=True)
         mode_track = []
-        for track, tonic in zip(pitch_tracks, tonic_freqs):
+        for track, tonic in zip(pitch_track, tonic_freqs):
             mode_track.extend(mf.hz_to_cent(track, ref_freq=tonic))
 
         # generate the pitch distribution
-        pitch_distrib = PitchDistribution.from_cent_pitch(
+        pitch_distrib = mf.generate_pd(
             mode_track, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
-
         if metric == 'pcd':  # convert to pitch class distribution, if
             # specified
-            pitch_distrib = pitch_distrib.to_pcd()
+            pitch_distrib = mf.generate_pcd(pitch_distrib)
 
         # save the model to a file, if requested
         if save_dir:
@@ -152,13 +151,16 @@ class Bozkurt:
             except:
                 ValueError("Unknown mode input!")
 
+        # normalize pitch track according to the given tonic frequency
+        cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
+
         # Pitch distribution of the input recording is generated
-        distrib = PitchDistribution.from_hz_pitch(
-            pitch_track, ref_freq=tonic_freq,
+        distrib = mf.generate_pd(
+            cent_track, ref_freq=tonic_freq,
             smooth_factor=self.smooth_factor, step_size=self.step_size)
 
         # convert to PCD, if specified
-        distrib = distrib.to_pcd() if metric == 'pcd' else distrib
+        distrib = mf.generate_pcd(distrib) if metric == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
         tonic_ranked = [('', 0) for x in range(rank)]
@@ -206,8 +208,7 @@ class Bozkurt:
             for m, model in enumerate(models):
                 dist_mat[:, m] = mf.tonic_estimate(
                     distrib, shift_idxs, model,
-                    distance_method=distance_method, metric=metric,
-                    step_size=self.step_size)
+                    distance_method=distance_method, metric=metric)
 
         # Distance matrix is ready now. For each rank, (or each pair of
         # tonic-mode estimate pair) the loop is iterated. When the first
@@ -269,13 +270,16 @@ class Bozkurt:
             except:
                 ValueError("Unknown mode input!")
 
+        # normalize pitch track according to the given tonic frequency
+        cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
+
         # Pitch distribution of the input recording is generated
-        distrib = PitchDistribution.from_hz_pitch(
-            pitch_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
+        distrib = mf.generate_pd(
+            cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
 
         # convert to PCD, if specified
-        distrib = distrib.to_pcd() if metric == 'pcd' else distrib
+        distrib = mf.generate_pcd(distrib) if metric == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
         tonic_ranked = [('', 0) for x in range(rank)]
@@ -373,13 +377,16 @@ class Bozkurt:
             except:
                 ValueError("Unknown mode input!")
 
+        # normalize pitch track according to the given tonic frequency
+        cent_track = mf.hz_to_cent(pitch_track, ref_freq=tonic_freq)
+
         # Pitch distribution of the input recording is generated
-        distrib = PitchDistribution.from_hz_pitch(
-            pitch_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
+        distrib = mf.generate_pd(
+            cent_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
 
         # convert to PCD, if specified
-        distrib = distrib.to_pcd() if metric == 'pcd' else distrib
+        distrib = mf.generate_pcd(distrib) if metric == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
         mode_ranked = [('', 0) for x in range(rank)]
