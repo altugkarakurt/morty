@@ -6,6 +6,7 @@ import json
 from scipy.stats import norm
 from scipy.integrate import simps
 from Converter import Converter
+import numbers
 
 
 class PitchDistribution:
@@ -36,6 +37,18 @@ class PitchDistribution:
         temp_ss = self.bins[1] - self.bins[0]
         self.step_size = temp_ss if temp_ss == (round(temp_ss * 10) / 10) \
             else round(temp_ss * 10) / 10
+
+    @property
+    def bin_unit(self):
+        if self.ref_freq is None:
+            return 'Hz'
+        elif isinstance(self.ref_freq, numbers.Number) and self.ref_freq > 0:
+            return 'cent'
+        elif self.ref_freq.tolist() and self.ref_freq > 0:  # numpy array
+            return 'cent'
+        else:
+            return ValueError('Invalid reference. ref_freq should be either '
+                              'None (bins in Hz) or a number greater than 0.')
 
     @staticmethod
     def from_cent_pitch(cent_track, ref_freq=440, smooth_factor=7.5,
@@ -168,6 +181,12 @@ class PitchDistribution:
         return (max(self.bins) == (1200 - self.step_size) and
                 min(self.bins) == 0)
 
+    def has_hz_bin(self):
+        return self.bin_unit in ['hz', 'Hz', 'Hertz', 'hertz']
+
+    def has_cent_bin(self):
+        return self.bin_unit in ['cent', 'Cent', 'cents', 'Cents']
+
     def detect_peaks(self):
         """--------------------------------------------------------------------
         Finds the peak indices of the distribution. These are treated as tonic
@@ -211,6 +230,21 @@ class PitchDistribution:
             return PitchDistribution(pcd_bins, pcd_vals,
                                      kernel_width=self.kernel_width,
                                      ref_freq=self.ref_freq)
+
+    def hz_to_cent(self, ref_freq):
+        if self.has_hz_bin():
+            self.bins = Converter.hz_to_cent(self.bins, ref_freq)
+            self.ref_freq = ref_freq
+        else:
+            raise ValueError('The pcd should have the bin unit as "hz".')
+
+    def cent_to_hz(self):
+        if self.has_cent_bin():
+            self.bins = Converter.cent_to_hz(self.bins, self.ref_freq)
+            self.ref_freq = None
+        else:
+            raise ValueError('The pcd should have the bin unit as "cent".')
+
 
     def shift(self, shift_idx):
         """--------------------------------------------------------------------
