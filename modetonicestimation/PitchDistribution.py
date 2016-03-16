@@ -5,7 +5,7 @@ import numpy as np
 import json
 from scipy.stats import norm
 from scipy.integrate import simps
-import ModeFunctions as mf
+from Converter import Converter
 
 
 class PitchDistribution:
@@ -126,7 +126,7 @@ class PitchDistribution:
     @staticmethod
     def from_hz_pitch(hz_track, ref_freq=440, smooth_factor=7.5,
                       step_size=7.5):
-        cent_track = mf.hz_to_cent(hz_track, ref_freq)
+        cent_track = Converter.hz_to_cent(hz_track, ref_freq)
         return PitchDistribution.from_cent_pitch(
             cent_track, ref_freq=ref_freq, smooth_factor=smooth_factor,
             step_size=step_size)

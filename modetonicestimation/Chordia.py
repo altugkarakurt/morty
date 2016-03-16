@@ -5,7 +5,7 @@ from modetonicestimation.PitchDistribution import PitchDistribution
 import json
 import os
 import random
-
+from Converter import Converter
 
 class Chordia:
     """---------------------------------------------------------------------
@@ -125,7 +125,7 @@ class Chordia:
                     self.threshold, self.overlap)
 
             # Each chunk is converted to cents
-            chunks = [mf.hz_to_cent(k, ref_freq=tonic) for k in chunks]
+            chunks = [Converter.hz_to_cent(k, ref_freq=tonic) for k in chunks]
 
             # This is a wrapper function. It iteratively generates the
             # distribution for each chunk and return it as a list. After

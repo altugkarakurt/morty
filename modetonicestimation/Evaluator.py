@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from modetonicestimation import ModeFunctions as mF
+from Converter import Converter
 
 
 class Evaluator:
@@ -34,7 +34,7 @@ class Evaluator:
                 'annotated_mode': annotated, 'estimated_mode': estimated}
 
     def tonic_evaluate(self, mbid, estimated, annotated):
-        est_cent = mF.hz_to_cent([estimated], annotated)[0]
+        est_cent = Converter.hz_to_cent([estimated], annotated)[0]
 
         # octave wrapping
         cent_diff = est_cent % self.CENT_PER_OCTAVE
