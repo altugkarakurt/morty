@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import os
-import ModeFunctions as mf
-from PitchDistribution import PitchDistribution
+from modetonicestimation import ModeFunctions as mf
+from modetonicestimation.PitchDistribution import PitchDistribution
 
 
 class Bozkurt:

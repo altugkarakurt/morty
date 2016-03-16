@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import ModeFunctions as mf
-from PitchDistribution import PitchDistribution
+from modetonicestimation import ModeFunctions as mf
+from modetonicestimation.PitchDistribution import PitchDistribution
 import json
 import os
 import random
@@ -110,7 +110,7 @@ class Chordia:
 
             # This is a wrapper function. It iteratively generates the distribution
             # for each chunk and return it as a list. After this point, we only
-            # need to save it. God bless modular programming!
+            # need to save it.
             temp_list = self.train_chunks(chunks, tonic, metric)
 
             # The list is composed of lists of PitchDistributions. So,
