@@ -105,11 +105,12 @@ def generate_pd(cent_track, ref_freq=440, smooth_factor=7.5, step_size=7.5):
             [np.arange(0, - 5 * smooth_factor, -step_size)[::-1],
              np.arange(step_size, 5 * smooth_factor, step_size)])
         sampled_norm = normal_dist.pdf(xn)
-        if(len(sampled_norm) <= 1):
-            raise ValueError("the smoothing factor is too small compared to the step size,\
-                             such that the convolution kernel returns a single point gaussian.\
-                             Either increase the value to at least (step size/3) or assign \
-                             smooth factor to 0, for no smoothing.")
+        if len(sampled_norm) <= 1:
+            raise ValueError("the smoothing factor is too small compared to "
+                             "the step size, such that the convolution "
+                             "kernel returns a single point gaussian. Either "
+                             "increase the value to at least (step size/3) "
+                             "or assign smooth factor to 0, for no smoothing.")
 
         extra_num_bins = len(sampled_norm) / 2  # convolution generates tails
         pd_vals = np.convolve(pd_vals,
@@ -282,7 +283,7 @@ def pd_zero_pad(pd, mode_pd):
 
 
 def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean",
-                   metric='pcd', step_size=7.5):
+                   metric='pcd'):
     """------------------------------------------------------------------------
     Given a mode (or candidate mode), compares the piece's distribution with
     each candidate tonic and returns the resultant distance vector to higher
@@ -327,8 +328,7 @@ def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean",
                                                  method=distance_method))[:, 0]
 
 
-def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd',
-                  step_size=7.5):
+def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd'):
     """------------------------------------------------------------------------
     Compares the recording's distribution with each candidate mode with respect
     to the given tonic and returns the resultant distance vector to higher

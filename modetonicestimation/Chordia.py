@@ -127,9 +127,9 @@ class Chordia:
             # Each chunk is converted to cents
             chunks = [mf.hz_to_cent(k, ref_freq=tonic) for k in chunks]
 
-            # This is a wrapper function. It iteratively generates the distribution
-            # for each chunk and return it as a list. After this point, we only
-            # need to save it.
+            # This is a wrapper function. It iteratively generates the
+            # distribution for each chunk and return it as a list. After
+            # this point, we only need to save it.
             temp_list = self.train_chunks(chunks, tonic, metric)
 
             # The list is composed of lists of PitchDistributions. So,
