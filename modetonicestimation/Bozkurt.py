@@ -82,9 +82,9 @@ class Bozkurt:
 
         # Normalize the pitch tracks of the mode wrt the tonic frequency and
         # concatenate
-        pitch_track = mf.parse_pitch_track(pitch_files, multiple=True)
+        pitch_tracks = mf.parse_pitch_track(pitch_files, multiple=True)
         mode_track = []
-        for track, tonic in zip(pitch_track, tonic_freqs):
+        for track, tonic in zip(pitch_tracks, tonic_freqs):
             mode_track.extend(mf.hz_to_cent(track, ref_freq=tonic))
 
         # generate the pitch distribution
