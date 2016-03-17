@@ -160,9 +160,19 @@ class PitchDistribution:
         except IOError:  # json string
             dist = json.loads(file_name)
 
-        return PitchDistribution(dist[0]['bins'], dist[0]['vals'],
-                                 kernel_width=dist[0]['kernel_width'],
-                                 ref_freq=dist[0]['ref_freq'])
+        return PitchDistribution.from_dict(dist)
+
+    @staticmethod
+    def from_dict(distrib_dict):
+        return PitchDistribution(distrib_dict['bins'], distrib_dict['vals'],
+                                 kernel_width=distrib_dict['kernel_width'],
+                                 ref_freq=distrib_dict['ref_freq'])
+
+    def to_dict(self):
+        return [{'bins': self.bins.tolist(), 'vals': self.vals.tolist(),
+                 'kernel_width': self.kernel_width,
+                 'ref_freq': self.ref_freq.tolist(),
+                 'step_size': self.step_size}]
 
     def save(self, fpath=None):
         """--------------------------------------------------------------------
@@ -170,10 +180,7 @@ class PitchDistribution:
         -----------------------------------------------------------------------
         fpath    : The file path of the JSON file to be created.
         --------------------------------------------------------------------"""
-        dist_json = [{'bins': self.bins.tolist(), 'vals': self.vals.tolist(),
-                      'kernel_width': self.kernel_width,
-                      'ref_freq': self.ref_freq.tolist(),
-                      'step_size': self.step_size}]
+        dist_json = self.to_dict()
 
         if fpath is None:
             json.dumps(dist_json, indent=4)
