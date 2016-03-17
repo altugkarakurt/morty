@@ -204,7 +204,7 @@ class PitchDistribution:
 
         # Essentia normalizes the positions to 1, they are converted here
         # to actual index values to be used in bins.
-        peak_idxs = [round(bn * (len(self.bins) - 1)) for bn in peak_bins]
+        peak_idxs = [int(round(bn * (len(self.bins) - 1))) for bn in peak_bins]
         if peak_idxs[0] == 0:
             peak_idxs = np.delete(peak_idxs, [len(peak_idxs) - 1])
             peak_vals = np.delete(peak_vals, [len(peak_vals) - 1])
