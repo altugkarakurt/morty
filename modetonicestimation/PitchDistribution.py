@@ -169,10 +169,15 @@ class PitchDistribution:
                                  ref_freq=distrib_dict['ref_freq'])
 
     def to_dict(self):
-        return [{'bins': self.bins.tolist(), 'vals': self.vals.tolist(),
-                 'kernel_width': self.kernel_width,
-                 'ref_freq': self.ref_freq.tolist(),
-                 'step_size': self.step_size}]
+        pdict = self.__dict__
+        for key in pdict.keys():
+            try:
+                # convert to list from np array
+                pdict[key] = pdict[key].tolist()
+            except AttributeError:
+                pass
+
+        return pdict
 
     def save(self, fpath=None):
         """--------------------------------------------------------------------
