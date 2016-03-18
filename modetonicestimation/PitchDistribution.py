@@ -77,8 +77,14 @@ class PitchDistribution:
         # The limits are also quantized to be a multiple of chosen step-size
         # smooth_factor = standard deviation of the gaussian kernel
 
-        # TODO: filter out the NaN, -infinity and +infinity from the pitch
-        # track
+        # parse the cent_track
+        cent_track = np.copy(cent_track)
+        if cent_track.ndim > 1:  # pitch is given as [time, pitch, (conf)] array
+            cent_track = cent_track[:,1]
+
+        # filter out the NaN, -infinity and +infinity
+        cent_track = cent_track[~np.isnan(cent_track)]
+        cent_track = cent_track[~np.isinf(cent_track)]
 
         # Finds the endpoints of the histogram edges. Histogram bins will be
         # generated as the midpoints of these edges.
@@ -141,7 +147,17 @@ class PitchDistribution:
     @staticmethod
     def from_hz_pitch(hz_track, ref_freq=440, smooth_factor=7.5,
                       step_size=7.5):
+        hz_track = np.copy(hz_track)
+        if hz_track.ndim > 1:  # pitch is given as [time, pitch, (conf)] array
+            hz_track = hz_track[:,1]
+
+        # filter out the NaN, -infinity and +infinity and values < 20
+        hz_track = hz_track[~np.isnan(hz_track)]
+        hz_track = hz_track[~np.isinf(hz_track)]
+        hz_track = hz_track[hz_track >= 20.0]
+
         cent_track = Converter.hz_to_cent(hz_track, ref_freq)
+
         return PitchDistribution.from_cent_pitch(
             cent_track, ref_freq=ref_freq, smooth_factor=smooth_factor,
             step_size=step_size)
