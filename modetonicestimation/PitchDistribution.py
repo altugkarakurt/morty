@@ -52,7 +52,7 @@ class PitchDistribution:
 
     @staticmethod
     def from_cent_pitch(cent_track, ref_freq=440, smooth_factor=7.5,
-                        step_size=7.5):
+                        step_size=7.5, norm_type='area'):
         """--------------------------------------------------------------------
         Given the pitch track in the unit of cents, generates the Pitch
         Distribution of it. the pitch track from a text file. 0th column is the
@@ -99,7 +99,7 @@ class PitchDistribution:
 
         # Generates the histogram and bins (i.e. the midpoints of edges)
         pd_vals, pd_edges = np.histogram(cent_track, bins=pd_edges,
-                                         density=True)
+                                         density=False)
         pd_bins = np.convolve(pd_edges, [0.5, 0.5])[1:-1]
 
         if smooth_factor > 0:  # kernel density estimation (approximated)
@@ -122,19 +122,20 @@ class PitchDistribution:
             pd_vals = np.convolve(pd_vals,
                                   sampled_norm)[extra_num_bins:-extra_num_bins]
 
-            # normalize the area under the curve
-            area = simps(pd_vals, dx=step_size)
-            pd_vals = pd_vals / area
-
         # Sanity check. If the histogram bins and vals lengths are different,
         # we are in trouble. This is an important assumption of higher level
         # functions
         if len(pd_bins) != len(pd_vals):
             raise ValueError('Lengths of bins and Vals are different')
 
-        # Initializes the PitchDistribution object and returns it.
-        return PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor,
-                                 ref_freq=ref_freq)
+        # initialize the distribution
+        pd = PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor,
+                               ref_freq=ref_freq)
+
+        # normalize
+        pd.normalize(norm_type=norm_type)
+
+        return pd
 
     @staticmethod
     def from_hz_pitch(hz_track, ref_freq=440, smooth_factor=7.5,
@@ -204,6 +205,21 @@ class PitchDistribution:
 
     def has_cent_bin(self):
         return self.bin_unit in ['cent', 'Cent', 'cents', 'Cents']
+
+    def normalize(self, norm_type='area'):
+        if norm_type is None:  # nothing, keep the occurences (histogram)
+            pass
+        elif norm_type == 'area':  # area under the curve using simpsons rule
+            area = simps(self.vals, dx=self.step_size)
+            self.vals /= area
+        elif norm_type == 'sum':  # sum normalization
+            sumval = np.sum(self.vals)
+            self.vals /= sumval
+        elif norm_type == 'max':  # max number becomes 1
+            maxval = max(self.vals)
+            self.vals /= maxval
+        else:
+            raise ValueError("norm_type can be None, 'area', 'sum' or 'max'")
 
     def detect_peaks(self):
         """--------------------------------------------------------------------
