@@ -7,6 +7,7 @@ from scipy.stats import norm
 from scipy.integrate import simps
 from Converter import Converter
 import numbers
+import matplotlib.pyplot as plt
 
 
 class PitchDistribution:
@@ -318,3 +319,16 @@ class PitchDistribution:
             return PitchDistribution(self.bins, self.vals,
                                      kernel_width=self.kernel_width,
                                      ref_freq=self.ref_freq)
+
+    def plot(self):
+        plt.plot(self.bins, self.vals)
+        if self.is_pcd():
+            plt.title('Pitch class distribution')
+        else:
+            plt.title('Pitch distribution')
+        if self.has_hz_bin():
+            plt.xlabel('Frequency (Hz)')
+        else:
+            plt.xlabel('Normalized Frequency (cent), ref = ' +
+                       str(self.ref_freq))
+        plt.ylabel('Occurence')
