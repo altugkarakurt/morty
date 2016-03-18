@@ -1,6 +1,7 @@
 import numpy as np
 _NUM_CENTS_IN_OCTAVE = 1200.0
 
+
 class Converter(object):
     @staticmethod
     def hz_to_cent(hz_track, ref_freq, min_freq=0.0):

@@ -79,8 +79,8 @@ class PitchDistribution:
 
         # parse the cent_track
         cent_track = np.copy(cent_track)
-        if cent_track.ndim > 1:  # pitch is given as [time, pitch, (conf)] array
-            cent_track = cent_track[:,1]
+        if cent_track.ndim > 1:  # pitch is given as [time, pitch, (conf)]
+            cent_track = cent_track[:, 1]
 
         # filter out the NaN, -infinity and +infinity
         cent_track = cent_track[~np.isnan(cent_track)]
@@ -149,7 +149,7 @@ class PitchDistribution:
                       step_size=7.5):
         hz_track = np.copy(hz_track)
         if hz_track.ndim > 1:  # pitch is given as [time, pitch, (conf)] array
-            hz_track = hz_track[:,1]
+            hz_track = hz_track[:, 1]
 
         # filter out the NaN, -infinity and +infinity and values < 20
         hz_track = hz_track[~np.isnan(hz_track)]
