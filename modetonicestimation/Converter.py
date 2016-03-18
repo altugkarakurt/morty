@@ -17,7 +17,7 @@ class Converter(object):
         hz_track = np.array(hz_track)
 
         # change values less than the min_freq to nan
-        hz_track[hz_track > min_freq] = np.nan
+        hz_track[hz_track < min_freq] = np.nan
 
         # The 0 Hz values are removed, not only because they are meaningless,
         # but also logarithm of 0 is problematic.

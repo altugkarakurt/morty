@@ -156,7 +156,7 @@ class PitchDistribution:
         hz_track = hz_track[~np.isinf(hz_track)]
         hz_track = hz_track[hz_track >= 20.0]
 
-        cent_track = Converter.hz_to_cent(hz_track, ref_freq)
+        cent_track = Converter.hz_to_cent(hz_track, ref_freq, min_freq=20.0)
 
         return PitchDistribution.from_cent_pitch(
             cent_track, ref_freq=ref_freq, smooth_factor=smooth_factor,
