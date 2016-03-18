@@ -152,7 +152,7 @@ class PitchDistribution:
 
     @staticmethod
     def from_hz_pitch(hz_track, ref_freq=440, smooth_factor=7.5,
-                      step_size=7.5):
+                      step_size=7.5, norm_type='area'):
         hz_track = np.copy(hz_track)
         if hz_track.ndim > 1:  # pitch is given as [time, pitch, (conf)] array
             hz_track = hz_track[:, 1]
@@ -166,7 +166,7 @@ class PitchDistribution:
 
         return PitchDistribution.from_cent_pitch(
             cent_track, ref_freq=ref_freq, smooth_factor=smooth_factor,
-            step_size=step_size)
+            step_size=step_size, norm_type=norm_type)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
