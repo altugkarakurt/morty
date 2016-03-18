@@ -82,7 +82,7 @@ class PitchDistribution:
         if cent_track.ndim > 1:  # pitch is given as [time, pitch, (conf)]
             cent_track = cent_track[:, 1]
 
-        # filter out the NaN, -infinity and +infinity
+        # filter out NaN, and infinity
         cent_track = cent_track[~np.isnan(cent_track)]
         cent_track = cent_track[~np.isinf(cent_track)]
 
@@ -126,8 +126,14 @@ class PitchDistribution:
 
             # convolution generates tails
             extra_num_bins = len(sampled_norm) / 2
-            pd_vals = np.convolve(pd_vals,
-                                  sampled_norm)[extra_num_bins:-extra_num_bins]
+            pd_bins = np.concatenate(
+                (np.arange(pd_bins[0] - extra_num_bins * step_size,
+                           pd_bins[0], step_size), pd_bins,
+                 np.arange(pd_bins[-1] + step_size, pd_bins[-1] +
+                           extra_num_bins * step_size + step_size,
+                           step_size)))
+
+            pd_vals = np.convolve(pd_vals, sampled_norm)
 
         # Sanity check. If the histogram bins and vals lengths are different,
         # we are in trouble. This is an important assumption of higher level
