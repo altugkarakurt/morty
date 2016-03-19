@@ -529,7 +529,7 @@ class Chordia:
 
                 # new_ref_freq is the new reference frequency after shift,
                 # as mentioned above.
-                new_ref_freq = mf.cent_to_hz([dist.bins[shift_factor]],
+                new_ref_freq = Converter.cent_to_hz([dist.bins[shift_factor]],
                                              ref_freq=ref_freq)[0]
                 # Peaks of the distribution are found and recorded. These will
                 # be treated as tonic candidates.
@@ -585,10 +585,10 @@ class Chordia:
                 # changed. The cent value of the tonic estimate is converted
                 # back to Hz.
                 if metric == 'pcd':
-                    tonic_list[r] = mf.cent_to_hz(
+                    tonic_list[r] = Converter.cent_to_hz(
                         [dist.bins[peak_idxs[min_row]]], new_ref_freq)[0]
                 elif metric == 'pd':
-                    tonic_list[r] = mf.cent_to_hz(
+                    tonic_list[r] = Converter.cent_to_hz(
                         [shift_idxs[min_row] * self.step_size], ref_freq)[0]
                 # We have found out which chunk is our nearest now. Here, we
                 # find out which mode it belongs to, using cum_lens. The -6
@@ -626,7 +626,7 @@ class Chordia:
             for r in range(min_cnt):
                 min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
                 min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
-                tonic_list[r] = mf.cent_to_hz([dist.bins[peak_idxs[min_col]]],
+                tonic_list[r] = Converter.cent_to_hz([dist.bins[peak_idxs[min_col]]],
                                               new_ref_freq)[0]
                 min_distance_list[r] = dist_mat[min_row][min_col]
                 dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
