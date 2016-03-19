@@ -229,18 +229,17 @@ class PitchDistribution:
 
     def normalize(self, norm_type='area'):
         if norm_type is None:  # nothing, keep the occurences (histogram)
-            pass
+            normval = 1
         elif norm_type == 'area':  # area under the curve using simpsons rule
-            area = simps(self.vals, dx=self.step_size)
-            self.vals = self.vals / area
+            normval = simps(self.vals, dx=self.step_size)
         elif norm_type == 'sum':  # sum normalization
-            sumval = np.sum(self.vals)
-            self.vals = self.vals / sumval
+            normval = np.sum(self.vals)
         elif norm_type == 'max':  # max number becomes 1
-            maxval = max(self.vals)
-            self.vals = self.vals / maxval
+            normval = max(self.vals)
         else:
             raise ValueError("norm_type can be None, 'area', 'sum' or 'max'")
+
+        self.vals = self.vals / normval
 
     def detect_peaks(self):
         """--------------------------------------------------------------------
