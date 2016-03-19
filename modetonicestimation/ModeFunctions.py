@@ -38,33 +38,6 @@ def parse_pitch_track(pitch_track, multiple=False):
         elif (type(pitch_track) == np.ndarray) or (type(pitch_track) == list):
             return np.array(pitch_track)
 
-
-def hz_to_cent(hz_track, ref_freq):
-    """------------------------------------------------------------------------
-    Converts an array of Hertz values into cents.
-    ---------------------------------------------------------------------------
-    hz_track : The 1-D array of Hertz values
-    ref_freq    : Reference frequency for cent conversion
-    ------------------------------------------------------------------------"""
-    hz_track = np.array(hz_track)
-
-    # The 0 Hz values are removed, not only because they are meaningless,
-    # but also logarithm of 0 is problematic.
-    return np.log2(hz_track[hz_track > 0] / ref_freq) * 1200.0
-
-
-def cent_to_hz(cent_track, ref_freq):
-    """------------------------------------------------------------------------
-    Converts an array of cent values into Hertz.
-    ---------------------------------------------------------------------------
-    cent_track  : The 1-D array of cent values
-    ref_freq    : Reference frequency for cent conversion
-    ------------------------------------------------------------------------"""
-    cent_track = np.array(cent_track)
-
-    return 2 ** (cent_track / 1200.0) * ref_freq
-
-
 def generate_distance_matrix(dist, peak_idxs, mode_dists, method='euclidean'):
     """------------------------------------------------------------------------
     Iteratively calculates the distance of the input distribution from each
@@ -186,7 +159,7 @@ def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean",
     step_size         : The step-size of the pitch distribution. Unit is cents
     ------------------------------------------------------------------------"""
 
-    # TODO: step_size and pD/pcd information can be retrieved from the dist
+    # TODO: step_size and pd/pcd information can be retrieved from the dist
     # object
     # try and test that
 
@@ -240,7 +213,7 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd'):
         distance_vector = np.array(generate_distance_matrix(
             dist, [0], mode_dists, method=distance_method))[0]
 
-    elif metric == 'pD':
+    elif metric == 'pd':
         distance_vector = np.zeros(len(mode_dists))
 
         # For each trial, a new instance of PitchDistribution is created and
@@ -252,7 +225,7 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd'):
                 dist.bins, dist.vals, kernel_width=dist.kernel_width,
                 ref_freq=dist.ref_freq)
             trial, mode_trial = pd_zero_pad(trial, mode_dists[i])
-            distance_vector[i] = distance(trial, mode_trial,
+            distance_vector[i] = distance(trial.vals, mode_trial.vals,
                                           method=distance_method)
     return distance_vector
 
