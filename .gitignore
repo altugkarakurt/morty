@@ -5,3 +5,5 @@
 .*
 !.travis.yml
 !.gitignore
+build/
+dist/
