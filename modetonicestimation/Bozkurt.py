@@ -139,7 +139,7 @@ class Bozkurt:
         pitch_track = mf.parse_pitch_track(pitch_file)
 
         # list of json files per mode
-        models = [PitchDistribution.load(os.path.join(mode_dir, mode+".json")) for mode in mode_names]
+        models = [PitchDistribution.load(mode+".json", file_dir=mode_dir) for mode in mode_names]
 
         # Pitch distribution of the input recording is generated
         distrib = PitchDistribution.from_hz_pitch(
@@ -164,7 +164,7 @@ class Bozkurt:
             distrib = distrib.shift(shift_factor)
 
             # update to the new reference frequency after shift
-            tonic_freq = Converter.cent_to_hz([distrib.bins[shift_factor]],
+            tonic_freq = mf.cent_to_hz([distrib.bins[shift_factor]],
                                        ref_freq=tonic_freq)[0]
 
             # Find the peaks of the distribution. These are the tonic
@@ -212,10 +212,10 @@ class Bozkurt:
             # changed. That's why it's treated differently than PD. Here,
             # the cent value of the tonic estimate is converted back to Hz.
             if metric == 'pcd':
-                tonic_ranked[r] = Converter.cent_to_hz(
+                tonic_ranked[r] = mf.cent_to_hz(
                     [distrib.bins[peak_idxs[min_row]]], ref_freq)[0]
             elif metric == 'pd':
-                tonic_ranked[r] = Converter.cent_to_hz(
+                tonic_ranked[r] = mf.cent_to_hz(
                     [shift_idxs[min_row] * self.step_size], ref_freq)[0]
             # Current mode estimate is recorded.
             mode_ranked[r] = mode_names[min_col]
@@ -248,7 +248,7 @@ class Bozkurt:
         pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
 
         # list of json files per mode
-        model = PitchDistribution.load(os.path.join(mode_dir, mode_name+".json"))
+        model = PitchDistribution.load(mode_name+".json", file_dir=mode_dir)
 
         # Pitch distribution of the input recording is generated
         distrib = PitchDistribution.from_hz_pitch(
@@ -267,7 +267,7 @@ class Bozkurt:
             distrib = distrib.shift(shift_factor)
 
             # update to the new reference frequency after shift
-            tonic_freq = Converter.cent_to_hz([distrib.bins[shift_factor]],
+            tonic_freq = mf.cent_to_hz([distrib.bins[shift_factor]],
                                        ref_freq=ref_freq)[0]
 
             # Find the peaks of the distribution. These are the tonic
@@ -313,10 +313,10 @@ class Bozkurt:
 
             # TODO: review here
             if metric == 'pcd':
-                tonic_ranked[r] = Converter.cent_to_hz([distrib.bins[peak_idxs[idx]]],
+                tonic_ranked[r] = mf.cent_to_hz([distrib.bins[peak_idxs[idx]]],
                                                 tonic_freq)[0]
             elif metric == 'pd':
-                tonic_ranked[r] = Converter.cent_to_hz(
+                tonic_ranked[r] = mf.cent_to_hz(
                     [shift_idxs[idx] * self.step_size], tonic_freq)[0]
             # Current minima is replaced with a value larger than maxima,
             # so that we won't return the same estimate twice.
@@ -342,7 +342,7 @@ class Bozkurt:
         pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
 
         # list of json files per mode
-        models = [PitchDistribution.load(os.path.join(mode_dir, mode+".json")) for mode in mode_names]
+        models = [PitchDistribution.load(mode+".json", file_dir=mode_dir) for mode in mode_names]
 
         # Pitch distribution of the input recording is generated
         distrib = PitchDistribution.from_hz_pitch(
