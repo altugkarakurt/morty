@@ -182,6 +182,8 @@ class PitchDistribution:
         except IOError:  # json string
             dist = json.loads(file_name)
 
+        dist = dist[0] if(type(dist) != dict) else dist
+        
         return PitchDistribution.from_dict(dist)
 
     @staticmethod
