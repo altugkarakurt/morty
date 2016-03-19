@@ -104,8 +104,8 @@ class Bozkurt:
 
         return pitch_distrib
 
-    def joint_estimate(self, pitch_file, mode_in='./', tonic_freq=440, rank=1,
-                       distance_method="bhat", metric='pcd'):
+    def joint_estimate(self, pitch_file, mode_names, ref_freq=440, rank=1,
+                       distance_method="bhat", metric='pcd', mode_dir='./'):
         """--------------------------------------------------------------------
         Joint Estimation: Neither the tonic nor the mode of the recording is
         known. Then, joint estimation estimates both of these parameters
@@ -138,22 +138,12 @@ class Bozkurt:
         # load pitch track
         pitch_track = mf.parse_pitch_track(pitch_file)
 
-        # parse mode input
-        try:
-            # list of json files per mode
-            mode_names = [os.path.splitext(m)[0] for m in mode_in]
-            models = [PitchDistribution.load(m) for m in mode_in]
-        except TypeError:
-            try:  # models
-                # models of all modes are loaded
-                mode_names = mode_in.keys()
-                models = [mode_in[m] for m in mode_names]
-            except:
-                ValueError("Unknown mode input!")
+        # list of json files per mode
+        models = [PitchDistribution.load(mode+".json", file_dir=mode_dir) for mode in mode_names]
 
         # Pitch distribution of the input recording is generated
         distrib = PitchDistribution.from_hz_pitch(
-            pitch_track, ref_freq=tonic_freq,
+            pitch_track, ref_freq=ref_freq,
             smooth_factor=self.smooth_factor, step_size=self.step_size)
 
         # convert to PCD, if specified
@@ -223,10 +213,10 @@ class Bozkurt:
             # the cent value of the tonic estimate is converted back to Hz.
             if metric == 'pcd':
                 tonic_ranked[r] = mf.cent_to_hz(
-                    [distrib.bins[peak_idxs[min_row]]], tonic_freq)[0]
+                    [distrib.bins[peak_idxs[min_row]]], ref_freq)[0]
             elif metric == 'pd':
                 tonic_ranked[r] = mf.cent_to_hz(
-                    [shift_idxs[min_row] * self.step_size], tonic_freq)[0]
+                    [shift_idxs[min_row] * self.step_size], ref_freq)[0]
             # Current mode estimate is recorded.
             mode_ranked[r] = mode_names[min_col]
             # The minimum value is replaced with a value larger than maximum,
@@ -234,8 +224,8 @@ class Bozkurt:
             dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
         return mode_ranked, tonic_ranked
 
-    def tonic_estimate(self, pitch_file, mode_in='./', tonic_freq=440, rank=1,
-                       distance_method="bhat", metric='pcd'):
+    def tonic_estimate(self, pitch_file, mode_name, rank=1, ref_freq=440,
+                       distance_method="bhat", metric='pcd', mode_dir="./"):
         """--------------------------------------------------------------------
         Tonic Estimation: The mode of the recording is known and tonic is to be
         estimated. This is generally the most accurate estimation among the
@@ -257,19 +247,12 @@ class Bozkurt:
 
         pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
 
-        # parse mode input
-        try:
-            model = PitchDistribution.load(mode_in)
-        except TypeError:
-            try:  # models
-                # mode is loaded
-                model = mode_in
-            except:
-                ValueError("Unknown mode input!")
+        # list of json files per mode
+        model = PitchDistribution.load(mode_name+".json", file_dir=mode_dir)
 
         # Pitch distribution of the input recording is generated
         distrib = PitchDistribution.from_hz_pitch(
-            pitch_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
+            pitch_track, ref_freq=ref_freq, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
 
         # convert to PCD, if specified
@@ -285,7 +268,7 @@ class Bozkurt:
 
             # update to the new reference frequency after shift
             tonic_freq = mf.cent_to_hz([distrib.bins[shift_factor]],
-                                       ref_freq=tonic_freq)[0]
+                                       ref_freq=ref_freq)[0]
 
             # Find the peaks of the distribution. These are the tonic
             # candidates.
@@ -309,7 +292,7 @@ class Bozkurt:
         # possible.
 
         peak_idxs = shift_idxs if metric == 'pd' else peak_idxs
-        tonic_freq = tonic_freq if metric == 'pcd' else tonic_freq
+        tonic_freq = tonic_freq if metric == 'pcd' else ref_freq
 
         # Distance vector is generated. In the tonic_estimate() function
         # of ModeFunctions, PD and PCD are treated differently and it
@@ -340,8 +323,8 @@ class Bozkurt:
             distance_vector[idx] = (np.amax(distance_vector) + 1)
         return tonic_ranked
 
-    def mode_estimate(self, pitch_file, mode_in='./', tonic_freq=None, rank=1,
-                      distance_method="bhat", metric='pcd'):
+    def mode_estimate(self, pitch_file, mode_names='./', tonic_freq=None, rank=1,
+                      distance_method="bhat", metric='pcd', mode_dir='./'):
         """--------------------------------------------------------------------
         Mode Estimation: The tonic of the recording is known and mode is to be
         estimated.
@@ -358,18 +341,8 @@ class Bozkurt:
 
         pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
 
-        # parse mode input
-        try:
-            # list of json files per mode
-            mode_names = [os.path.splitext(m)[0] for m in mode_in]
-            models = [PitchDistribution.load(m) for m in mode_in]
-        except TypeError:
-            try:  # models
-                # models of all modes are loaded
-                mode_names = mode_in.keys()
-                models = [mode_in[m] for m in mode_names]
-            except:
-                ValueError("Unknown mode input!")
+        # list of json files per mode
+        models = [PitchDistribution.load(mode+".json", file_dir=mode_dir) for mode in mode_names]
 
         # Pitch distribution of the input recording is generated
         distrib = PitchDistribution.from_hz_pitch(
