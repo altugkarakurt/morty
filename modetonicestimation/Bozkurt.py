@@ -139,7 +139,8 @@ class Bozkurt:
         pitch_track = mf.parse_pitch_track(pitch_file)
 
         # list of json files per mode
-        models = [PitchDistribution.load(mode+".json", file_dir=mode_dir) for mode in mode_names]
+        models = [PitchDistribution.load(os.path.join(mode_dir, mode+".json"))
+                  for mode in mode_names]
 
         # Pitch distribution of the input recording is generated
         distrib = PitchDistribution.from_hz_pitch(
@@ -324,8 +325,9 @@ class Bozkurt:
             distance_vector[idx] = (np.amax(distance_vector) + 1)
         return tonic_ranked
 
-    def mode_estimate(self, pitch_file, mode_names='./', tonic_freq=None, rank=1,
-                      distance_method="bhat", metric='pcd', mode_dir='./'):
+    def mode_estimate(self, pitch_file, mode_names='./', tonic_freq=None,
+                      rank=1, distance_method="bhat", metric='pcd',
+                      mode_dir='./'):
         """--------------------------------------------------------------------
         Mode Estimation: The tonic of the recording is known and mode is to be
         estimated.
@@ -343,7 +345,8 @@ class Bozkurt:
         pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
 
         # list of json files per mode
-        models = [PitchDistribution.load(mode+".json", file_dir=mode_dir) for mode in mode_names]
+        models = [PitchDistribution.load(os.path.join(mode_dir, mode+".json"))
+                  for mode in mode_names]
 
         # Pitch distribution of the input recording is generated
         distrib = PitchDistribution.from_hz_pitch(
