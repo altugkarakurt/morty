@@ -16,7 +16,6 @@ class Converter(object):
             raise ValueError('min_freq cannot be less than 0')
 
         hz_track = np.array(hz_track)
-        hz_track[hz_track < min_freq] = np.nan
 
         # change values less than the min_freq to nan
         hz_track[hz_track < min_freq] = np.nan
