@@ -181,8 +181,14 @@ class PitchDistribution:
             dist = json.load(open(file_name, 'r'))
         except IOError:  # json string
             dist = json.loads(file_name)
-
-        return PitchDistribution.from_dict(dist)
+            
+        # The dict might be buried in a one-element list. This is common,
+        # since we save Bozkurt as a singular list of dict, tobe consistent
+        # with Chordia. 
+        if type(dist) == dict:
+            return PitchDistribution.from_dict(dist)
+        else:
+            return PitchDistribution.from_dict(dist[0])
 
     @staticmethod
     def from_dict(distrib_dict):
