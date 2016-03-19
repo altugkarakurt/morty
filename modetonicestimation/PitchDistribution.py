@@ -232,13 +232,13 @@ class PitchDistribution:
             pass
         elif norm_type == 'area':  # area under the curve using simpsons rule
             area = simps(self.vals, dx=self.step_size)
-            self.vals /= area
+            self.vals = self.vals / area
         elif norm_type == 'sum':  # sum normalization
             sumval = np.sum(self.vals)
-            self.vals /= sumval
+            self.vals = self.vals / sumval
         elif norm_type == 'max':  # max number becomes 1
             maxval = max(self.vals)
-            self.vals /= maxval
+            self.vals = self.vals / maxval
         else:
             raise ValueError("norm_type can be None, 'area', 'sum' or 'max'")
 
