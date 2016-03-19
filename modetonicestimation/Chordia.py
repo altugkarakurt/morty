@@ -194,27 +194,18 @@ class Chordia:
         """--------------------------------------------------------------------
         In the estimation phase, the input pitch track is sliced into chunk and
         each chunk is compared with each candidate mode's each sample model,
-
         i.e. with the distributions of each training recording's each chunk.
-
         This function is a wrapper, that handles decision making portion and
-
         the overall flow of the estimation process. Internally, segment
-
         estimate is called for generation of distance matrices and detecting
-
         neighbor distributions.
-
+        
         Joint Estimation: Neither the tonic nor the mode of the recording is
-
         known. Then, joint estimation estimates both of these parameters
-
         without any prior knowledge about the recording.
         To use this: est_mode and est_tonic flags should be True since both are
         to be estimated. In this case tonic_freq and mode_name parameters
-
         are not used, since these are used to pass the annotated data about
-
         the recording.
         -----------------------------------------------------------------------
         pitch_file      : File in which the pitch track of the input recording
@@ -490,8 +481,11 @@ class Chordia:
         # The model mode distribution(s) are loaded. If the mode is annotated
         # and tonic is to be estimated, only the model of annotated mode is
         # retrieved.
-        mode_collections = [Chordia.load_model(mode, dist_dir=mode_dir)
+        if(est_mode):
+            mode_collections = [Chordia.load_model(mode, dist_dir=mode_dir)
                             for mode in mode_names]
+        elif(est_tonic):
+            mode_collections = [Chordia.load_model(mode_name, dist_dir=mode_dir)]
 
         # This is used when we want to use equal number of points as model
         # per each candidate mode. This comes in handy if the numbers of
@@ -574,8 +568,7 @@ class Chordia:
                 for m, cur_mode_dist in enumerate(mode_dists):
                     dist_mat[:, m] = mf.tonic_estimate(
                         dist, shift_idxs, cur_mode_dist,
-                        distance_method=distance_method, metric=metric,
-                        step_size=self.step_size)
+                        distance_method=distance_method, metric=metric)
 
             # Since we need to report min_cnt many nearest neighbors, the loop
 
@@ -626,7 +619,7 @@ class Chordia:
             # a chunk distribution and each row is for a tonic candidate.
             dist_mat = [mf.tonic_estimate(
                 dist, peak_idxs, d, distance_method=distance_method,
-                metric=metric, step_size=self.step_size) for d in mode_dist]
+                metric=metric) for d in mode_dist]
 
             # See the joint estimation version of this loop for further
             # explanations
@@ -646,7 +639,7 @@ class Chordia:
             # compared to each chunk distribution in each candidate mode model.
             distance_vector = mf.mode_estimate(
                 dist, mode_dists, distance_method=distance_method,
-                metric=metric, step_size=self.step_size)
+                metric=metric)
 
             # See the joint estimation version of this loop for further
             # explanations.

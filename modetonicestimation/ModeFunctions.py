@@ -160,7 +160,7 @@ def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean",
     step_size         : The step-size of the pitch distribution. Unit is cents
     ------------------------------------------------------------------------"""
 
-    # TODO: step_size and pD/pcd information can be retrieved from the dist
+    # TODO: step_size and pd/pcd information can be retrieved from the dist
     # object
     # try and test that
 
@@ -214,7 +214,7 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd'):
         distance_vector = np.array(generate_distance_matrix(
             dist, [0], mode_dists, method=distance_method))[0]
 
-    elif metric == 'pD':
+    elif metric == 'pd':
         distance_vector = np.zeros(len(mode_dists))
 
         # For each trial, a new instance of PitchDistribution is created and
@@ -226,7 +226,7 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd'):
                 dist.bins, dist.vals, kernel_width=dist.kernel_width,
                 ref_freq=dist.ref_freq)
             trial, mode_trial = pd_zero_pad(trial, mode_dists[i])
-            distance_vector[i] = distance(trial, mode_trial,
+            distance_vector[i] = distance(trial.vals, mode_trial.vals,
                                           method=distance_method)
     return distance_vector
 

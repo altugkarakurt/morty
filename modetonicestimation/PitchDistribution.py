@@ -5,9 +5,9 @@ import numpy as np
 import json
 from scipy.stats import norm
 from scipy.integrate import simps
+import matplotlib.pyplot as plt
 from Converter import Converter
 import numbers
-import matplotlib.pyplot as plt
 
 
 class PitchDistribution:
@@ -76,7 +76,6 @@ class PitchDistribution:
 
         # The limits are also quantized to be a multiple of chosen step-size
         # smooth_factor = standard deviation of the gaussian kernel
-
         # parse the cent_track
         cent_track = np.copy(cent_track)
         if cent_track.ndim > 1:  # pitch is given as [time, pitch, (conf)]
@@ -161,7 +160,6 @@ class PitchDistribution:
         hz_track = hz_track[~np.isnan(hz_track)]
         hz_track = hz_track[~np.isinf(hz_track)]
         hz_track = hz_track[hz_track >= 20.0]
-
         cent_track = Converter.hz_to_cent(hz_track, ref_freq, min_freq=20.0)
 
         return PitchDistribution.from_cent_pitch(
