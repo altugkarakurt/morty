@@ -3,7 +3,7 @@ import numpy as np
 import os
 from Converter import Converter
 from PitchDistribution import PitchDistribution
-import ModeFunctions as mf
+import ModeFunctions as ModeFun
 
 
 class Bozkurt:
@@ -83,7 +83,7 @@ class Bozkurt:
 
         # Normalize the pitch tracks of the mode wrt the tonic frequency and
         # concatenate
-        pitch_track = mf.parse_pitch_track(pitch_files, multiple=True)
+        pitch_track = ModeFun.parse_pitch_track(pitch_files, multiple=True)
         mode_track = []
         for track, tonic in zip(pitch_track, tonic_freqs):
             mode_track.extend(Converter.hz_to_cent(track, ref_freq=tonic))
@@ -136,11 +136,11 @@ class Bozkurt:
         --------------------------------------------------------------------"""
 
         # load pitch track
-        pitch_track = mf.parse_pitch_track(pitch_file)
+        pitch_track = ModeFun.parse_pitch_track(pitch_file)
 
         # list of json files per mode
-        models = [PitchDistribution.load(os.path.join(mode_dir, mode+".json"))
-                  for mode in mode_names]
+        models = [PitchDistribution.load(
+            os.path.join(mode_dir, mode + ".json")) for mode in mode_names]
 
         # Pitch distribution of the input recording is generated
         distrib = PitchDistribution.from_hz_pitch(
@@ -164,10 +164,6 @@ class Bozkurt:
             shift_factor = distrib.vals.tolist().index(min(distrib.vals))
             distrib = distrib.shift(shift_factor)
 
-            # update to the new reference frequency after shift
-            tonic_freq = Converter.cent_to_hz([distrib.bins[shift_factor]],
-                                       ref_freq=tonic_freq)[0]
-
             # Find the peaks of the distribution. These are the tonic
             # candidates.
             peak_idxs, peak_vals = distrib.detect_peaks()
@@ -175,8 +171,8 @@ class Bozkurt:
             # PCD doesn't require any preliminary steps. Generate the distance
             # matrix. The rows are tonic candidates and columns are mode
             # candidates.
-            dist_mat = mf.generate_distance_matrix(distrib, peak_idxs, models,
-                                                   method=distance_method)
+            dist_mat = ModeFun.generate_distance_matrix(
+                distrib, peak_idxs, models, method=distance_method)
         elif metric == 'pd':
             # Find the peaks of the distribution. These are the tonic
             # candidates
@@ -194,7 +190,7 @@ class Bozkurt:
             # the matrix are iteratively generated
             dist_mat = np.zeros((len(shift_idxs), len(models)))
             for m, model in enumerate(models):
-                dist_mat[:, m] = mf.tonic_estimate(
+                dist_mat[:, m] = ModeFun.tonic_estimate(
                     distrib, shift_idxs, model,
                     distance_method=distance_method, metric=metric)
 
@@ -245,11 +241,11 @@ class Bozkurt:
         --------------------------------------------------------------------"""
 
         # load pitch track
-
-        pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
+        pitch_track = ModeFun.parse_pitch_track(pitch_file, multiple=False)
 
         # list of json files per mode
-        model = PitchDistribution.load(mode_name+".json", file_dir=mode_dir)
+        model = PitchDistribution.load(os.path.join(
+            mode_dir, mode_name + ".json"))
 
         # Pitch distribution of the input recording is generated
         distrib = PitchDistribution.from_hz_pitch(
@@ -269,7 +265,7 @@ class Bozkurt:
 
             # update to the new reference frequency after shift
             tonic_freq = Converter.cent_to_hz([distrib.bins[shift_factor]],
-                                       ref_freq=ref_freq)[0]
+                                              ref_freq=ref_freq)[0]
 
             # Find the peaks of the distribution. These are the tonic
             # candidates.
@@ -287,7 +283,6 @@ class Bozkurt:
             shift_idxs = [(idx - origin) for idx in peak_idxs]
 
         # Tonic Estimation
-
         # This part assigns the special case changes to standard variables,
         # so that we can treat PD and PCD in the same way, as much as
         # possible.
@@ -300,7 +295,7 @@ class Bozkurt:
         # handles the special cases such as zero-padding. The mode is
         # already known, so there is only one model to be compared. Each
         # entry corresponds to one tonic candidate.
-        distance_vector = mf.tonic_estimate(
+        distance_vector = ModeFun.tonic_estimate(
             distrib, peak_idxs, model, distance_method=distance_method,
             metric=metric)
 
@@ -314,9 +309,8 @@ class Bozkurt:
 
             # TODO: review here
             if metric == 'pcd':
-                tonic_ranked[r] = Converter.cent_to_hz([distrib.bins[peak_idxs[
-                    idx]]],
-                                                tonic_freq)[0]
+                tonic_ranked[r] = Converter.cent_to_hz(
+                    [distrib.bins[peak_idxs[idx]]], tonic_freq)[0]
             elif metric == 'pd':
                 tonic_ranked[r] = Converter.cent_to_hz(
                     [shift_idxs[idx] * self.step_size], tonic_freq)[0]
@@ -342,11 +336,11 @@ class Bozkurt:
 
         # load pitch track
 
-        pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
+        pitch_track = ModeFun.parse_pitch_track(pitch_file, multiple=False)
 
         # list of json files per mode
-        models = [PitchDistribution.load(os.path.join(mode_dir, mode+".json"))
-                  for mode in mode_names]
+        models = [PitchDistribution.load(
+            os.path.join(mode_dir, mode + ".json")) for mode in mode_names]
 
         # Pitch distribution of the input recording is generated
         distrib = PitchDistribution.from_hz_pitch(
@@ -364,7 +358,7 @@ class Bozkurt:
         # ModeFunctions handles the different approach required for
         # PCD and PD. Since tonic is known, the distributions aren't
         # shifted and are only compared to candidate mode models.
-        distance_vector = mf.mode_estimate(
+        distance_vector = ModeFun.mode_estimate(
             distrib, models, distance_method=distance_method,
             metric=metric)
 

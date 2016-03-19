@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from modetonicestimation import ModeFunctions as mf
+from modetonicestimation import ModeFunctions as ModeFun
 from modetonicestimation.PitchDistribution import PitchDistribution
 import json
 import os
@@ -112,7 +112,7 @@ class Chordia:
         # single tonic annotation for each recording so we assume that the
         #  tonic doesn't change throughout a recording.
         tonic_freqs = [np.array(tonic) for tonic in tonic_freqs]
-        pitch_tracks = mf.parse_pitch_track(pitch_files, multiple=True)
+        pitch_tracks = ModeFun.parse_pitch_track(pitch_files, multiple=True)
         for pitch_track, tonic in zip(pitch_tracks, tonic_freqs):
             time_track = np.arange(0, (self.frame_rate * len(pitch_track)),
                                    self.frame_rate)
@@ -121,7 +121,7 @@ class Chordia:
             if not self.chunk_size:  # no slicing
                 chunks = [pitch_track]
             else:
-                chunks = mf.slice_pitch_track(
+                chunks = ModeFun.slice_pitch_track(
                     time_track, pitch_track, self.chunk_size,
                     self.threshold, self.overlap)
 
@@ -199,7 +199,7 @@ class Chordia:
         the overall flow of the estimation process. Internally, segment
         estimate is called for generation of distance matrices and detecting
         neighbor distributions.
-        
+
         Joint Estimation: Neither the tonic nor the mode of the recording is
         known. Then, joint estimation estimates both of these parameters
         without any prior knowledge about the recording.
@@ -241,7 +241,7 @@ class Chordia:
 
         # load pitch track
 
-        pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
+        pitch_track = ModeFun.parse_pitch_track(pitch_file, multiple=False)
 
         # Pitch track is sliced into chunks.
         time_track = np.arange(0, (self.frame_rate * len(pitch_track)),
@@ -250,7 +250,7 @@ class Chordia:
         if not self.chunk_size:  # no slicing
             chunks = [pitch_track]
         else:
-            chunks = mf.slice_pitch_track(
+            chunks = ModeFun.slice_pitch_track(
                 time_track, pitch_track, self.chunk_size, self.threshold,
                 self.overlap)
 
@@ -330,7 +330,7 @@ class Chordia:
         --------------------------------------------------------------------"""
         # load pitch track
 
-        pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
+        pitch_track = ModeFun.parse_pitch_track(pitch_file, multiple=False)
 
         # Pitch track is sliced into chunks.
         time_track = np.arange(0, self.frame_rate * len(pitch_track),
@@ -339,7 +339,7 @@ class Chordia:
         if not self.chunk_size:  # no slicing
             chunks = [pitch_track]
         else:
-            chunks = mf.slice_pitch_track(
+            chunks = ModeFun.slice_pitch_track(
                 time_track, pitch_track, self.chunk_size, self.threshold,
                 self.overlap)
 
@@ -390,7 +390,7 @@ class Chordia:
         --------------------------------------------------------------------"""
         # load pitch track
 
-        pitch_track = mf.parse_pitch_track(pitch_file, multiple=False)
+        pitch_track = ModeFun.parse_pitch_track(pitch_file, multiple=False)
 
         # Pitch track is sliced into chunks.
         time_track = np.arange(0, (self.frame_rate * len(pitch_track)),
@@ -399,7 +399,7 @@ class Chordia:
         if not self.chunk_size:  # no slicing
             chunks = [pitch_track]
         else:
-            chunks = mf.slice_pitch_track(
+            chunks = ModeFun.slice_pitch_track(
                 time_track, pitch_track, self.chunk_size, self.threshold,
                 self.overlap)
 
@@ -481,11 +481,12 @@ class Chordia:
         # The model mode distribution(s) are loaded. If the mode is annotated
         # and tonic is to be estimated, only the model of annotated mode is
         # retrieved.
-        if(est_mode):
+        if est_mode:
             mode_collections = [Chordia.load_model(mode, dist_dir=mode_dir)
-                            for mode in mode_names]
-        elif(est_tonic):
-            mode_collections = [Chordia.load_model(mode_name, dist_dir=mode_dir)]
+                                for mode in mode_names]
+        elif est_tonic:
+            mode_collections = [Chordia.load_model(mode_name,
+                                                   dist_dir=mode_dir)]
 
         # This is used when we want to use equal number of points as model
         # per each candidate mode. This comes in handy if the numbers of
@@ -530,7 +531,7 @@ class Chordia:
                 # new_ref_freq is the new reference frequency after shift,
                 # as mentioned above.
                 new_ref_freq = Converter.cent_to_hz([dist.bins[shift_factor]],
-                                             ref_freq=ref_freq)[0]
+                                                    ref_freq=ref_freq)[0]
                 # Peaks of the distribution are found and recorded. These will
                 # be treated as tonic candidates.
                 peak_idxs, peak_vals = dist.detect_peaks()
@@ -557,7 +558,7 @@ class Chordia:
                 # PCD doesn't require any prelimimary steps. Generates the
                 # distance matrix. The rows are tonic candidates and columns
                 #  are mode candidates.
-                dist_mat = mf.generate_distance_matrix(
+                dist_mat = ModeFun.generate_distance_matrix(
                     dist, peak_idxs, mode_dists, method=distance_method)
             elif metric == 'pd':
                 # Since PD lengths aren't equal, zero padding is required and
@@ -566,7 +567,7 @@ class Chordia:
                 # are iteratively generated
                 dist_mat = np.zeros((len(shift_idxs), len(mode_dists)))
                 for m, cur_mode_dist in enumerate(mode_dists):
-                    dist_mat[:, m] = mf.tonic_estimate(
+                    dist_mat[:, m] = ModeFun.tonic_estimate(
                         dist, shift_idxs, cur_mode_dist,
                         distance_method=distance_method, metric=metric)
 
@@ -617,7 +618,7 @@ class Chordia:
             # distributions belong to the same mode. Each column is for
 
             # a chunk distribution and each row is for a tonic candidate.
-            dist_mat = [mf.tonic_estimate(
+            dist_mat = [ModeFun.tonic_estimate(
                 dist, peak_idxs, d, distance_method=distance_method,
                 metric=metric) for d in mode_dist]
 
@@ -626,8 +627,8 @@ class Chordia:
             for r in range(min_cnt):
                 min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
                 min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
-                tonic_list[r] = Converter.cent_to_hz([dist.bins[peak_idxs[min_col]]],
-                                              new_ref_freq)[0]
+                tonic_list[r] = Converter.cent_to_hz(
+                    [dist.bins[peak_idxs[min_col]]], new_ref_freq)[0]
                 min_distance_list[r] = dist_mat[min_row][min_col]
                 dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
             return [tonic_list, min_distance_list.tolist()]
@@ -637,7 +638,7 @@ class Chordia:
             # Only in mode estimation, the distance matrix is actually a vector
             # Since the tonic is annotated, the distribution isn't shifted and
             # compared to each chunk distribution in each candidate mode model.
-            distance_vector = mf.mode_estimate(
+            distance_vector = ModeFun.mode_estimate(
                 dist, mode_dists, distance_method=distance_method,
                 metric=metric)
 
