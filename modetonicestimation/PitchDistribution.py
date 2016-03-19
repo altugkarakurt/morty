@@ -5,8 +5,10 @@ import numpy as np
 import json
 from scipy.stats import norm
 from scipy.integrate import simps
+import matplotlib.pyplot as plt
 from Converter import Converter
 import numbers
+import os
 
 
 class PitchDistribution:
@@ -52,7 +54,7 @@ class PitchDistribution:
 
     @staticmethod
     def from_cent_pitch(cent_track, ref_freq=440, smooth_factor=7.5,
-                        step_size=7.5):
+                        step_size=7.5, norm_type='area'):
         """--------------------------------------------------------------------
         Given the pitch track in the unit of cents, generates the Pitch
         Distribution of it. the pitch track from a text file. 0th column is the
@@ -75,9 +77,15 @@ class PitchDistribution:
 
         # The limits are also quantized to be a multiple of chosen step-size
         # smooth_factor = standard deviation of the gaussian kernel
-
-        # TODO: filter out the NaN, -infinity and +infinity from the pitch
-        # track
+        
+        # parse the cent_track
+        cent_track = np.copy(cent_track)
+        if cent_track.ndim > 1:  # pitch is given as [time, pitch, (conf)] array
+             cent_track = cent_track[:,1]
+        
+        # filter out NaN, and infinity
+        cent_track = cent_track[~np.isnan(cent_track)]
+        cent_track = cent_track[~np.isinf(cent_track)]
 
         # Finds the endpoints of the histogram edges. Histogram bins will be
         # generated as the midpoints of these edges.
@@ -99,7 +107,7 @@ class PitchDistribution:
 
         # Generates the histogram and bins (i.e. the midpoints of edges)
         pd_vals, pd_edges = np.histogram(cent_track, bins=pd_edges,
-                                         density=True)
+                                         density=False)
         pd_bins = np.convolve(pd_edges, [0.5, 0.5])[1:-1]
 
         if smooth_factor > 0:  # kernel density estimation (approximated)
@@ -119,12 +127,14 @@ class PitchDistribution:
 
             # convolution generates tails
             extra_num_bins = len(sampled_norm) / 2
-            pd_vals = np.convolve(pd_vals,
-                                  sampled_norm)[extra_num_bins:-extra_num_bins]
-
-            # normalize the area under the curve
-            area = simps(pd_vals, dx=step_size)
-            pd_vals = pd_vals / area
+            pd_bins = np.concatenate(
+                (np.arange(pd_bins[0] - extra_num_bins * step_size,
+                           pd_bins[0], step_size), pd_bins,
+                 np.arange(pd_bins[-1] + step_size, pd_bins[-1] +
+                           extra_num_bins * step_size + step_size,
+                           step_size)))
+            
+            pd_vals = np.convolve(pd_vals, sampled_norm)
 
         # Sanity check. If the histogram bins and vals lengths are different,
         # we are in trouble. This is an important assumption of higher level
@@ -132,47 +142,76 @@ class PitchDistribution:
         if len(pd_bins) != len(pd_vals):
             raise ValueError('Lengths of bins and Vals are different')
 
-        # Initializes the PitchDistribution object and returns it.
-        return PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor,
-                                 ref_freq=ref_freq)
+        # initialize the distribution
+        pd = PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor,
+                               ref_freq=ref_freq)
+
+        # normalize
+        pd.normalize(norm_type=norm_type)
+        return pd
 
     @staticmethod
     def from_hz_pitch(hz_track, ref_freq=440, smooth_factor=7.5,
-                      step_size=7.5):
-        cent_track = Converter.hz_to_cent(hz_track, ref_freq)
+                      step_size=7.5, norm_type='area'):
+        hz_track = np.copy(hz_track)
+        if hz_track.ndim > 1:  # pitch is given as [time, pitch, (conf)] array
+            hz_track = hz_track[:,1]
+        
+        # filter out the NaN, -infinity and +infinity and values < 20
+        hz_track = hz_track[~np.isnan(hz_track)]
+        hz_track = hz_track[~np.isinf(hz_track)]
+        hz_track = hz_track[hz_track >= 20.0]
+    
+        cent_track = Converter.hz_to_cent(hz_track, ref_freq, min_freq=20.0)
         return PitchDistribution.from_cent_pitch(
             cent_track, ref_freq=ref_freq, smooth_factor=smooth_factor,
-            step_size=step_size)
+            step_size=step_size, norm_type=norm_type)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
     @classmethod
-    def load(cls, file_name):
+    def load(cls, file_name, file_dir="./"):
         """--------------------------------------------------------------------
         Loads a PitchDistribution object from JSON file.
         -----------------------------------------------------------------------
         file_name    : The filename of the JSON file
         --------------------------------------------------------------------
         """
-        dist = json.load(open(file_name, 'r'))
+        try:
+            file_path = os.path.join(file_dir, file_name)
+            dist = json.load(open(file_path, 'r'))
+        except IOError: #json string
+            dist = json.loads(file_name)
 
-        return PitchDistribution(dist[0]['bins'], dist[0]['vals'],
-                                 kernel_width=dist[0]['kernel_width'],
-                                 ref_freq=dist[0]['ref_freq'])
+        return PitchDistribution.from_dict(dist)
+    
+    @staticmethod
+    def from_dict(distrib_dict):
+        return PitchDistribution(distrib_dict['bins'], distrib_dict['vals'],
+                                 kernel_width=distrib_dict['kernel_width'],
+                                 ref_freq=distrib_dict['ref_freq'])
 
-    def save(self, fpath):
+    def to_dict(self):
+        pdict = self.__dict__
+        for key in pdict.keys():
+            # convert to list from np array
+            pdict[key] = pdict[key].tolist()
+
+        return pdict
+
+    def save(self, fpath=None):
         """--------------------------------------------------------------------
         Saves the PitchDistribution object to a JSON file.
         -----------------------------------------------------------------------
         fpath    : The file path of the JSON file to be created.
         --------------------------------------------------------------------"""
-        dist_json = [{'bins': self.bins.tolist(), 'vals': self.vals.tolist(),
-                      'kernel_width': self.kernel_width,
-                      'ref_freq': self.ref_freq.tolist(),
-                      'step_size': self.step_size}]
-
-        json.dump(dist_json, open(fpath, 'w'), indent=4)
+        dist_json = self.to_dict()
+        
+        if fpath is None:
+            json.dumps(dist_json, indent=4)
+        else:
+            json.dump(dist_json, open(fpath, 'w'), indent=4)
 
     def is_pcd(self):
         """--------------------------------------------------------------------
@@ -187,6 +226,22 @@ class PitchDistribution:
     def has_cent_bin(self):
         return self.bin_unit in ['cent', 'Cent', 'cents', 'Cents']
 
+    def normalize(self, norm_type='area'):
+        if norm_type is None:  # nothing, keep the occurences (histogram)
+            pass
+        elif norm_type == 'area':  # area under the curve using simpsons rule
+            area = simps(self.vals, dx=self.step_size)
+            self.vals /= area
+        elif norm_type == 'sum':  # sum normalization
+            sumval = np.sum(self.vals)
+            self.vals /= sumval
+        elif norm_type == 'max':  # max number becomes 1
+            maxval = max(self.vals)
+            self.vals /= maxval
+        else:
+            raise ValueError("norm_type can be None, 'area', 'sum' or 'max'")
+
+
     def detect_peaks(self):
         """--------------------------------------------------------------------
         Finds the peak indices of the distribution. These are treated as tonic
@@ -198,7 +253,8 @@ class PitchDistribution:
 
         # Essentia normalizes the positions to 1, they are converted here
         # to actual index values to be used in bins.
-        peak_idxs = [round(bn * (len(self.bins) - 1)) for bn in peak_bins]
+        peak_idxs = [int(round(bn * (len(self.bins) - 1))) for bn in peak_bins]
+        
         if peak_idxs[0] == 0:
             peak_idxs = np.delete(peak_idxs, [len(peak_idxs) - 1])
             peak_vals = np.delete(peak_vals, [len(peak_vals) - 1])
@@ -284,3 +340,17 @@ class PitchDistribution:
             return PitchDistribution(self.bins, self.vals,
                                      kernel_width=self.kernel_width,
                                      ref_freq=self.ref_freq)
+
+    def plot(self):
+        plt.plot(self.bins, self.vals)
+        if self.is_pcd():
+            plt.title('Pitch class distribution')
+        else:
+            plt.title('Pitch distribution')
+        if self.has_hz_bin():
+            plt.xlabel('Frequency (Hz)')
+        else:
+            plt.xlabel('Normalized Frequency (cent), ref = ' + \
+                       str(self.ref_freq))
+        plt.ylabel('Occurence')
+    
