@@ -53,7 +53,7 @@ class PitchDistribution:
 
     @staticmethod
     def from_cent_pitch(cent_track, ref_freq=440, smooth_factor=7.5,
-                        step_size=7.5, norm_type='area'):
+                        step_size=7.5, norm_type='sum'):
         """--------------------------------------------------------------------
         Given the pitch track in the unit of cents, generates the Pitch
         Distribution of it. the pitch track from a text file. 0th column is the
@@ -229,7 +229,7 @@ class PitchDistribution:
     def has_cent_bin(self):
         return self.bin_unit in ['cent', 'Cent', 'cents', 'Cents']
 
-    def normalize(self, norm_type='area'):
+    def normalize(self, norm_type='sum'):
         if norm_type is None:  # nothing, keep the occurences (histogram)
             normval = 1
         elif norm_type == 'area':  # area under the curve using simpsons rule
