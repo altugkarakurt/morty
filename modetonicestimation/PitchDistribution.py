@@ -151,7 +151,7 @@ class PitchDistribution:
 
     @staticmethod
     def from_hz_pitch(hz_track, ref_freq=440, smooth_factor=7.5,
-                      step_size=7.5, norm_type='area'):
+                      step_size=7.5, norm_type='sum'):
         hz_track = np.copy(hz_track)
         if hz_track.ndim > 1:  # pitch is given as [time, pitch, (conf)] array
             hz_track = hz_track[:, 1]
