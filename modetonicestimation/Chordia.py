@@ -8,7 +8,7 @@ import random
 from Converter import Converter
 
 
-class Chordia:
+class Chordia(object):
     """---------------------------------------------------------------------
     This is an implementation of the method proposed for tonic and raag
     estimation, in the following paper. This also includes some extra features

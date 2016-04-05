@@ -10,7 +10,7 @@ from Converter import Converter
 import numbers
 
 
-class PitchDistribution:
+class PitchDistribution(object):
     def __init__(self, pd_bins, pd_vals, kernel_width=7.5, ref_freq=440.0):
         """-------------------------------------------------------------------
         The main data structure that wraps all the relevant information about a

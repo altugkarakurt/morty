@@ -2,8 +2,7 @@
 from Converter import Converter
 
 
-class Evaluator:
-
+class Evaluator(object):
     """----------------------------------------------------------------
     This class is used for evaluating the validity of our estimations.
     We return a dictionary entry as our evaluation result. See the
