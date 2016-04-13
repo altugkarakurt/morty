@@ -435,7 +435,7 @@ class Chordia(object):
 
     def chunk_estimate(self, pitch_track, mode_names=None, mode_name='',
                        mode_dir='./', est_tonic=True, est_mode=True,
-                       distance_method="bhat", metric='pcd', ref_freq=440,
+                       distance_method="bhat", metric='pcd', ref_freq=440.0,
                        min_cnt=3, equal_sample_per_mode=False):
         """--------------------------------------------------------------------
         This function is called by the wrapper estimate() function only. It

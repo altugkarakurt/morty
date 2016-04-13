@@ -52,7 +52,7 @@ class PitchDistribution(object):
                               'None (bins in Hz) or a number greater than 0.')
 
     @staticmethod
-    def from_cent_pitch(cent_track, ref_freq=440, smooth_factor=7.5,
+    def from_cent_pitch(cent_track, ref_freq=440.0, smooth_factor=7.5,
                         step_size=7.5, norm_type='sum'):
         """--------------------------------------------------------------------
         Given the pitch track in the unit of cents, generates the Pitch
@@ -150,7 +150,7 @@ class PitchDistribution(object):
         return pd
 
     @staticmethod
-    def from_hz_pitch(hz_track, ref_freq=440, smooth_factor=7.5,
+    def from_hz_pitch(hz_track, ref_freq=440.0, smooth_factor=7.5,
                       step_size=7.5, norm_type='sum'):
         hz_track = np.copy(hz_track)
         if hz_track.ndim > 1:  # pitch is given as [time, pitch, (conf)] array

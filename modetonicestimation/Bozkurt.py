@@ -104,7 +104,7 @@ class Bozkurt(object):
 
         return pitch_distrib
 
-    def joint_estimate(self, pitch_file, mode_names, ref_freq=440, rank=1,
+    def joint_estimate(self, pitch_file, mode_names, ref_freq=440.0, rank=1,
                        distance_method="bhat", metric='pcd', mode_dir='./'):
         """--------------------------------------------------------------------
         Joint Estimation: Neither the tonic nor the mode of the recording is
@@ -221,7 +221,7 @@ class Bozkurt(object):
             dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
         return mode_ranked, tonic_ranked
 
-    def tonic_estimate(self, pitch_file, mode_name, rank=1, ref_freq=440,
+    def tonic_estimate(self, pitch_file, mode_name, rank=1, ref_freq=440.0,
                        distance_method="bhat", metric='pcd', mode_dir="./"):
         """--------------------------------------------------------------------
         Tonic Estimation: The mode of the recording is known and tonic is to be
