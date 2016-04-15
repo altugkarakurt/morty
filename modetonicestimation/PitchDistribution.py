@@ -41,15 +41,15 @@ class PitchDistribution(object):
 
     @property
     def bin_unit(self):
+        err_str = 'Invalid reference. ref_freq should be either None ' \
+                  '(bin unit is Hz) or a number greater than 0.'
         if self.ref_freq is None:
             return 'Hz'
-        elif isinstance(self.ref_freq, numbers.Number) and self.ref_freq > 0:
-            return 'cent'
-        elif self.ref_freq.tolist() and self.ref_freq > 0:  # numpy array
+        elif isinstance(self.ref_freq, (numbers.Number, np.ndarray)):
+            assert self.ref_freq > 0, err_str
             return 'cent'
         else:
-            return ValueError('Invalid reference. ref_freq should be either '
-                              'None (bins in Hz) or a number greater than 0.')
+            return ValueError(err_str)
 
     @staticmethod
     def from_cent_pitch(cent_track, ref_freq=440.0, smooth_factor=7.5,
@@ -115,13 +115,11 @@ class PitchDistribution(object):
                 [np.arange(0, - 5 * smooth_factor, -step_size)[::-1],
                  np.arange(step_size, 5 * smooth_factor, step_size)])
             sampled_norm = normal_dist.pdf(xn)
-            if len(sampled_norm) <= 1:
-                raise ValueError("the smoothing factor is too small compared "
-                                 "to the step size, such that the convolution "
-                                 "kernel returns a single point gaussian. "
-                                 "Either increase the value to at least "
-                                 "(step size/3) or assign smooth factor to 0, "
-                                 "for no smoothing.")
+            assert len(sampled_norm) <= 1, \
+                "the smoothing factor is too small compared to the step " \
+                "size, such that the convolution kernel returns a single " \
+                "point Gaussian. Either increase the value to at least " \
+                "(step size/3) or assign smooth factor to 0, for no smoothing."
 
             # convolution generates tails
             extra_num_bins = len(sampled_norm) / 2
@@ -137,8 +135,8 @@ class PitchDistribution(object):
         # Sanity check. If the histogram bins and vals lengths are different,
         # we are in trouble. This is an important assumption of higher level
         # functions
-        if len(pd_bins) != len(pd_vals):
-            raise ValueError('Lengths of bins and Vals are different')
+        assert len(pd_bins) != len(pd_vals), 'Lengths of bins and vals are ' \
+                                             'different.'
 
         # initialize the distribution
         pd = PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor,
