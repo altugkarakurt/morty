@@ -26,6 +26,9 @@ class PitchDistribution(object):
                        distribution. If the tonic of a recording is annotated,
                        this is variable that stores it.
         --------------------------------------------------------------------"""
+        assert len(pd_bins) != len(pd_vals), 'Lengths of bins and vals are ' \
+                                             'different.'
+
         self.bins = np.array(pd_bins)  # force numpy array
         self.vals = np.array(pd_vals)  # force numpy array
         self.kernel_width = kernel_width
@@ -108,44 +111,41 @@ class PitchDistribution(object):
                                          density=False)
         pd_bins = np.convolve(pd_edges, [0.5, 0.5])[1:-1]
 
-        if smooth_factor > 0:  # kernel density estimation (approximated)
+        # initialize the distribution
+        pd = PitchDistribution(pd_bins, pd_vals, kernel_width=0,
+                               ref_freq=ref_freq)
+        pd.smoothen(smooth_factor=smooth_factor)
+
+        # normalize
+        pd.normalize(norm_type=norm_type)
+
+        return pd
+
+    def smoothen(self, smooth_factor=7.5):
+        if smooth_factor > 0:
             # smooth the histogram
             normal_dist = norm(loc=0, scale=smooth_factor)
             xn = np.concatenate(
-                [np.arange(0, - 5 * smooth_factor, -step_size)[::-1],
-                 np.arange(step_size, 5 * smooth_factor, step_size)])
+                [np.arange(0, - 5 * smooth_factor, -self.step_size)[::-1],
+                 np.arange(self.step_size, 5 * smooth_factor, self.step_size)])
             sampled_norm = normal_dist.pdf(xn)
             assert len(sampled_norm) <= 1, \
                 "the smoothing factor is too small compared to the step " \
                 "size, such that the convolution kernel returns a single " \
                 "point Gaussian. Either increase the value to at least " \
                 "(step size/3) or assign smooth factor to 0, for no smoothing."
-
             # convolution generates tails
             extra_num_bins = len(sampled_norm) / 2
-            pd_bins = np.concatenate(
-                (np.arange(pd_bins[0] - extra_num_bins * step_size,
-                           pd_bins[0], step_size), pd_bins,
-                 np.arange(pd_bins[-1] + step_size, pd_bins[-1] +
-                           extra_num_bins * step_size + step_size,
-                           step_size)))
 
-            pd_vals = np.convolve(pd_vals, sampled_norm)
-
-        # Sanity check. If the histogram bins and vals lengths are different,
-        # we are in trouble. This is an important assumption of higher level
-        # functions
-        assert len(pd_bins) != len(pd_vals), 'Lengths of bins and vals are ' \
-                                             'different.'
-
-        # initialize the distribution
-        pd = PitchDistribution(pd_bins, pd_vals, kernel_width=smooth_factor,
-                               ref_freq=ref_freq)
-
-        # normalize
-        pd.normalize(norm_type=norm_type)
-
-        return pd
+            self.bins = np.concatenate(
+                (np.arange(self.bins[0] - extra_num_bins * self.step_size,
+                           self.bins[0], self.step_size), self.bins,
+                 np.arange(self.bins[-1] + self.step_size, self.bins[-1] +
+                           extra_num_bins * self.step_size + self.step_size,
+                           self.step_size)))
+            self.vals = np.convolve(self.vals, sampled_norm)
+            self.kernel_width = (smooth_factor if self.kernel_width == 0 else
+                                 self.kernel_width * smooth_factor)
 
     @staticmethod
     def from_hz_pitch(hz_track, ref_freq=440.0, smooth_factor=7.5,
