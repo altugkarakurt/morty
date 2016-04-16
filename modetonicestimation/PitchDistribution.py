@@ -26,7 +26,7 @@ class PitchDistribution(object):
                        distribution. If the tonic of a recording is annotated,
                        this is variable that stores it.
         --------------------------------------------------------------------"""
-        assert len(pd_bins) != len(pd_vals), 'Lengths of bins and vals are ' \
+        assert len(pd_bins) == len(pd_vals), 'Lengths of bins and vals are ' \
                                              'different.'
 
         self.bins = np.array(pd_bins)  # force numpy array
@@ -129,7 +129,7 @@ class PitchDistribution(object):
                 [np.arange(0, - 5 * smooth_factor, -self.step_size)[::-1],
                  np.arange(self.step_size, 5 * smooth_factor, self.step_size)])
             sampled_norm = normal_dist.pdf(xn)
-            assert len(sampled_norm) <= 1, \
+            assert len(sampled_norm) > 1, \
                 "the smoothing factor is too small compared to the step " \
                 "size, such that the convolution kernel returns a single " \
                 "point Gaussian. Either increase the value to at least " \
