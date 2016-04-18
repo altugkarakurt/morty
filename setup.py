@@ -2,14 +2,14 @@
 
 from setuptools import setup
 
-setup(name='modetonicestimation',
+setup(name='morty',
 version='1.0',
     author='Altug Karakurt',
     author_email='altugkarakurt AT gmail DOT com',
     license='agpl 3.0',
     description='Python library for mode and tonic estimation.',
     url='https://github.com/altugkarakurt/ModeTonicEstimation',
-    packages=['modetonicestimation'],
+    packages=['morty'],
     include_package_data=True,
     install_requires=[
         "numpy",
