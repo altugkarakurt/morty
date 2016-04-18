@@ -5,22 +5,28 @@ from numpy.random import randn
 from random import shuffle
 
 
-def heaviside(x): return (1 if x >= 0 else 0)
+def heaviside(x):
+    return (1 if x >= 0 else 0)
 
 
-def d_heaviside(x): return (1 if x == 0 else 0)
+def d_heaviside(x):
+    return (1 if x == 0 else 0)
 
 
-def sigmoid(x): return 1 / (1 + np.exp(-x))
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
 
 
-def d_sigmoid(x): return sigmoid(x) * (1 - sigmoid(x))
+def d_sigmoid(x):
+    return sigmoid(x) * (1 - sigmoid(x))
 
 
-def MSE(y, y_est): return ((y - y_est) ** 2) / 2
+def MSE(y, y_est):
+    return ((y - y_est) ** 2) / 2
 
 
-def d_MSE(y, y_est): return -(y - y_est)
+def d_MSE(y, y_est):
+    return -(y - y_est)
 
 
 class NeuralNet:
@@ -55,9 +61,9 @@ class NeuralNet:
 
         for layer, layer_size in enumerate(self.sizes):
             # [1] is the "bias neuron"
-            layer_input = np.concatenate(([1], layer_outputs[layer-1])) \
-                          if layer != 0 \
-                          else np.concatenate(([1], np.array(network_input)))
+            layer_input = np.concatenate(([1], layer_outputs[layer - 1])) \
+                if layer != 0 \
+                else np.concatenate(([1], np.array(network_input)))
 
             for neuron in range(layer_size):
                 local_weight = self.weights[layer][neuron]
@@ -75,7 +81,7 @@ class NeuralNet:
 
         for epoch in range(epochs):
             shuffle(training_data)
-            blocks = [training_data[k:k+block_size]
+            blocks = [training_data[k:k + block_size]
                       for k in range(0, training_size, block_size)]
 
             for block_idx, block in enumerate(blocks):

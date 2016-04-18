@@ -8,7 +8,7 @@ import os
 
 class NeuralClassifier:
     def __init__(self, step_size, smooth_factor, mode_names, weights=None):
-        sizes = [int(1200/step_size), len(mode_names)]
+        sizes = [int(1200 / step_size), len(mode_names)]
         self.neural_net = NeuralNet(sizes=sizes, weights=weights)
         self.step_size = step_size
         self.smooth_factor = smooth_factor
