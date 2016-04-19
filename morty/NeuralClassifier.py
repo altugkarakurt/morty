@@ -37,13 +37,7 @@ class NeuralClassifier:
             fpath = os.path.join(save_dir, "weights.txt")
             np.savetxt(fpath, self.neural_net.weights)
 
-    def mode_estimate(self, pitch_file, tonic_freq):
-        pitch_track = ModeFun.parse_pitch_track(pitch_file, multiple=False)
-        cent_track = Converter.hz_to_cent(pitch_track, ref_freq=tonic_freq)
-        pd = PitchDistribution.from_cent_pitch(cent_track, tonic_freq,
-                                               self.smooth_factor,
-                                               self.step_size)
-        pcd_vals = pd.to_pcd().vals
+    def mode_estimate(self, pcd_vals):
         mode_est = self.neural_net.estimate(pcd_vals)
         max_idx = np.argmax(mode_est)
         return [1 if(idx == max_idx) else 0 for idx, _ in enumerate(mode_est)]
