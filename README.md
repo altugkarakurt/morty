@@ -17,7 +17,7 @@ Since the training a supervised machine learning process, a dataset for each mod
 ### Usage
 Please refer to the jupyter notebooks for the basic usage and an interactive demo.
 
-If the pitch track of a piece isn't available, [melodyExtraction.py](https://github.com/altugkarakurt/ModeTonicEstimation/blob/master/extras/melodyExtraction.py) function in the extras package can be used to obtain the pitch tracks automatically. The pitch track is expected to be in given as a .txt file, that consists of a single column of values of the pitch track in Hertz, time information isn't required. This function is a wrapper around the [predominantmelodymakam](https://github.com/sertansenturk/predominantmelodymakam) package to store the pitch track in the desired format.
+If the pitch track of a piece isn't available, [melodyExtraction.py](https://github.com/altugkarakurt/morty/blob/master/extras/melodyExtraction.py) function in the extras package can be used to obtain the pitch tracks automatically. The pitch track is expected to be in given as a .txt file, that consists of a single column of values of the pitch track in Hertz, time information isn't required. This function is a wrapper around the [predominantmelodymakam](https://github.com/sertansenturk/predominantmelodymakam) package to store the pitch track in the desired format.
 
 ### Installation
 

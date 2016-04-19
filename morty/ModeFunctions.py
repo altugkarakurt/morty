@@ -2,7 +2,7 @@
 import numpy as np
 import os
 from scipy.spatial import distance as spdistance
-from modetonicestimation.PitchDistribution import PitchDistribution
+from morty.PitchDistribution import PitchDistribution
 
 
 def parse_pitch_track(pitch_track, multiple=False):

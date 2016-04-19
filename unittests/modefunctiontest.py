@@ -1,6 +1,6 @@
 import numpy as np
-from modetonicestimation import ModeFunctions as mF
-from modetonicestimation.PitchDistribution import PitchDistribution
+from morty import ModeFunctions as mF
+from morty.PitchDistribution import PitchDistribution
 
 
 # def test_generate_pcd():
