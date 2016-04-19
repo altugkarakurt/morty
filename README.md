@@ -9,7 +9,7 @@ The main purpose of the toolbox is to provide a quick access to automatic tonic 
 The pitch distribution and pitch class distributions implemented in this package can be additionally used for other relevant tasks such as [tuning analysis](https://github.com/miracatici/notemodel), [intonation-analysis](https://github.com/sertansenturk/alignednotemodel) and [melodic progression analysis](https://github.com/sertansenturk/seyiranalyzer). Furthermore the applied analysis can be used in cross-cultural comparisons.
 
 ### Description
-Currently _morty_ implements the methodologies proposed in (A. C. Gedik and B.Bozkurt, 2010) and (P. Chordia and S. Şentürk, 2013). We will refer to these methods as _Bozkurt_ and _Chordia_ from now on. These methods are based on the musical assumption that the melodic intervals in the performances belonging to the same mode should be tuned similarly and their occurence in the modal structure with respect to each other should also be similar. 
+The methodologies proposed in (A. C. Gedik and B.Bozkurt, 2010) and (P. Chordia and S. Şentürk, 2013) are based on the musical assumption that the melodic intervals in the performances belonging to the same mode should be tuned similarly and their occurence in the modal structure with respect to each other should also be similar. 
 
 Given annotated tonics and makams for a set of training audio performances, both methods compute models based on pitch histograms (pitch distributions or pitch-class distributions) for each mode. The histograms are computed from the predominant melodies extracted from each performance. Note that the training performances can be entire recordings or an excerpt. 
 
