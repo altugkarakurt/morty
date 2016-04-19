@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from predominantmelodymakam.PredominantMelodyMakam import PredominantMelodyMakam
+from predominantmelodymakam.predominantmelodymakam import \
+    PredominantMelodyMakam
 from fileoperations.fileoperations import get_filenames_in_dir
 import os
 import json
@@ -21,12 +22,12 @@ else:
 print idx
 
 extractor = PredominantMelodyMakam()
-
 audioDir = './'  # audio folder and sub folders
 
+# text file
 audio_files = get_filenames_in_dir(audioDir, keyword="*.mp3")[0]
-txtFiles = [os.path.join(os.path.dirname(f), os.path.basename(os.path.splitext(f)[0]) + '.pitch') for f in
-            audio_files]  # text file; for sonic visualizer
+txtFiles = [os.path.join(os.path.dirname(f), os.path.basename(
+    os.path.splitext(f)[0]) + '.pitch') for f in audio_files]
 
 if idx:  # if index is given
     audio_files = [audio_files[idx]]
@@ -44,7 +45,8 @@ for ii, mp3 in enumerate(audio_files):
         pitch = np.array(json.loads(results['pitch']))[:, [0, 1]]
         pitch_track = np.array(json.loads(results['pitch']))[:, [0, 1]]
         pitch_track = (np.around([i * math.pow(10, DECIMAL)
-                                  for i in pitch_track[:, 1]]) / 100.0).tolist()
+                                  for i in pitch_track[:, 1]]) / 100.0)
+        pitch_track = pitch_track.tolist()
         with open(txtFiles[ii], 'w') as f:
             for i in pitch_track:
                 f.write("%.2f\n" % i)

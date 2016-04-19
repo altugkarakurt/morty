@@ -19,6 +19,7 @@ install:
 # command to run before the tests
 before_script:
   - "flake8 morty --ignore=E501"
+  - "flake8 extras --ignore=E501"
 
 # command to run tests
 script:
