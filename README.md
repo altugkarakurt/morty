@@ -2,7 +2,7 @@
 **MO**de **R**ecognition and **T**onic **Y**dentification Toolbox
 
 ### Introduction
-**morty** is a toolbox for mode recognition and tonic identification of audio performances of "modal" music cultures. The toolbox is based on well-studied pitch histogram analysis. It implements two state of the art methods applied to Ottoman-Turkish makam music (A. C. Gedik and B.Bozkurt, 2010) and Hindustani music (P. Chordia and S. Şentürk, 2013).
+**morty** is a toolbox for mode recognition and tonic identification in audio performances of "modal" music cultures. The toolbox is based on well-studied pitch histogram analysis. It implements two state of the art methods applied to Ottoman-Turkish makam music (A. C. Gedik and B.Bozkurt, 2010) and Hindustani music (P. Chordia and S. Şentürk, 2013).
 
 The main purpose of the toolbox is to provide a quick access to automatic tonic identification and mode recognition implementations for music cultures, for which these tasks have not been addressed and provide a baseline for novel methodologies to be compared against. Therefore, the implementations are designed such that there is no "computational-bias" towards a particular culture yet any culture-specific optimization can be easily introduced in the context of the implemented methodologies. 
 
