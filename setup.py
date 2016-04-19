@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='morty',
-version='1.0',
+version='1.0.0',
     author='Altug Karakurt',
     author_email='altugkarakurt AT gmail DOT com',
     license='agpl 3.0',
@@ -12,8 +12,8 @@ version='1.0',
     packages=['morty'],
     include_package_data=True,
     install_requires=[
-        "numpy",
-        "scipy",
-        "matplotlib"
+        "numpy>=1.9.0",
+        "scipy>=0.17.0",
+        "matplotlib>=1.5.1"
     ],
 )
