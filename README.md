@@ -11,7 +11,7 @@ The pitch distribution and pitch class distributions implemented in this package
 ### Description
 The methodologies proposed in (A. C. Gedik and B.Bozkurt, 2010) and (P. Chordia and S. Şentürk, 2013) are based on the musical assumption that the tuning and the relative occurence of the melodic intervals in the performances belonging to the same mode should also be similar. 
 
-Given the annotated tonics and makams for a set of training audio performances, both methods compute models based on pitch histograms (pitch distributions or pitch-class distributions) for each mode. The histograms are computed from the predominant melodies extracted from each performance. Note that the training performances can be entire recordings or an excerpt. 
+Given the annotated tonics and makams for a set of training audio performances, both methods extract predominant melody of each performance and then compute models based on pitch histograms (pitch distributions or pitch-class distributions) for each mode using the extracted predominant melodies. Note that the training performances can be entire recordings or an excerpt. 
 
 In our context, these models are used in three similar computational tasks:
 - **Mode Recognition:** Given an audio performance with known tonic, the pitch histogram computed from the performance is compared with the model produced for each mode. The mode belonging to the most similar model will be classified as the estimated mode.
