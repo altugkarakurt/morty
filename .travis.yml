@@ -24,4 +24,4 @@ before_script:
 # command to run tests
 script:
 #  - nosetests unittests
-#  - nosetests --with-coverage
+  - nosetests --with-coverage
