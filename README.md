@@ -31,7 +31,7 @@ Since the training step is a supervised machine learning process, a dataset for 
 * Train the candidate modes by using the collections of predominant melodies of respective modes extracted from the annotated audio.
 * Feed the predominant melody of the testing audio with the known attributes (tonic or mode), if any, and obtain the estimation(s).
 
-You can refer to the jupyter notebooks for the basic usage.
+Please refer to the jupyter notebooks in the [demos](https://github.com/altugkarakurt/morty/tree/master/demo) folder for the basic usage.
 
 If the predominant melodies are not available, [melodyExtraction.py](https://github.com/altugkarakurt/morty/blob/master/extras/melodyExtraction.py) method in the extras package can be used for automatic predominant melodies extraction. This method is a wrapper [implementation](https://github.com/sertansenturk/predominantmelodymakam) of the predominant melody extraction methodology proposed by Atlı et. al (2014) to store the pitch track in the desired format. The input pitch track is expected to be in given as a .txt file, that consists of a single column of values of the pitch track in Hertz. The timestamps are not required. Note that the default parameters for predominant melody extraction are optimized for Ottoman-Turkish makam music, so you might want to calibrate the parameters according to the necessities of the studied music culture.
 

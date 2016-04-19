@@ -100,7 +100,7 @@ class Bozkurt(object):
         if save_dir:
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
-            pitch_distrib.save(save_dir + mode_name + '.json')
+            pitch_distrib.save(os.path.join(save_dir, mode_name + '.json'))
 
         return pitch_distrib
 

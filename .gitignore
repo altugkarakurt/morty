@@ -7,4 +7,4 @@
 !.gitignore
 build/
 dist/
-demo/train_dir/
+demos/train_dir/
