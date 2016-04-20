@@ -19,7 +19,7 @@ elif len(sys.argv) == 2:  # for parallelization
 else:
     raise ValueError('Only accepts zero or one argument')
 
-print idx
+print(idx)
 
 extractor = PredominantMelodyMakam()
 audiodir = './'  # audio folder and sub folders
@@ -34,11 +34,11 @@ if idx:  # if index is given
     txtfiles = [txtfiles[idx]]
 
 for ii, mp3 in enumerate(audio_files):
-    print ' '
-    print str(ii + 1) + ": " + os.path.basename(mp3)
+    print(' ')
+    print("{0:d}: {1:s}".format(ii + 1, os.path.basename(mp3)))
 
     if os.path.isfile(txtfiles[ii]):  # already exists
-        print "   > Already exist; skipped."
+        print("   > Already exist; skipped.")
     else:
         results = extractor.run(mp3)
 
@@ -49,4 +49,4 @@ for ii, mp3 in enumerate(audio_files):
         pitch_track = pitch_track.tolist()
         with open(txtfiles[ii], 'w') as f:
             for i in pitch_track:
-                f.write("%.2f\n" % i)
+                f.write(u"{0:.2f}\n".format(i))

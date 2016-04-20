@@ -48,7 +48,7 @@ def stratified_fold(data_dir, annotation_file, n_folds=10, save_file=''):
 def get_mode_names(data_dir):
     # check if the folder exists
     if not os.path.isdir(data_dir):
-        print "> Directory doesn't exist!"
+        print("> Directory doesn't exist!")
         return []
 
     return [x[1] for x in os.walk(data_dir)][0]
