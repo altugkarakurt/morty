@@ -221,6 +221,9 @@ class PitchDistribution(object):
         return (max(self.bins) == (1200 - self.step_size) and
                 min(self.bins) == 0)
 
+    def type(self):
+        return 'pcd' if self.is_pcd() else 'pd'
+
     def has_hz_bin(self):
         return self.bin_unit in ['hz', 'Hz', 'Hertz', 'hertz']
 
@@ -308,7 +311,6 @@ class PitchDistribution(object):
         --------------------------------------------------------------------"""
         # If the shift index is non-zero, do the shifting procedure
         if shift_idx:
-
             # If distribution is a PCD, we do a circular shift
             if self.is_pcd():
                 shifted_vals = np.concatenate((self.vals[shift_idx:],

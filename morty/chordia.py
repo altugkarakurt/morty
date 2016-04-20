@@ -562,7 +562,7 @@ class Chordia(object):
                 for m, cur_mode_dist in enumerate(mode_dists):
                     dist_mat[:, m] = modefun.tonic_estimate(
                         dist, shift_idxs, cur_mode_dist,
-                        distance_method=distance_method, metric=metric)
+                        distance_method=distance_method)
 
             # Since we need to report min_cnt many nearest neighbors, the loop
 
@@ -610,8 +610,8 @@ class Chordia(object):
             # distributions belong to the same mode. Each column is for
             # a chunk distribution and each row is for a tonic candidate.
             dist_mat = [modefun.tonic_estimate(
-                dist, peak_idxs, d, distance_method=distance_method,
-                metric=metric) for d in mode_dist]
+                dist, peak_idxs, d, distance_method=distance_method)
+                        for d in mode_dist]
 
             # See the joint estimation version of this loop for further
             # explanations
@@ -630,8 +630,7 @@ class Chordia(object):
             # Since the tonic is annotated, the distribution isn't shifted and
             # compared to each chunk distribution in each candidate mode model.
             distance_vector = modefun.mode_estimate(
-                dist, mode_dists, distance_method=distance_method,
-                metric=metric)
+                dist, mode_dists, distance_method=distance_method)
 
             # See the joint estimation version of this loop for further
             # explanations.

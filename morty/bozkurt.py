@@ -115,7 +115,7 @@ class Bozkurt(object):
                         given, the mode will be estimated. In case of
                         directory, the modes will be taken as the json
                         filenames.
-        tonic_freq      : Annotated tonic of the recording. If it's unknown,
+        ref_freq        : Annotated tonic of the recording. If it's unknown,
                         we use an arbitrary value, so this can be ignored.
         rank            : The number of estimations expected from the system.
                         If this is 1, estimation returns the most likely
@@ -287,8 +287,7 @@ class Bozkurt(object):
         # already known, so there is only one model to be compared. Each
         # entry corresponds to one tonic candidate.
         distance_vector = modefun.tonic_estimate(
-            distrib, peak_idxs, model, distance_method=distance_method,
-            metric=metric)
+            distrib, peak_idxs, model, distance_method=distance_method)
 
         for r in range(min(rank, len(peak_idxs))):
             # Minima is found, corresponding tonic candidate is our current
@@ -350,8 +349,7 @@ class Bozkurt(object):
         # PCD and PD. Since tonic is known, the distributions aren't
         # shifted and are only compared to candidate mode models.
         distance_vector = modefun.mode_estimate(
-            distrib, models, distance_method=distance_method,
-            metric=metric)
+            distrib, models, distance_method=distance_method)
 
         for r in range(min(rank, len(mode_names))):
             # Minima is found, corresponding mode candidate is our current

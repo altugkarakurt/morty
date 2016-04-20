@@ -142,8 +142,7 @@ def pd_zero_pad(pd, mode_pd):
     return pd, mode_pd
 
 
-def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean",
-                   metric='pcd'):
+def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean"):
     """------------------------------------------------------------------------
     Given a mode (or candidate mode), compares the piece's distribution with
     each candidate tonic and returns the resultant distance vector to higher
@@ -156,19 +155,17 @@ def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean",
                       each iteration.
     distance_method : The choice of distance method. See the full list at
                       distance()
-    metric          : Whether PCD or PD is used
-    step_size         : The step-size of the pitch distribution. Unit is cents
     ------------------------------------------------------------------------"""
 
-    # TODO: step_size and pd/pcd information can be retrieved from the dist
-    # object
-    # try and test that
+    assert dist.type() == mode_dist.type(), \
+        'Mismatch between the type of the input distribution and the trained '\
+        'mode distribution.'
 
     # There are no preliminaries, simply generate the distance vector
-    if metric == 'pcd':
+    if dist.type() == 'pcd':
         return np.array(generate_distance_matrix(dist, peak_idxs, [mode_dist],
                                                  method=distance_method))[:, 0]
-    elif metric == 'pd':
+    elif dist.type() == 'pd':
         # The PitchDistribution object is copied in order not to change its
         # internals before the following steps.
         temp = PitchDistribution(
@@ -188,7 +185,7 @@ def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean",
                                                  method=distance_method))[:, 0]
 
 
-def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd'):
+def mode_estimate(dist, mode_dists, distance_method='euclidean'):
     """------------------------------------------------------------------------
     Compares the recording's distribution with each candidate mode with respect
     to the given tonic and returns the resultant distance vector to higher
@@ -202,18 +199,18 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd'):
                       pitch distributions of candidate modes.
     distance_method : The choice of distance method. See the full list at
                       distance()
-    metric          : Whether PCD or PD is used
     step_size       : The step-size of the pitch distribution. Unit is cents
     ------------------------------------------------------------------------"""
 
-    # TODO: step_size and pD/pcd information can be retrieved from the dist
-    # object try and test that
+    assert all(dist.type() == md.type() for md in mode_dists), \
+        'Mismatch between the type of the input distribution and the trained '\
+        'mode distributions.'
 
     # There are no preliminaries, simply generate the distance vector.
-    if metric == 'pcd':
+    if dist.type() == 'pcd':
         distance_vector = np.array(generate_distance_matrix(
             dist, [0], mode_dists, method=distance_method))[0]
-    elif metric == 'pd':
+    elif dist.type() == 'pd':
         distance_vector = np.zeros(len(mode_dists))
 
         # For each trial, a new instance of PitchDistribution is created and
@@ -227,6 +224,9 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd'):
             trial, mode_trial = pd_zero_pad(trial, mode_dists[i])
             distance_vector[i] = distance(trial.vals, mode_trial.vals,
                                           method=distance_method)
+    else:
+        raise ValueError('"dist.type()" can either take the values "pd" or '
+                         '"pcd".')
 
     return distance_vector
 
