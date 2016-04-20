@@ -1,6 +1,5 @@
 import numpy as np
 import time
-
 from numpy.random import randn
 from random import shuffle
 
@@ -21,11 +20,11 @@ def d_sigmoid(x):
     return sigmoid(x) * (1 - sigmoid(x))
 
 
-def MSE(y, y_est):
+def mse(y, y_est):
     return ((y - y_est) ** 2) / 2
 
 
-def d_MSE(y, y_est):
+def d_mse(y, y_est):
     return -(y - y_est)
 
 
@@ -111,9 +110,9 @@ class NeuralNet(object):
             for neuron in range(layer_size):
                 # print("n%d of l%d\n" % (neuron, layer))
                 if layer == len(self.sizes) - 1:
-                    mse = d_MSE(label[neuron], network_output[neuron])
+                    d_mse_val = d_mse(label[neuron], network_output[neuron])
                     d_out = d_outputs[layer][neuron]
-                    local_gradient[layer][neuron] = d_out * mse
+                    local_gradient[layer][neuron] = d_out * d_mse_val
 
                 else:
                     d_out = d_outputs[layer][neuron]
