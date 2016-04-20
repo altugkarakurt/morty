@@ -141,8 +141,8 @@ class Chordia(object):
 
         return pitch_distrib_list
 
-    @classmethod
-    def load_model(cls, mode_name, dist_dir='./'):
+    @staticmethod
+    def load_model(mode_name, dist_dir='./'):
         """--------------------------------------------------------------------
         Since each mode model consists of a list of PitchDistribution objects,
         the load() function from that class can't be used directly. This
@@ -166,8 +166,8 @@ class Chordia(object):
                 kernel_width=d['kernel_width'], ref_freq=d['ref_freq']))
         return obj_list
 
-    @classmethod
-    def save_model(cls, distribution_list, save_dir, mode_name):
+    @staticmethod
+    def save_model(distribution_list, save_dir, mode_name):
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
 

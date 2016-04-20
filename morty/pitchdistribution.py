@@ -167,8 +167,8 @@ class PitchDistribution(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
-    @classmethod
-    def load(cls, file_name):
+    @staticmethod
+    def load(file_name):
         """--------------------------------------------------------------------
         Loads a PitchDistribution object from JSON file.
         -----------------------------------------------------------------------
