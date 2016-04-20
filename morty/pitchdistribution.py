@@ -278,10 +278,10 @@ class PitchDistribution(object):
             pcd_vals = np.zeros(len(pcd_bins))
 
             # Octave wrapping
-            for k in range(len(self.bins)):
-                idx = int((self.bins[k] % 1200) / self.step_size)
+            for bin, val in zip(self.bins, self.vals):
+                idx = int((bin % 1200) / self.step_size)
                 idx = idx if idx != 160 else 0
-                pcd_vals[idx] += self.vals[k]
+                pcd_vals[idx] += val
 
             # Initializes the PitchDistribution object and returns it.
             return PitchDistribution(pcd_bins, pcd_vals,

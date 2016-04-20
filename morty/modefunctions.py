@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import os
+import copy
 from scipy.spatial import distance as spdistance
 from morty.pitchdistribution import PitchDistribution
 
@@ -213,18 +214,15 @@ def mode_estimate(distrib, mode_distribs, distance_method='euclidean'):
         distance_vector = np.array(generate_distance_matrix(
             distrib, [0], mode_distribs, method=distance_method))[0]
     elif distrib.type() == 'pd':
-        distance_vector = np.zeros(len(mode_distribs))
-
         # For each trial, a new instance of PitchDistribution is created and
         # its attributes are copied from mode_distribs. For each trial, it
         # needs to be zero padded according to the current mode distribution
         # length. The entries of the vector is generated iteratively,
         # one-by-one.
-        for i in range(len(mode_distribs)):
-            trial = PitchDistribution(
-                distrib.bins, distrib.vals, kernel_width=distrib.kernel_width,
-                ref_freq=distrib.ref_freq)
-            trial, mode_trial = pd_zero_pad(trial, mode_distribs[i])
+        distance_vector = np.zeros(len(mode_distribs))
+        for i, md in enumerate(mode_distribs):
+            trial = copy.deepcopy(distrib)
+            trial, mode_trial = pd_zero_pad(trial, md[i])
             distance_vector[i] = distance(trial.vals, mode_trial.vals,
                                           method=distance_method)
     else:
