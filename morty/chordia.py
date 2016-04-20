@@ -278,15 +278,15 @@ class Chordia(object):
         # candidate_foo : the flattened list of all foos from chunks
         # kn_foo : k nearest foos of candidate_foos. this is a subset of
         #          candidate_foo
-        candidate_distances, candidate_ests, kn_distances, kn_ests, = (
-            [] for _ in range(4))
+        candidate_distances, candidate_ests, kn_distances, kn_ests, = [], [], \
+                                                                      [], []
 
         # Joint estimation decision making.
         # Flattens the returned candidates and related data about them and
         # stores them into candidate_*
-        for i, _ in enumerate(chunks):
+        for i in range(0, len(chunks)):
             candidate_distances.extend(neighbors[i][1])
-            for l, _ in enumerate(neighbors[i][0][1]):
+            for l in range(0, len(neighbors[i][0][1])):
                 candidate_ests.append(
                     (neighbors[i][0][1][l], neighbors[i][0][0][l]))
 
@@ -496,8 +496,8 @@ class Chordia(object):
             if mode_name != '' else None
 
         # Initializations of possible output parameters
-        tonic_list = [0 for x in range(min_cnt)]
-        mode_list = ['' for x in range(min_cnt)]
+        tonic_list = [0 for _ in range(min_cnt)]
+        mode_list = ['' for _ in range(min_cnt)]
         min_distance_list = np.zeros(min_cnt)
 
         # If tonic will be estimated, there are certain common preliminary

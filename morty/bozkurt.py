@@ -145,8 +145,8 @@ class Bozkurt(object):
         distrib = distrib.to_pcd() if metric == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
-        tonic_ranked = [('', 0) for x in range(rank)]
-        mode_ranked = [('', 0) for x in range(rank)]
+        tonic_ranked = [('', 0) for _ in range(rank)]
+        mode_ranked = [('', 0) for _ in range(rank)]
 
         if metric == 'pcd':
             # If there happens to be a peak at the last (and first due to the
@@ -245,7 +245,7 @@ class Bozkurt(object):
         distrib = distrib.to_pcd() if metric == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
-        tonic_ranked = [('', 0) for x in range(rank)]
+        tonic_ranked = [('', 0) for _ in range(rank)]
 
         # Preliminary steps for tonic identification
         if metric == 'pcd':
@@ -339,7 +339,7 @@ class Bozkurt(object):
         distrib = distrib.to_pcd() if metric == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
-        mode_ranked = [('', 0) for x in range(rank)]
+        mode_ranked = [('', 0) for _ in range(rank)]
 
         # Mode Estimation
         # Distance vector is generated. Again, mode_estimate() of
