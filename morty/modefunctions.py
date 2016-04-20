@@ -41,7 +41,7 @@ def parse_pitch_track(pitch_track, multiple=False):
 
 
 def generate_distance_matrix(distrib, peak_idxs, mode_distribs,
-                             method='euclidean'):
+                             method='bhat'):
     """------------------------------------------------------------------------
     Iteratively calculates the distance of the input distribution from each
     (mode candidate, tonic candidate) pair. This is a generic function, that is
@@ -68,7 +68,7 @@ def generate_distance_matrix(distrib, peak_idxs, mode_distribs,
     return np.array(result)
 
 
-def distance(vals_1, vals_2, method='euclidean'):
+def distance(vals_1, vals_2, method='bhat'):
     """------------------------------------------------------------------------
     Calculates the distance between two 1-D lists of values. This function is
     called with pitch distribution values, while generating distance matrices.
@@ -145,7 +145,7 @@ def pd_zero_pad(pd, mode_pd):
 
 
 def tonic_estimate(distrib, peak_idxs, mode_distrib,
-                   distance_method="euclidean"):
+                   distance_method="bhat"):
     """------------------------------------------------------------------------
     Given a mode (or candidate mode), compares the piece's distribution with
     each candidate tonic and returns the resultant distance vector to higher
@@ -188,7 +188,7 @@ def tonic_estimate(distrib, peak_idxs, mode_distrib,
             temp, peak_idxs, [mode_distrib], method=distance_method))[:, 0]
 
 
-def mode_estimate(distrib, mode_distribs, distance_method='euclidean'):
+def mode_estimate(distrib, mode_distribs, distance_method='bhat'):
     """------------------------------------------------------------------------
     Compares the recording's distribution with each candidate mode with respect
     to the given tonic and returns the resultant distance vector to higher
