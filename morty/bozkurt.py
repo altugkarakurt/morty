@@ -3,7 +3,7 @@ import numpy as np
 import os
 from converter import Converter
 from pitchdistribution import PitchDistribution
-import modefunctions as ModeFun
+import modefunctions as modefun
 
 
 class Bozkurt(object):
@@ -78,7 +78,7 @@ class Bozkurt(object):
 
         # Normalize the pitch tracks of the mode wrt the tonic frequency and
         # concatenate
-        pitch_track = ModeFun.parse_pitch_track(pitch_files, multiple=True)
+        pitch_track = modefun.parse_pitch_track(pitch_files, multiple=True)
         mode_track = []
         for track, tonic in zip(pitch_track, tonic_freqs):
             mode_track.extend(Converter.hz_to_cent(track, ref_freq=tonic))
@@ -130,7 +130,7 @@ class Bozkurt(object):
         --------------------------------------------------------------------"""
 
         # load pitch track
-        pitch_track = ModeFun.parse_pitch_track(pitch_file)
+        pitch_track = modefun.parse_pitch_track(pitch_file)
 
         # list of json files per mode
         models = [PitchDistribution.load(
@@ -165,7 +165,7 @@ class Bozkurt(object):
             # PCD doesn't require any preliminary steps. Generate the distance
             # matrix. The rows are tonic candidates and columns are mode
             # candidates.
-            dist_mat = ModeFun.generate_distance_matrix(
+            dist_mat = modefun.generate_distance_matrix(
                 distrib, peak_idxs, models, method=distance_method)
         elif metric == 'pd':
             # Find the peaks of the distribution. These are the tonic
@@ -184,9 +184,12 @@ class Bozkurt(object):
             # the matrix are iteratively generated
             dist_mat = np.zeros((len(shift_idxs), len(models)))
             for m, model in enumerate(models):
-                dist_mat[:, m] = ModeFun.tonic_estimate(
+                dist_mat[:, m] = modefun.tonic_estimate(
                     distrib, shift_idxs, model,
                     distance_method=distance_method, metric=metric)
+        else:
+            raise ValueError('"metric" can either take the value "pd" or '
+                             '"pcd".')
 
         # Distance matrix is ready now. For each rank, (or each pair of
         # tonic-mode estimate pair) the loop is iterated. When the first
@@ -230,7 +233,7 @@ class Bozkurt(object):
         --------------------------------------------------------------------"""
 
         # load pitch track
-        pitch_track = ModeFun.parse_pitch_track(pitch_file, multiple=False)
+        pitch_track = modefun.parse_pitch_track(pitch_file, multiple=False)
 
         # list of json files per mode
         model = PitchDistribution.load(os.path.join(
@@ -283,7 +286,7 @@ class Bozkurt(object):
         # handles the special cases such as zero-padding. The mode is
         # already known, so there is only one model to be compared. Each
         # entry corresponds to one tonic candidate.
-        distance_vector = ModeFun.tonic_estimate(
+        distance_vector = modefun.tonic_estimate(
             distrib, peak_idxs, model, distance_method=distance_method,
             metric=metric)
 
@@ -324,7 +327,7 @@ class Bozkurt(object):
 
         # load pitch track
 
-        pitch_track = ModeFun.parse_pitch_track(pitch_file, multiple=False)
+        pitch_track = modefun.parse_pitch_track(pitch_file, multiple=False)
 
         # list of json files per mode
         models = [PitchDistribution.load(
@@ -346,7 +349,7 @@ class Bozkurt(object):
         # ModeFunctions handles the different approach required for
         # PCD and PD. Since tonic is known, the distributions aren't
         # shifted and are only compared to candidate mode models.
-        distance_vector = ModeFun.mode_estimate(
+        distance_vector = modefun.mode_estimate(
             distrib, models, distance_method=distance_method,
             metric=metric)
 
