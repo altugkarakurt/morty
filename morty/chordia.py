@@ -71,7 +71,7 @@ class Chordia(object):
         self.threshold = threshold
         self.frame_rate = frame_rate
 
-    def train(self, mode_name, pitch_files, tonic_freqs, metric='pcd',
+    def train(self, mode_name, pitch_files, tonic_freqs, feature='pcd',
               save_dir=''):
         """--------------------------------------------------------------------
         For the mode trainings, the requirements are a set of recordings with
@@ -92,7 +92,7 @@ class Chordia(object):
                         "mode_name.json"
         pitch_files   : List of pitch tracks (i.e. 1-D list of frequencies)
         tonic_freqs   : List of annotated tonics of recordings
-        metric        : Whether the model should be octave wrapped (Pitch Class
+        feature       : Whether the model should be octave wrapped (Pitch Class
                         Distribution: PCD) or not (Pitch Distribution: PD)
         save_dir      : Where to save the resultant JSON files.
         --------------------------------------------------------------------"""
@@ -123,7 +123,7 @@ class Chordia(object):
             # This is a wrapper function. It iteratively generates the
             # distribution for each chunk and return it as a list. After
             # this point, we only need to save it.
-            temp_list = self.train_chunks(chunks, tonic, metric)
+            temp_list = self.train_chunks(chunks, tonic, feature)
 
             # The list is composed of lists of PitchDistributions. So,
             # each list in temp_list corresponds to a recording and each
@@ -181,7 +181,7 @@ class Chordia(object):
                                   'w'), indent=2)
 
     def joint_estimate(self, pitch_file, mode_names='', mode_dir='./',
-                       distance_method="bhat", metric='pcd', k_param=3,
+                       distance_method="bhat", feature='pcd', k_param=3,
                        equal_sample_per_mode=False):
         """--------------------------------------------------------------------
         In the estimation phase, the input pitch track is sliced into chunk and
@@ -221,7 +221,7 @@ class Chordia(object):
 
         distance_method : The choice of distance methods. See distance() in
                         ModeFunctions for more information.
-        metric          : Whether the model should be octave wrapped (Pitch
+        feature         : Whether the model should be octave wrapped (Pitch
 
                         Class Distribution: PCD) or not (Pitch Distribution:
 
@@ -267,7 +267,7 @@ class Chordia(object):
             neighbors[p] = self._chunk_estimate(
                 chunks[p], mode_names=mode_names, mode_dir=mode_dir,
                 est_tonic=True, est_mode=True, distance_method=distance_method,
-                metric=metric, min_cnt=min_cnt,
+                feature=feature, min_cnt=min_cnt,
                 equal_sample_per_mode=equal_sample_per_mode)
 
         # The decision making about the entire recording starts here. neighbors
@@ -306,7 +306,7 @@ class Chordia(object):
         return elem_counts[np.argmax(idx_counts)]
 
     def tonic_estimate(self, pitch_file, mode_name, mode_dir='./',
-                       distance_method="bhat", metric='pcd', k_param=3,
+                       distance_method="bhat", feature='pcd', k_param=3,
                        equal_sample_per_mode=False):
         """--------------------------------------------------------------------
         Tonic Estimation: The mode of the recording is known and tonic is to be
@@ -342,7 +342,7 @@ class Chordia(object):
             neighbors[p] = self._chunk_estimate(
                 chunks[p], mode_name=mode_name, mode_dir=mode_dir,
                 est_tonic=True, est_mode=False,
-                distance_method=distance_method, metric=metric,
+                distance_method=distance_method, feature=feature,
                 min_cnt=min_cnt, equal_sample_per_mode=equal_sample_per_mode)
 
         candidate_distances, candidate_ests, kn_distances, kn_ests = (
@@ -364,7 +364,7 @@ class Chordia(object):
         return elem_counts[np.argmax(idx_counts)]
 
     def mode_estimate(self, pitch_file, tonic_freq, mode_names, mode_dir='./',
-                      distance_method="bhat", metric='pcd',
+                      distance_method="bhat", feature='pcd',
                       k_param=3, equal_sample_per_mode=False):
         """--------------------------------------------------------------------
         Mode Estimation: The tonic of the recording is known and mode is to be
@@ -399,7 +399,7 @@ class Chordia(object):
             neighbors[p] = self._chunk_estimate(
                 chunks[p], mode_names=mode_names, mode_dir=mode_dir,
                 est_tonic=False, est_mode=True,
-                distance_method=distance_method, metric=metric,
+                distance_method=distance_method, feature=feature,
                 ref_freq=tonic_freq, min_cnt=min_cnt,
                 equal_sample_per_mode=equal_sample_per_mode)
 
@@ -423,7 +423,7 @@ class Chordia(object):
 
     def _chunk_estimate(self, pitch_track, mode_names=None, mode_name='',
                         mode_dir='./', est_tonic=True, est_mode=True,
-                        distance_method="bhat", metric='pcd', ref_freq=440.0,
+                        distance_method="bhat", feature='pcd', ref_freq=440.0,
                         min_cnt=3, equal_sample_per_mode=False):
         """--------------------------------------------------------------------
         This function is called by the wrapper estimate() function only. It
@@ -450,7 +450,7 @@ class Chordia(object):
                         is False, mode_name is treated as the annotated mode.
         distance_method : The choice of distance methods. See distance() in
                           ModeFunctions for more information.
-        metric          : Whether the model should be octave wrapped (Pitch
+        feature         : Whether the model should be octave wrapped (Pitch
                         Class Distribution: PCD) or not (Pitch Distribution:
                         PD)
         ref_freq        : Annotated tonic of the recording. If it's unknown, we
@@ -465,7 +465,7 @@ class Chordia(object):
         distrib = PitchDistribution.from_hz_pitch(
             pitch_track, ref_freq=ref_freq, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
-        distrib = distrib.to_pcd() if metric == 'pcd' else distrib
+        distrib = distrib.to_pcd() if feature == 'pcd' else distrib
         # The model mode distribution(s) are loaded. If the mode is annotated
         # and tonic is to be estimated, only the model of annotated mode is
         # retrieved.
@@ -507,7 +507,7 @@ class Chordia(object):
         # steps, regardless of the process being a joint estimation of a
         # tonic estimation.
         if est_tonic:
-            if metric == 'pcd':
+            if feature == 'pcd':
                 # This is a precaution. If there happens to be a peak at the
                 # last (and first due to the circular nature of PCD) sample,
                 # it's considered as two peaks, one at the end and one at
@@ -528,7 +528,7 @@ class Chordia(object):
                 # be treated as tonic candidates.
                 peak_idxs, peak_vals = distrib.detect_peaks()
 
-            elif metric == 'pd':
+            elif feature == 'pd':
                 # Since PD isn't circular, the precaution in PCD is unnecessary
                 # here. Peaks of the distribution are found and recorded.
                 # These will be treated as tonic candidates.
@@ -539,7 +539,7 @@ class Chordia(object):
                 origin = np.where(distrib.bins == 0)[0][0]
                 shift_idxs = [(idx - origin) for idx in peak_idxs]
             else:
-                raise ValueError('"metric" can either take the value "pd" or '
+                raise ValueError('"feature" can either take the value "pd" or '
                                  '"pcd".')
 
         # Here the actual estimation steps begin
@@ -548,13 +548,13 @@ class Chordia(object):
         # Bozkurt and Chordia. We might squeeze them into a single function
         # in ModeFunctions.
         if est_tonic and est_mode:
-            if metric == 'pcd':
+            if feature == 'pcd':
                 # PCD doesn't require any prelimimary steps. Generates the
                 # distance matrix. The rows are tonic candidates and columns
                 # are mode candidates.
                 dist_mat = modefun.generate_distance_matrix(
                     distrib, peak_idxs, mode_dists, method=distance_method)
-            elif metric == 'pd':
+            elif feature == 'pd':
                 # Since PD lengths aren't equal, zero padding is required and
                 # tonic_estimate() of ModeFunctions just does that. It can
                 # handle only a single column, so the columns of the matrix
@@ -579,10 +579,10 @@ class Chordia(object):
                 # Due to the precaution step of PCD, the reference frequency is
                 # changed. The cent value of the tonic estimate is converted
                 # back to Hz.
-                if metric == 'pcd':
+                if feature == 'pcd':
                     tonic_list[r] = Converter.cent_to_hz(
                         [distrib.bins[peak_idxs[min_row]]], new_ref_freq)[0]
-                elif metric == 'pd':
+                elif feature == 'pd':
                     tonic_list[r] = Converter.cent_to_hz(
                         [shift_idxs[min_row] * self.step_size], ref_freq)[0]
                 # We have found out which chunk is our nearest now. Here, we
@@ -603,8 +603,8 @@ class Chordia(object):
         elif est_tonic:
             # This part assigns the special case changes to standard variables,
             # so PD and PCD can be treated in the same way.
-            peak_idxs = shift_idxs if metric == 'pd' else peak_idxs
-            new_ref_freq = ref_freq if metric == 'pd' else new_ref_freq
+            peak_idxs = shift_idxs if feature == 'pd' else peak_idxs
+            new_ref_freq = ref_freq if feature == 'pd' else new_ref_freq
 
             # Distance matrix is generated. The mode is already known,
             # so there is only one mode collection, i.e. set of chunk
@@ -642,7 +642,7 @@ class Chordia(object):
                 distance_vector[idx] = (np.amax(distance_vector) + 1)
             return [mode_list, min_distance_list.tolist()]
 
-    def train_chunks(self, pts, ref_freq, metric='pcd'):
+    def train_chunks(self, pts, ref_freq, feature='pcd'):
         """--------------------------------------------------------------------
         Gets the pitch track chunks of a recording, generates its pitch
         distribution and returns the PitchDistribution objects as a list.
@@ -656,7 +656,7 @@ class Chordia(object):
         ref_freq   : Reference frequency to be used in PD/PCD generation.
                     Since this the training function, this should be the
                     annotated tonic of the recording
-        metric     : The choice of PCD or PD
+        feature    : The choice of PCD or PD
         --------------------------------------------------------------------"""
         distrib_list = []
         # Iterates over the pitch tracks of a recording
@@ -665,7 +665,7 @@ class Chordia(object):
             distrib = PitchDistribution.from_cent_pitch(
                 pts[idx], ref_freq=ref_freq, smooth_factor=self.smooth_factor,
                 step_size=self.step_size)
-            if metric == 'pcd':
+            if feature == 'pcd':
                 distrib = distrib.to_pcd()
 
             # The resultant pitch distributions are filled in the list to be

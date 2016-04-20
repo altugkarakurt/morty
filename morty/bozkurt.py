@@ -45,7 +45,7 @@ class Bozkurt(object):
         self.smooth_factor = smooth_factor
         self.step_size = step_size
 
-    def train(self, mode_name, pitch_files, tonic_freqs, metric='pcd',
+    def train(self, mode_name, pitch_files, tonic_freqs, feature='pcd',
               save_dir=''):
         """--------------------------------------------------------------------
         For the mode trainings, the requirements are a set of recordings with
@@ -64,7 +64,7 @@ class Bozkurt(object):
         pitch_files   : List of files with pitch tracks extracted from the
                         recording (i.e. single-column files with frequencies)
         tonic_freqs   : List of annotated tonic frequencies of recordings
-        metric        : Whether the model should be octave wrapped (Pitch Class
+        feature       : Whether the model should be octave wrapped (Pitch Class
                         Distribution: PCD) or not (Pitch Distribution: PD)
         save_dir      : Where to save the resultant JSON files.
         --------------------------------------------------------------------"""
@@ -87,7 +87,7 @@ class Bozkurt(object):
         pitch_distrib = PitchDistribution.from_cent_pitch(
             mode_track, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
-        if metric == 'pcd':  # convert to pitch class distribution, if
+        if feature == 'pcd':  # convert to pitch class distribution, if
             # specified
             pitch_distrib = pitch_distrib.to_pcd()
 
@@ -100,7 +100,7 @@ class Bozkurt(object):
         return pitch_distrib
 
     def joint_estimate(self, pitch_file, mode_names, ref_freq=440.0, rank=1,
-                       distance_method="bhat", metric='pcd', mode_dir='./'):
+                       distance_method="bhat", feature='pcd', mode_dir='./'):
         """--------------------------------------------------------------------
         Joint Estimation: Neither the tonic nor the mode of the recording is
         known. Then, joint estimation estimates both of these parameters
@@ -124,7 +124,7 @@ class Bozkurt(object):
                         each containing a tonic/mode pair.
         distance_method : The choice of distance methods. See distance() in
                         ModeFunctions for more information.
-        metric          : Whether the model should be octave wrapped (Pitch
+        feature         : Whether the model should be octave wrapped (Pitch
                         Class Distribution: PCD) or not (Pitch Distribution:
                         PD)
         --------------------------------------------------------------------"""
@@ -142,13 +142,13 @@ class Bozkurt(object):
             smooth_factor=self.smooth_factor, step_size=self.step_size)
 
         # convert to PCD, if specified
-        distrib = distrib.to_pcd() if metric == 'pcd' else distrib
+        distrib = distrib.to_pcd() if feature == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
         tonic_ranked = [('', 0) for _ in range(rank)]
         mode_ranked = [('', 0) for _ in range(rank)]
 
-        if metric == 'pcd':
+        if feature == 'pcd':
             # If there happens to be a peak at the last (and first due to the
             # circular nature of PCD) sample, it is considered as two peaks,
             # one at the end and one at the beginning. To prevent this,
@@ -167,7 +167,7 @@ class Bozkurt(object):
             # candidates.
             dist_mat = modefun.generate_distance_matrix(
                 distrib, peak_idxs, models, method=distance_method)
-        elif metric == 'pd':
+        elif feature == 'pd':
             # Find the peaks of the distribution. These are the tonic
             # candidates
             peak_idxs, peak_vals = distrib.detect_peaks()
@@ -188,7 +188,7 @@ class Bozkurt(object):
                     distrib, shift_idxs, model,
                     distance_method=distance_method)
         else:
-            raise ValueError('"metric" can either take the value "pd" or '
+            raise ValueError('"feature" can either take the value "pd" or '
                              '"pcd".')
 
         # Distance matrix is ready now. For each rank, (or each pair of
@@ -205,10 +205,10 @@ class Bozkurt(object):
             # Due to the precaution step of PCD, the reference frequency is
             # changed. That's why it's treated differently than PD. Here,
             # the cent value of the tonic estimate is converted back to Hz.
-            if metric == 'pcd':
+            if feature == 'pcd':
                 tonic_ranked[r] = Converter.cent_to_hz(
                     [distrib.bins[peak_idxs[min_row]]], ref_freq)[0]
-            elif metric == 'pd':
+            elif feature == 'pd':
                 tonic_ranked[r] = Converter.cent_to_hz(
                     [shift_idxs[min_row] * self.step_size], ref_freq)[0]
             # Current mode estimate is recorded.
@@ -219,7 +219,7 @@ class Bozkurt(object):
         return mode_ranked, tonic_ranked
 
     def tonic_estimate(self, pitch_file, mode_name, rank=1, ref_freq=440.0,
-                       distance_method="bhat", metric='pcd', mode_dir="./"):
+                       distance_method="bhat", feature='pcd', mode_dir="./"):
         """--------------------------------------------------------------------
         Tonic Estimation: The mode of the recording is known and tonic is to be
         estimated. This is generally the most accurate estimation among the
@@ -245,13 +245,13 @@ class Bozkurt(object):
             step_size=self.step_size)
 
         # convert to PCD, if specified
-        distrib = distrib.to_pcd() if metric == 'pcd' else distrib
+        distrib = distrib.to_pcd() if feature == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
         tonic_ranked = [('', 0) for _ in range(rank)]
 
         # Preliminary steps for tonic identification
-        if metric == 'pcd':
+        if feature == 'pcd':
             shift_factor = distrib.vals.tolist().index(min(distrib.vals))
             distrib = distrib.shift(shift_factor)
 
@@ -263,7 +263,7 @@ class Bozkurt(object):
             # candidates.
             peak_idxs, peak_vals = distrib.detect_peaks()
 
-        elif metric == 'pd':
+        elif feature == 'pd':
             # Find the peaks of the distribution. These are the tonic
             # candidates
             peak_idxs, peak_vals = distrib.detect_peaks()
@@ -278,8 +278,8 @@ class Bozkurt(object):
         # This part assigns the special case changes to standard variables,
         # so that we can treat PD and PCD in the same way, as much as
         # possible.
-        peak_idxs = shift_idxs if metric == 'pd' else peak_idxs
-        tonic_freq = tonic_freq if metric == 'pcd' else ref_freq
+        peak_idxs = shift_idxs if feature == 'pd' else peak_idxs
+        tonic_freq = tonic_freq if feature == 'pcd' else ref_freq
 
         # Distance vector is generated. In the tonic_estimate() function
         # of ModeFunctions, PD and PCD are treated differently and it
@@ -298,10 +298,10 @@ class Bozkurt(object):
             # PCD and PD are treated differently here.
 
             # TODO: review here
-            if metric == 'pcd':
+            if feature == 'pcd':
                 tonic_ranked[r] = Converter.cent_to_hz(
                     [distrib.bins[peak_idxs[idx]]], tonic_freq)[0]
-            elif metric == 'pd':
+            elif feature == 'pd':
                 tonic_ranked[r] = Converter.cent_to_hz(
                     [shift_idxs[idx] * self.step_size], tonic_freq)[0]
             # Current minima is replaced with a value larger than maxima,
@@ -310,7 +310,7 @@ class Bozkurt(object):
         return tonic_ranked
 
     def mode_estimate(self, pitch_file, mode_names='./', tonic_freq=None,
-                      rank=1, distance_method="bhat", metric='pcd',
+                      rank=1, distance_method="bhat", feature='pcd',
                       mode_dir='./'):
         """--------------------------------------------------------------------
         Mode Estimation: The tonic of the recording is known and mode is to be
@@ -338,7 +338,7 @@ class Bozkurt(object):
             step_size=self.step_size)
 
         # convert to PCD, if specified
-        distrib = distrib.to_pcd() if metric == 'pcd' else distrib
+        distrib = distrib.to_pcd() if feature == 'pcd' else distrib
 
         # Saved mode models are loaded and output variables are initiated
         mode_ranked = [('', 0) for _ in range(rank)]
