@@ -462,10 +462,10 @@ class Chordia(object):
         --------------------------------------------------------------------"""
         # Preliminaries before the estimations
         # Cent-to-Hz covnersion is done and pitch distributions are generated
-        dist = PitchDistribution.from_hz_pitch(
+        distrib = PitchDistribution.from_hz_pitch(
             pitch_track, ref_freq=ref_freq, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
-        dist = dist.to_pcd() if metric == 'pcd' else dist
+        distrib = distrib.to_pcd() if metric == 'pcd' else distrib
         # The model mode distribution(s) are loaded. If the mode is annotated
         # and tonic is to be estimated, only the model of annotated mode is
         # retrieved.
@@ -516,26 +516,26 @@ class Chordia(object):
                 # i.e. make it the new reference frequency. This new
                 # reference could have been any other as long as there is no
                 # peak there, but minima is fairly easy to find.
-                shift_factor = dist.vals.tolist().index(min(dist.vals))
-                dist = dist.shift(shift_factor)
+                shift_factor = distrib.vals.tolist().index(min(distrib.vals))
+                distrib = distrib.shift(shift_factor)
 
                 # new_ref_freq is the new reference frequency after shift,
                 # as mentioned above.
-                new_ref_freq = Converter.cent_to_hz([dist.bins[shift_factor]],
+                new_ref_freq = Converter.cent_to_hz([distrib.bins[shift_factor]],
                                                     ref_freq=ref_freq)[0]
                 # Peaks of the distribution are found and recorded. These will
                 # be treated as tonic candidates.
-                peak_idxs, peak_vals = dist.detect_peaks()
+                peak_idxs, peak_vals = distrib.detect_peaks()
 
             elif metric == 'pd':
                 # Since PD isn't circular, the precaution in PCD is unnecessary
                 # here. Peaks of the distribution are found and recorded.
                 # These will be treated as tonic candidates.
-                peak_idxs, peak_vals = dist.detect_peaks()
+                peak_idxs, peak_vals = distrib.detect_peaks()
                 # The number of samples to be shifted is the list
                 # [peak indices - zero bin] origin is the bin with value
                 # zero and the shifting is done w.r.t. it.
-                origin = np.where(dist.bins == 0)[0][0]
+                origin = np.where(distrib.bins == 0)[0][0]
                 shift_idxs = [(idx - origin) for idx in peak_idxs]
             else:
                 raise ValueError('"metric" can either take the value "pd" or '
@@ -552,7 +552,7 @@ class Chordia(object):
                 # distance matrix. The rows are tonic candidates and columns
                 # are mode candidates.
                 dist_mat = modefun.generate_distance_matrix(
-                    dist, peak_idxs, mode_dists, method=distance_method)
+                    distrib, peak_idxs, mode_dists, method=distance_method)
             elif metric == 'pd':
                 # Since PD lengths aren't equal, zero padding is required and
                 # tonic_estimate() of ModeFunctions just does that. It can
@@ -561,7 +561,7 @@ class Chordia(object):
                 dist_mat = np.zeros((len(shift_idxs), len(mode_dists)))
                 for m, cur_mode_dist in enumerate(mode_dists):
                     dist_mat[:, m] = modefun.tonic_estimate(
-                        dist, shift_idxs, cur_mode_dist,
+                        distrib, shift_idxs, cur_mode_dist,
                         distance_method=distance_method)
 
             # Since we need to report min_cnt many nearest neighbors, the loop
@@ -580,7 +580,7 @@ class Chordia(object):
                 # back to Hz.
                 if metric == 'pcd':
                     tonic_list[r] = Converter.cent_to_hz(
-                        [dist.bins[peak_idxs[min_row]]], new_ref_freq)[0]
+                        [distrib.bins[peak_idxs[min_row]]], new_ref_freq)[0]
                 elif metric == 'pd':
                     tonic_list[r] = Converter.cent_to_hz(
                         [shift_idxs[min_row] * self.step_size], ref_freq)[0]
@@ -610,7 +610,7 @@ class Chordia(object):
             # distributions belong to the same mode. Each column is for
             # a chunk distribution and each row is for a tonic candidate.
             dist_mat = [modefun.tonic_estimate(
-                dist, peak_idxs, d, distance_method=distance_method)
+                distrib, peak_idxs, d, distance_method=distance_method)
                         for d in mode_dist]
 
             # See the joint estimation version of this loop for further
@@ -619,7 +619,7 @@ class Chordia(object):
                 min_row = np.where((dist_mat == np.amin(dist_mat)))[0][0]
                 min_col = np.where((dist_mat == np.amin(dist_mat)))[1][0]
                 tonic_list[r] = Converter.cent_to_hz(
-                    [dist.bins[peak_idxs[min_col]]], new_ref_freq)[0]
+                    [distrib.bins[peak_idxs[min_col]]], new_ref_freq)[0]
                 min_distance_list[r] = dist_mat[min_row][min_col]
                 dist_mat[min_row][min_col] = (np.amax(dist_mat) + 1)
             return [tonic_list, min_distance_list.tolist()]
@@ -630,7 +630,7 @@ class Chordia(object):
             # Since the tonic is annotated, the distribution isn't shifted and
             # compared to each chunk distribution in each candidate mode model.
             distance_vector = modefun.mode_estimate(
-                dist, mode_dists, distance_method=distance_method)
+                distrib, mode_dists, distance_method=distance_method)
 
             # See the joint estimation version of this loop for further
             # explanations.
@@ -657,17 +657,17 @@ class Chordia(object):
                     annotated tonic of the recording
         metric     : The choice of PCD or PD
         --------------------------------------------------------------------"""
-        dist_list = []
+        distrib_list = []
         # Iterates over the pitch tracks of a recording
         for idx, _ in enumerate(pts):
             # PitchDistribution of the current chunk is generated
-            dist = PitchDistribution.from_cent_pitch(
+            distrib = PitchDistribution.from_cent_pitch(
                 pts[idx], ref_freq=ref_freq, smooth_factor=self.smooth_factor,
                 step_size=self.step_size)
             if metric == 'pcd':
-                dist = dist.to_pcd()
+                distrib = distrib.to_pcd()
 
             # The resultant pitch distributions are filled in the list to be
             # returned
-            dist_list.append(dist)
-        return dist_list
+            distrib_list.append(distrib)
+        return distrib_list

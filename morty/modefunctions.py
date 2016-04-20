@@ -39,27 +39,28 @@ def parse_pitch_track(pitch_track, multiple=False):
             return np.array(pitch_track)
 
 
-def generate_distance_matrix(dist, peak_idxs, mode_dists, method='euclidean'):
+def generate_distance_matrix(distrib, peak_idxs, mode_distribs,
+                             method='euclidean'):
     """------------------------------------------------------------------------
     Iteratively calculates the distance of the input distribution from each
     (mode candidate, tonic candidate) pair. This is a generic function, that is
     independent of distribution type or any other parameter value.
     ---------------------------------------------------------------------------
-    dist       : Input distribution that is to be estimated
-    peak_idxs  : List of indices of dist's peaks
-    mode_dists : List of candidate mode distributions
-    method     : The distance method to be used. The available distances are
-                 listed in distance() function.
+    distribs        : Input distribution that is to be estimated
+    peak_idxs       : List of indices of distribution peaks
+    mode_distribss  : List of candidate mode distributions
+    method          : The distance method to be used. The available distances
+                    are listed in distance() function.
     ------------------------------------------------------------------------"""
 
-    result = np.zeros((len(peak_idxs), len(mode_dists)))
+    result = np.zeros((len(peak_idxs), len(mode_distribs)))
 
     # Iterates over the peaks, i.e. the tonic candidates
     for i, cur_peak_idx in enumerate(peak_idxs):
-        trial = dist.shift(cur_peak_idx)
+        trial = distrib.shift(cur_peak_idx)
 
         # Iterates over mode candidates
-        for j, cur_mode_dist in enumerate(mode_dists):
+        for j, cur_mode_dist in enumerate(mode_distribs):
             # Calls the distance function for each entry of the matrix
             result[i][j] = distance(trial.vals, cur_mode_dist.vals,
                                     method=method)
@@ -142,50 +143,51 @@ def pd_zero_pad(pd, mode_pd):
     return pd, mode_pd
 
 
-def tonic_estimate(dist, peak_idxs, mode_dist, distance_method="euclidean"):
+def tonic_estimate(distrib, peak_idxs, mode_distrib,
+                   distance_method="euclidean"):
     """------------------------------------------------------------------------
     Given a mode (or candidate mode), compares the piece's distribution with
     each candidate tonic and returns the resultant distance vector to higher
     level functions. This is a wrapper function that handles the required
     preliminary tasks and calls generate_distance_matrix() accordingly.
     ---------------------------------------------------------------------------
-    dist            : Distribution of the input recording
-    peak_idxs       : Indices of peaks (i.e. tonic candidates) of dist
-    mode_dist       : Distribution of the mode that dist will be compared at
+    distrib         : Distribution of the input recording
+    peak_idxs       : Indices of peaks (i.e. tonic candidates) of distribution
+    mode_distib     : Distribution of the mode that distrib will be compared at
                       each iteration.
     distance_method : The choice of distance method. See the full list at
                       distance()
     ------------------------------------------------------------------------"""
 
-    assert dist.type() == mode_dist.type(), \
+    assert distrib.type() == mode_distrib.type(), \
         'Mismatch between the type of the input distribution and the trained '\
         'mode distribution.'
 
     # There are no preliminaries, simply generate the distance vector
-    if dist.type() == 'pcd':
-        return np.array(generate_distance_matrix(dist, peak_idxs, [mode_dist],
-                                                 method=distance_method))[:, 0]
-    elif dist.type() == 'pd':
+    if distrib.type() == 'pcd':
+        return np.array(generate_distance_matrix(
+            distrib, peak_idxs, [mode_distrib], method=distance_method))[:, 0]
+    elif distrib.type() == 'pd':
         # The PitchDistribution object is copied in order not to change its
         # internals before the following steps.
         temp = PitchDistribution(
-            dist.bins, dist.vals, kernel_width=dist.kernel_width,
-            ref_freq=dist.ref_freq)
-        temp, mode_dist = pd_zero_pad(temp, mode_dist)
+            distrib.bins, distrib.vals, kernel_width=distrib.kernel_width,
+            ref_freq=distrib.ref_freq)
+        temp, mode_distrib = pd_zero_pad(temp, mode_distrib)
 
         # Fills both sides of distribution values with zeros, to make sure
         # that the shifts won't drop any non-zero values
         temp.vals = np.concatenate((np.zeros(abs(max(peak_idxs))), temp.vals,
                                     np.zeros(abs(min(peak_idxs)))))
-        mode_dist.vals = np.concatenate(
+        mode_distrib.vals = np.concatenate(
             (np.zeros(abs(max(peak_idxs))),
-             mode_dist.vals, np.zeros(abs(min(peak_idxs)))))
+             mode_distrib.vals, np.zeros(abs(min(peak_idxs)))))
 
-        return np.array(generate_distance_matrix(temp, peak_idxs, [mode_dist],
-                                                 method=distance_method))[:, 0]
+        return np.array(generate_distance_matrix(
+            temp, peak_idxs, [mode_distrib], method=distance_method))[:, 0]
 
 
-def mode_estimate(dist, mode_dists, distance_method='euclidean'):
+def mode_estimate(distrib, mode_distribs, distance_method='euclidean'):
     """------------------------------------------------------------------------
     Compares the recording's distribution with each candidate mode with respect
     to the given tonic and returns the resultant distance vector to higher
@@ -194,38 +196,39 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean'):
     function. This is a wrapper function that handles the required
     preliminary tasks and calls generate_distance_matrix() accordingly.
     ---------------------------------------------------------------------------
-    dist            : Distribution of the input recording
-    mode_dists      : List of PitchDistribution objects. These are the model
+    distrib         : Distribution of the input recording
+    mode_distribs   : List of PitchDistribution objects. These are the model
                       pitch distributions of candidate modes.
     distance_method : The choice of distance method. See the full list at
                       distance()
     step_size       : The step-size of the pitch distribution. Unit is cents
     ------------------------------------------------------------------------"""
 
-    assert all(dist.type() == md.type() for md in mode_dists), \
+    assert all(distrib.type() == md.type() for md in mode_distribs), \
         'Mismatch between the type of the input distribution and the trained '\
         'mode distributions.'
 
     # There are no preliminaries, simply generate the distance vector.
-    if dist.type() == 'pcd':
+    if distrib.type() == 'pcd':
         distance_vector = np.array(generate_distance_matrix(
-            dist, [0], mode_dists, method=distance_method))[0]
-    elif dist.type() == 'pd':
-        distance_vector = np.zeros(len(mode_dists))
+            distrib, [0], mode_distribs, method=distance_method))[0]
+    elif distrib.type() == 'pd':
+        distance_vector = np.zeros(len(mode_distribs))
 
         # For each trial, a new instance of PitchDistribution is created and
-        # its attributes are copied from dist. For each trial, it needs to
-        # be zero padded according to the current mode distribution length.
-        # The entries of the vector is generated iteratively, one-by-one.
-        for i in range(len(mode_dists)):
+        # its attributes are copied from mode_distribs. For each trial, it
+        # needs to be zero padded according to the current mode distribution
+        # length. The entries of the vector is generated iteratively,
+        # one-by-one.
+        for i in range(len(mode_distribs)):
             trial = PitchDistribution(
-                dist.bins, dist.vals, kernel_width=dist.kernel_width,
-                ref_freq=dist.ref_freq)
-            trial, mode_trial = pd_zero_pad(trial, mode_dists[i])
+                distrib.bins, distrib.vals, kernel_width=distrib.kernel_width,
+                ref_freq=distrib.ref_freq)
+            trial, mode_trial = pd_zero_pad(trial, mode_distribs[i])
             distance_vector[i] = distance(trial.vals, mode_trial.vals,
                                           method=distance_method)
     else:
-        raise ValueError('"dist.type()" can either take the values "pd" or '
+        raise ValueError('"distrib.type()" can either take the values "pd" or '
                          '"pcd".')
 
     return distance_vector

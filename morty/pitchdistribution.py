@@ -176,13 +176,13 @@ class PitchDistribution(object):
         --------------------------------------------------------------------
         """
         try:
-            dist = json.load(open(file_name, 'r'))
+            distrib = json.load(open(file_name, 'r'))
         except IOError:  # json string
-            dist = json.loads(file_name)
+            distrib = json.loads(file_name)
 
-        dist = dist[0] if(not type(dist) == dict) else dist
+        distrib = distrib[0] if(not type(distrib) == dict) else distrib
 
-        return PitchDistribution.from_dict(dist)
+        return PitchDistribution.from_dict(distrib)
 
     @staticmethod
     def from_dict(distrib_dict):
