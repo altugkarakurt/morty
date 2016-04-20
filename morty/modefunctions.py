@@ -204,7 +204,8 @@ def mode_estimate(distrib, mode_distribs, distance_method='bhat'):
     step_size       : The step-size of the pitch distribution. Unit is cents
     ------------------------------------------------------------------------"""
 
-    assert all(distrib.distrib_type() == md.distrib_type() for md in mode_distribs), \
+    assert all(distrib.distrib_type() == md.distrib_type()
+               for md in mode_distribs), \
         'Mismatch between the type of the input distribution and the trained '\
         'mode distributions.'
 
