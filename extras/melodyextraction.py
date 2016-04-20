@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-from predominantmelodymakam.predominantmelodymakam import \
-    PredominantMelodyMakam
+from predominantmelodymakam.predominantmelodymakam import PredominantMelodyMakam
 from fileoperations.fileoperations import get_filenames_in_dir
 import os
 import json
@@ -42,11 +41,10 @@ for ii, mp3 in enumerate(audio_files):
     else:
         results = extractor.run(mp3)
 
-        pitch = np.array(json.loads(results['pitch']))[:, [0, 1]]
         pitch_track = np.array(json.loads(results['pitch']))[:, [0, 1]]
         pitch_track = (np.around([i * math.pow(10, DECIMAL)
                                   for i in pitch_track[:, 1]]) / 100.0)
         pitch_track = pitch_track.tolist()
         with open(txtfiles[ii], 'w') as f:
             for i in pitch_track:
-                f.write(u"{0:.2f}\n".format(i))
+                f.write("{0:.2f}\n".format(i))
