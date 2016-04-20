@@ -186,7 +186,7 @@ class Bozkurt(object):
             for m, model in enumerate(models):
                 dist_mat[:, m] = modefun.tonic_estimate(
                     distrib, shift_idxs, model,
-                    distance_method=distance_method, metric=metric)
+                    distance_method=distance_method)
         else:
             raise ValueError('"metric" can either take the value "pd" or '
                              '"pcd".')
