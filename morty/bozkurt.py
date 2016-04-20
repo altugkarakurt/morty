@@ -12,10 +12,8 @@ class Bozkurt(object):
     estimation, in the following sources. This also includes some improvements
     to the method, such as the option of PCD along with PD, or the option of
     smoothing along with fine-grained pitch distributions. There is also the
-
     option to get the first chunk of the input recording of desired length
     and only consider that portion for both estimation and training.
-
 
     * A. C. Gedik, B.Bozkurt, 2010, "Pitch Frequency Histogram Based Music
     Information Retrieval for Turkish Music", Signal Processing, vol.10,
@@ -110,7 +108,6 @@ class Bozkurt(object):
         -----------------------------------------------------------------------
         pitch_file:     : File in which the pitch track of the input recording
                         whose tonic and/or mode is to be estimated.
-
         mode_in         : The mode input, If it is a filename or distribution
                         object, the mode is treated as known and only tonic
                         will be estimated. If a directory with the json
@@ -223,17 +220,12 @@ class Bozkurt(object):
         """--------------------------------------------------------------------
         Tonic Estimation: The mode of the recording is known and tonic is to be
         estimated. This is generally the most accurate estimation among the
-
         three. To use this: est_tonic should be True and est_mode should be
-
         False. In this case tonic_freq  and mode_names parameters are not
-
         used since tonic isn't known a priori and mode is known and hence
-
         there is no candidate mode.
         -----------------------------------------------------------------------
         See joint_estimation() for details. The I/O of *_estimate() functions
-
         are identical.
         --------------------------------------------------------------------"""
 
@@ -283,7 +275,6 @@ class Bozkurt(object):
         # This part assigns the special case changes to standard variables,
         # so that we can treat PD and PCD in the same way, as much as
         # possible.
-
         peak_idxs = shift_idxs if metric == 'pd' else peak_idxs
         tonic_freq = tonic_freq if metric == 'pcd' else ref_freq
 

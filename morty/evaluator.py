@@ -6,7 +6,6 @@ class Evaluator(object):
     """----------------------------------------------------------------
     This class is used for evaluating the validity of our estimations.
     We return a dictionary entry as our evaluation result. See the
-
     return statements in each function to see which attributes are
     being reported.
     ----------------------------------------------------------------"""

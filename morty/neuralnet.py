@@ -6,11 +6,11 @@ from random import shuffle
 
 
 def heaviside(x):
-    return (1 if x >= 0 else 0)
+    return 1 if x >= 0 else 0
 
 
 def d_heaviside(x):
-    return (1 if x == 0 else 0)
+    return 1 if x == 0 else 0
 
 
 def sigmoid(x):
@@ -29,8 +29,7 @@ def d_MSE(y, y_est):
     return -(y - y_est)
 
 
-class NeuralNet:
-
+class NeuralNet(object):
     def __init__(self, sizes, activation_function=(sigmoid, d_sigmoid),
                  weights=None):
         # TODO: check whether bias, weight sizes are compatible with layer
@@ -72,7 +71,7 @@ class NeuralNet:
                 local_output = self.activation_function(local_gradient)
                 layer_outputs[layer][neuron] = local_output
 
-        return (layer_outputs, local_fields)
+        return layer_outputs, local_fields
 
     def train(self, data, labels, epochs=1, block_size=1, learn_rate=0.5):
         data = [np.array(datum) for datum in data]

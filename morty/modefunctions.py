@@ -213,7 +213,6 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd'):
     if metric == 'pcd':
         distance_vector = np.array(generate_distance_matrix(
             dist, [0], mode_dists, method=distance_method))[0]
-
     elif metric == 'pd':
         distance_vector = np.zeros(len(mode_dists))
 

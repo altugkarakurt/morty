@@ -15,26 +15,20 @@ class Chordia(object):
     to the proposed version; such as the choice of using PD as well as PCD and
     the choice of fine-grained distributions as well as the smoothened ones.
 
-
     * Chordia, P. and Şentürk, S. 2013. "Joint recognition of raag and tonic
     in North Indian music. Computer Music Journal", 37(3):82–98.
 
     We require a set of recordings with annotated modes and tonics to train the
     mode models. Unlike BozkurtEstimation, there is no single model for a mode.
     Instead, we slice_pitch_track pitch tracks into chunks and generate
-
     distributions for them. So, there are many sample points for each mode.
 
 
     Then, the unknown mode and/or tonic of an input recording is estimated by
     comparing it to these models. For each chunk, we consider the close
-
     neighbors and based on the united set of close neighbors of all chunks
-
     of a recording, we apply K Nearest Neighbors to give a final decision
-
     about the whole recording.
-
     ---------------------------------------------------------------------"""
 
     def __init__(self, step_size=7.5, smooth_factor=7.5, chunk_size=60,
@@ -60,7 +54,6 @@ class Chordia(object):
                         However if the entire track is shorter than this
                         it is still returned as it is, in order to be able to
                         represent that recording.
-
         overlap       : If it's zero, the next chunk starts from the end of the
                         previous chunk, else it starts from the
                         (chunk_size*threshold)th sample of the previous chunk.
@@ -82,7 +75,6 @@ class Chordia(object):
               save_dir=''):
         """--------------------------------------------------------------------
         For the mode trainings, the requirements are a set of recordings with
-
         annotated tonics for each mode under consideration. This function only
         expects the recordings' pitch tracks and corresponding tonics as lists.
         The two lists should be indexed in parallel, so the tonic of ith pitch
@@ -110,7 +102,7 @@ class Chordia(object):
         # generated individually, then appended to pitch_distrib_list.
         # Notice that although we treat each chunk individually, we use a
         # single tonic annotation for each recording so we assume that the
-        #  tonic doesn't change throughout a recording.
+        # tonic doesn't change throughout a recording.
         tonic_freqs = [np.array(tonic) for tonic in tonic_freqs]
         pitch_tracks = ModeFun.parse_pitch_track(pitch_files, multiple=True)
         for pitch_track, tonic in zip(pitch_tracks, tonic_freqs):
@@ -264,7 +256,6 @@ class Chordia(object):
         # entire recording.Then, we find the nearest neighbors from the
         # union of these from each chunk. This is quite an overshoot,
         # we only need min_cnt >= k_param.
-
         min_cnt = len(chunks) * k_param
 
         neighbors = [['', 0] for _ in chunks]
@@ -379,17 +370,14 @@ class Chordia(object):
         Mode Estimation: The tonic of the recording is known and mode is to be
         estimated.
         To use this: est_mode should be True and est_tonic should be False. In
-
         this case mode_name parameter isn't used since the mode annotation
-
         is not available. It can be ignored.
         -----------------------------------------------------------------------
         See joint_estimate() for details. The I/O part of *_estimate()
-
         functions are identical.
         --------------------------------------------------------------------"""
-        # load pitch track
 
+        # load pitch track
         pitch_track = ModeFun.parse_pitch_track(pitch_file, multiple=False)
 
         # Pitch track is sliced into chunks.
@@ -548,7 +536,6 @@ class Chordia(object):
                 shift_idxs = [(idx - origin) for idx in peak_idxs]
 
         # Here the actual estimation steps begin
-
         # Joint Estimation
         # TODO: The first steps of joint estimation are very similar for both
         # Bozkurt and Chordia. We might squeeze them into a single function
@@ -614,9 +601,7 @@ class Chordia(object):
 
             # Distance matrix is generated. The mode is already known,
             # so there is only one mode collection, i.e. set of chunk
-
             # distributions belong to the same mode. Each column is for
-
             # a chunk distribution and each row is for a tonic candidate.
             dist_mat = [ModeFun.tonic_estimate(
                 dist, peak_idxs, d, distance_method=distance_method,
