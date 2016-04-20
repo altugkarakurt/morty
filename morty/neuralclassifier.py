@@ -1,7 +1,7 @@
-from NeuralNet import NeuralNet
-from Converter import Converter
-import ModeFunctions as ModeFun
-from PitchDistribution import PitchDistribution
+from neuralnet import NeuralNet
+from converter import Converter
+import modefunctions as ModeFun
+from pitchdistribution import PitchDistribution
 import numpy as np
 import os
 

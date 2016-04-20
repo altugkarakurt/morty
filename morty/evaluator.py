@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from Converter import Converter
+from converter import Converter
 
 
 class Evaluator(object):

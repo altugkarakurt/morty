@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import os
-from Converter import Converter
-from PitchDistribution import PitchDistribution
-import ModeFunctions as ModeFun
+from converter import Converter
+from pitchdistribution import PitchDistribution
+import modefunctions as ModeFun
 
 
 class Bozkurt(object):
@@ -51,22 +51,19 @@ class Bozkurt(object):
               save_dir=''):
         """--------------------------------------------------------------------
         For the mode trainings, the requirements are a set of recordings with
-
         annotated tonics for each mode under consideration. This function only
         expects the recordings' pitch tracks and corresponding tonics as lists.
         The two lists should be indexed in parallel, so the tonic of ith pitch
         track in the pitch track list should be the ith element of tonic list.
-        Once training is completed for a mode, the model wouldbe generated as a
-
-        PitchDistribution object and saved in a JSON file. For loading these
-        objects and other relevant information about the data structure,
+        Once training is completed for a mode, the model would be generated
+        as a PitchDistribution object and saved in a JSON file. For loading
+        these objects and other relevant information about the data structure,
         see the PitchDistribution class.
         -----------------------------------------------------------------------
         mode_name     : Name of the mode to be trained. This is only used for
                         naming the resultant JSON file, in the form
                         "mode_name.json"
         pitch_files   : List of files with pitch tracks extracted from the
-
                         recording (i.e. single-column files with frequencies)
         tonic_freqs   : List of annotated tonic frequencies of recordings
         metric        : Whether the model should be octave wrapped (Pitch Class

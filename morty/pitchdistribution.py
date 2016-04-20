@@ -6,7 +6,7 @@ import json
 from scipy.stats import norm
 from scipy.integrate import simps
 import matplotlib.pyplot as plt
-from Converter import Converter
+from converter import Converter
 import numbers
 
 

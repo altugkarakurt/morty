@@ -33,7 +33,7 @@ Since the training step is a supervised machine learning process, a dataset for 
 
 Please refer to the jupyter notebooks in the [demos](https://github.com/altugkarakurt/morty/tree/master/demo) folder for the basic usage.
 
-If the predominant melodies are not available, [melodyExtraction.py](https://github.com/altugkarakurt/morty/blob/master/extras/melodyExtraction.py) method in the extras package can be used for automatic predominant melodies extraction. This method is a wrapper [implementation](https://github.com/sertansenturk/predominantmelodymakam) of the predominant melody extraction methodology proposed by Atlı et. al (2014) to store the pitch track in the desired format. The input pitch track is expected to be in given as a .txt file, that consists of a single column of values of the pitch track in Hertz. The timestamps are not required. Note that the default parameters for predominant melody extraction are optimized for Ottoman-Turkish makam music, so you might want to calibrate the parameters according to the necessities of the studied music culture.
+If the predominant melodies are not available, [melodyextraction.py](https://github.com/altugkarakurt/morty/blob/master/extras/melodyExtraction.py) method in the extras package can be used for automatic predominant melodies extraction. This method is a wrapper [implementation](https://github.com/sertansenturk/predominantmelodymakam) of the predominant melody extraction methodology proposed by Atlı et. al (2014) to store the pitch track in the desired format. The input pitch track is expected to be in given as a .txt file, that consists of a single column of values of the pitch track in Hertz. The timestamps are not required. Note that the default parameters for predominant melody extraction are optimized for Ottoman-Turkish makam music, so you might want to calibrate the parameters according to the necessities of the studied music culture.
 
 ### Installation
 
@@ -43,8 +43,7 @@ If you want to install the repository, it is recommended to install the package 
     source env/bin/activate
     python setup.py install
 
-If you want to be able to edit files and have the changes be reflected, then
-install the repository like this instead
+If you want to be able to edit files and have the changes be reflected, then install the repository like this instead
 
     pip install -e .
 
@@ -55,13 +54,13 @@ For the functionalities in extras package, you can install the optional dependen
     pip install -r optional_requirements
 
 ### Explanation of Classes
-* *PitchDistribution* is the class, which holds the pitch distribution. It also includes save and load functions to make the pitch distributions accessible for later use.
+- *PitchDistribution* is the class, which holds the pitch distribution. It also includes save and load functions to make the pitch distributions accessible for later use.
 
-* *BozkurtEstimation* implements the methods proposed in (A. C. Gedik, B.Bozkurt, 2010) and (B. Bozkurt, 2008).
+- *Bozkurt* class implements the methods proposed in (A. C. Gedik, B. Bozkurt, 2010) and (B. Bozkurt, 2008).
 
-* *ChordiaEstimation* implements the method proposed in (Chordia, P. and Şentürk, S. 2013).
+- *Chordia* class implements the method proposed in (P. Chordia and S. Şentürk, 2013).
 
-* *ModeFunctions* includes the low-level functions related to mode and tonic recognition. These functions are generic and common in both Bozkurt and Chordia methods. They aren't expected to be used directly; instead they are called by the higher level wrapper functions in BozkurtEstimation and ChordiaEstimation.
+- *modefunctions* module includes the low-level functions related to mode and tonic recognition. These functions are generic and common in both Bozkurt and Chordia methods. They aren't expected to be used directly; instead they are called by the higher level wrapper functions in BozkurtEstimation and ChordiaEstimation.
 
 ### References
 

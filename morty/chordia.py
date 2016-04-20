@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from morty import ModeFunctions as ModeFun
-from morty.PitchDistribution import PitchDistribution
+from morty import modefunctions as ModeFun
+from morty.pitchdistribution import PitchDistribution
 import json
 import os
 import random
-from Converter import Converter
+from converter import Converter
 
 
 class Chordia(object):

@@ -2,7 +2,7 @@
 import numpy as np
 import os
 from scipy.spatial import distance as spdistance
-from morty.PitchDistribution import PitchDistribution
+from morty.pitchdistribution import PitchDistribution
 
 
 def parse_pitch_track(pitch_track, multiple=False):
@@ -203,7 +203,7 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd'):
     distance_method : The choice of distance method. See the full list at
                       distance()
     metric          : Whether PCD or PD is used
-    step_size         : The step-size of the pitch distribution. Unit is cents
+    step_size       : The step-size of the pitch distribution. Unit is cents
     ------------------------------------------------------------------------"""
 
     # TODO: step_size and pD/pcd information can be retrieved from the dist
@@ -228,6 +228,7 @@ def mode_estimate(dist, mode_dists, distance_method='euclidean', metric='pcd'):
             trial, mode_trial = pd_zero_pad(trial, mode_dists[i])
             distance_vector[i] = distance(trial.vals, mode_trial.vals,
                                           method=distance_method)
+
     return distance_vector
 
 
