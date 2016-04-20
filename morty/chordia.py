@@ -523,7 +523,7 @@ class Chordia(object):
                 # as mentioned above.
                 new_ref_freq = Converter.cent_to_hz(
                     [distrib.bins[shift_factor]], ref_freq=ref_freq)[0]
-                
+
                 # Peaks of the distribution are found and recorded. These will
                 # be treated as tonic candidates.
                 peak_idxs, peak_vals = distrib.detect_peaks()

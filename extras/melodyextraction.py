@@ -22,22 +22,22 @@ else:
 print idx
 
 extractor = PredominantMelodyMakam()
-audioDir = './'  # audio folder and sub folders
+audiodir = './'  # audio folder and sub folders
 
 # text file
-audio_files = get_filenames_in_dir(audioDir, keyword="*.mp3")[0]
-txtFiles = [os.path.join(os.path.dirname(f), os.path.basename(
+audio_files = get_filenames_in_dir(audiodir, keyword="*.mp3")[0]
+txtfiles = [os.path.join(os.path.dirname(f), os.path.basename(
     os.path.splitext(f)[0]) + '.pitch') for f in audio_files]
 
 if idx:  # if index is given
     audio_files = [audio_files[idx]]
-    txtFiles = [txtFiles[idx]]
+    txtfiles = [txtfiles[idx]]
 
 for ii, mp3 in enumerate(audio_files):
     print ' '
     print str(ii + 1) + ": " + os.path.basename(mp3)
 
-    if os.path.isfile(txtFiles[ii]):  # already exists
+    if os.path.isfile(txtfiles[ii]):  # already exists
         print "   > Already exist; skipped."
     else:
         results = extractor.run(mp3)
@@ -47,6 +47,6 @@ for ii, mp3 in enumerate(audio_files):
         pitch_track = (np.around([i * math.pow(10, DECIMAL)
                                   for i in pitch_track[:, 1]]) / 100.0)
         pitch_track = pitch_track.tolist()
-        with open(txtFiles[ii], 'w') as f:
+        with open(txtfiles[ii], 'w') as f:
             for i in pitch_track:
                 f.write("%.2f\n" % i)
