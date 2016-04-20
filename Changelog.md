@@ -1,3 +1,7 @@
+#### morty v1.0.0
+ - First stable release
+ - Refactoring to improve readablity, maintanence and code quality
+
 #### morty v0.9.0
  - First candidate release
  - Implemented [pitch and pitch-class distribution](https://github.com/altugkarakurt/morty/blob/master/morty/PitchDistribution.py).
