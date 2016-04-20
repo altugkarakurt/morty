@@ -221,7 +221,7 @@ class PitchDistribution(object):
         return (max(self.bins) == (1200 - self.step_size) and
                 min(self.bins) == 0)
 
-    def type(self):
+    def distrib_type(self):
         return 'pcd' if self.is_pcd() else 'pd'
 
     def has_hz_bin(self):

@@ -144,8 +144,7 @@ def pd_zero_pad(pd, mode_pd):
     return pd, mode_pd
 
 
-def tonic_estimate(distrib, peak_idxs, mode_distrib,
-                   distance_method="bhat"):
+def tonic_estimate(distrib, peak_idxs, mode_distrib, distance_method="bhat"):
     """------------------------------------------------------------------------
     Given a mode (or candidate mode), compares the piece's distribution with
     each candidate tonic and returns the resultant distance vector to higher
@@ -160,15 +159,15 @@ def tonic_estimate(distrib, peak_idxs, mode_distrib,
                       distance()
     ------------------------------------------------------------------------"""
 
-    assert distrib.type() == mode_distrib.type(), \
+    assert distrib.distrib_type() == mode_distrib.distrib_type(), \
         'Mismatch between the type of the input distribution and the trained '\
         'mode distribution.'
 
     # There are no preliminaries, simply generate the distance vector
-    if distrib.type() == 'pcd':
+    if distrib.distrib_type() == 'pcd':
         return np.array(generate_distance_matrix(
             distrib, peak_idxs, [mode_distrib], method=distance_method))[:, 0]
-    elif distrib.type() == 'pd':
+    elif distrib.distrib_type() == 'pd':
         # The PitchDistribution object is copied in order not to change its
         # internals before the following steps.
         temp = PitchDistribution(
@@ -205,15 +204,15 @@ def mode_estimate(distrib, mode_distribs, distance_method='bhat'):
     step_size       : The step-size of the pitch distribution. Unit is cents
     ------------------------------------------------------------------------"""
 
-    assert all(distrib.type() == md.type() for md in mode_distribs), \
+    assert all(distrib.distrib_type() == md.distrib_type() for md in mode_distribs), \
         'Mismatch between the type of the input distribution and the trained '\
         'mode distributions.'
 
     # There are no preliminaries, simply generate the distance vector.
-    if distrib.type() == 'pcd':
+    if distrib.distrib_type() == 'pcd':
         distance_vector = np.array(generate_distance_matrix(
             distrib, [0], mode_distribs, method=distance_method))[0]
-    elif distrib.type() == 'pd':
+    elif distrib.distrib_type() == 'pd':
         # For each trial, a new instance of PitchDistribution is created and
         # its attributes are copied from mode_distribs. For each trial, it
         # needs to be zero padded according to the current mode distribution
