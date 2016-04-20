@@ -6,45 +6,88 @@ from sklearn import cross_validation
 
 class FoldGenerator(object):
     @classmethod
-    def stratified_k_fold(cls, data_dir, annotation_file, n_folds=10,
-                          save_file=''):
+    def stratified_k_fold(cls, data_dir, annotation_in, n_folds=10,
+                          random_state=None):
+        """
+        Generates stratified k folds from the audio_recordings in the
+        data_dir. The stratification is applied according to the makam
+        annotations
+        :param data_dir: (str) data directory
+        :param annotation_in: (str) json file or dictionary, which stores the
+               annotations
+               The loaded variable is a list of dictionaries, where each
+               dictionary have the "mbid", "tonic" (frequency) and "makam"
+               (name) keys, e.g.
+               [
+                 {
+                   "mbid": "0db48ce4-f018-4d7d-b75e-66a64db72067",
+                   "tonic": 151.1,
+                   "makam": "Hicaz"
+                 },
+                 {
+                   "mbid": "2c88acdf-685d-42c7-913d-1a9f2005587e",
+                   "tonic": 292.5,
+                   "makam": "Hicaz"
+                 }
+                 ...
+               ]
+        :param n_folds: (int) number of stratified folds requested
+        :param random_state: (None, int or RandomState) pseudo-random number
+               generator state used for shuffling. If None, use default numpy
+               RNG for shuffling.
+        :return: list of folds. each fold is organized as a dict with two keys
+               "test" and "train". These keys store a list of dicts, where each
+               dict has the "file", recording "MBID", (annotated) "tonic"
+               and (annotated) "mode" keys, e.g:
+               {'test': [
+                   {'file': '0b45417b-acb4-4f8a-b180-5ad45be889af.pitch',
+                    'mbid': u'0b45417b-acb4-4f8a-b180-5ad45be889af',
+                    'mode': u'Saba',
+                    'tonic': 328.3},
+                   {'file': '3c25f0d8-a6df-4bde-87ef-e4af708b861d.pitch',
+                    'mbid': u'3c25f0d8-a6df-4bde-87ef-e4af708b861d',
+                    'mode': u'Hicaz',
+                    'tonic': 150.0},
+                    ...],
+                'train': [
+                   {...}]
+        """
         modes = cls._get_mode_names(data_dir)
         [file_paths, base_folders, file_names] = get_filenames_in_dir(
             data_dir, keyword='*.pitch')
 
-        with open(annotation_file, 'r') as a:
-            annotations = json.load(a)
+        try:  # json file
+            annotations = json.load(open(annotation_in, 'r'))
+        except TypeError:  # list of dict
+            annotations = annotation_in
 
         file_modes, mbids, tonics = cls._parse_mbid_mode_tonic(
             annotations, file_names, base_folders)
 
         # get the stratified folds
         mode_idx = [modes.index(m) for m in file_modes]
-        skf = cross_validation.StratifiedKFold(mode_idx, n_folds=n_folds,
-                                               shuffle=True)
+        skf = cross_validation.StratifiedKFold(
+            mode_idx, n_folds=n_folds, shuffle=True, random_state=random_state)
 
         folds = cls._organize_folds(skf, file_paths, mbids, file_modes, tonics)
-
-        # save the folds to a file if specified
-        if save_file:
-            with open(save_file, 'w') as f:
-                json.dump(folds, f, indent=2)
 
         return folds
 
     @staticmethod
     def _organize_folds(skf, file_paths, mbids, file_modes, tonics):
-        folds = dict()
-        for ff, fold in enumerate(skf):
-            folds['fold' + str(ff)] = {'train': [], 'test': []}
-            for tr_idx in fold[0]:
-                folds['fold' + str(ff)]['train'].append(
-                    {'file': file_paths[tr_idx], 'mode': file_modes[tr_idx],
-                     'tonic': tonics[tr_idx], 'mbid': mbids[tr_idx]})
-            for te_idx in fold[1]:
-                folds['fold' + str(ff)]['test'].append({
-                    'file': file_paths[te_idx], 'mode': file_modes[te_idx],
-                    'tonic': tonics[te_idx], 'mbid': mbids[te_idx]})
+        folds = []
+        for ff, skf_fold in enumerate(skf):
+            train_ids, test_ids = skf_fold
+
+            # accumulate the training and testing data in the fold
+            fold = {'train': [], 'test': []}
+            for lbl, indices in (('train', train_ids), ('test', test_ids)):
+                for id in indices:
+                    fold[lbl].append({
+                        'file': file_paths[id], 'mode': file_modes[id],
+                        'tonic': tonics[id], 'mbid': mbids[id]})
+
+            folds.append(fold)
 
         return folds
 
