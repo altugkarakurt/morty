@@ -611,8 +611,8 @@ class Chordia(object):
             # distributions belong to the same mode. Each column is for
             # a chunk distribution and each row is for a tonic candidate.
             dist_mat = [modefun.tonic_estimate(
-                distrib, peak_idxs, d, distance_method=distance_method) for
-                        d in mode_dist]
+                distrib, peak_idxs, d, distance_method=distance_method)
+                for d in mode_dist]
 
             # See the joint estimation version of this loop for further
             # explanations
