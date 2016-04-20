@@ -37,7 +37,7 @@ class PitchExtractor(object):
             if os.path.isfile(pf):  # already exists
                 print("   > Already exist; skipped.")
             else:
-                results = cls.extractor.run(af)3
+                results = cls.extractor.run(af)
 
                 pitch_track = np.array(results['pitch'])[:, [0, 1]]
                 pitch_track = (np.around([i * math.pow(10, cls.DECIMAL)
