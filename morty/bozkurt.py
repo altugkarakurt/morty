@@ -73,8 +73,8 @@ class Bozkurt(object):
         # each recording is iteratively converted to cents, according to
         # their respective annotated tonics. Then, these are appended to
         # mode_track and a very long pitch track is generated, as if it is a
-        #  single very long recording. The pitch distribution of this track
-        #  is the mode's model distribution.
+        # single very long recording. The pitch distribution of this track
+        # is the mode's model distribution.
 
         # Normalize the pitch tracks of the mode wrt the tonic frequency and
         # concatenate
@@ -151,7 +151,7 @@ class Bozkurt(object):
         if metric == 'pcd':
             # If there happens to be a peak at the last (and first due to the
             # circular nature of PCD) sample, it is considered as two peaks,
-            #  one at the end and one at the beginning. To prevent this,
+            # one at the end and one at the beginning. To prevent this,
             # we find the global minima (as it is easy to compute) of the
             # distribution and make it the new reference frequency,
             # i.e. shift it to the beginning.

@@ -277,7 +277,7 @@ class Chordia(object):
         # Temporary variables used during the desicion making part.
         # candidate_foo : the flattened list of all foos from chunks
         # kn_foo : k nearest foos of candidate_foos. this is a subset of
-        #           candidate_foo
+        #          candidate_foo
         candidate_distances, candidate_ests, kn_distances, kn_ests, = (
             [] for _ in range(4))
 
@@ -487,7 +487,7 @@ class Chordia(object):
 
         # cum_lens (cummulative lengths) keeps track of number of chunks
         # retrieved from each mode. So that we are able to find out which is
-        #  the mode of the closest chunk.
+        # the mode of the closest chunk.
         cum_lens = np.cumsum([len(col) for col in mode_collections])
 
         # load mode distribution
@@ -544,7 +544,7 @@ class Chordia(object):
             if metric == 'pcd':
                 # PCD doesn't require any prelimimary steps. Generates the
                 # distance matrix. The rows are tonic candidates and columns
-                #  are mode candidates.
+                # are mode candidates.
                 dist_mat = ModeFun.generate_distance_matrix(
                     dist, peak_idxs, mode_dists, method=distance_method)
             elif metric == 'pd':
@@ -562,7 +562,7 @@ class Chordia(object):
 
             # is iterated min_cnt times and returns a neighbor at each
             # iteration, from closest to futher. When first nearest neighbor
-            #  is found it's changed to be the furthest, so in the next
+            # is found it's changed to be the furthest, so in the next
             # iteration, the nearest would be the second nearest and so on.
             for r in range(min_cnt):
                 # The minima of the distance matrix is found. This is to find
