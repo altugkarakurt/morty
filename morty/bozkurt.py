@@ -53,7 +53,7 @@ class Bozkurt(object):
             'distribution) or "pcd" (pitch class distribution).'
         self.feature_type = feature_type
 
-    def train(self, mode_name, pitch_files, tonic_freqs, save_dir=''):
+    def train(self, pitches, tonics, modes, sources=None):
         """--------------------------------------------------------------------
         For the mode trainings, the requirements are a set of recordings with
         annotated tonics for each mode under consideration. This function only
@@ -65,45 +65,45 @@ class Bozkurt(object):
         these objects and other relevant information about the data structure,
         see the PitchDistribution class.
         -----------------------------------------------------------------------
-        mode_name     : Name of the mode to be trained. This is only used for
-                        naming the resultant JSON file, in the form
-                        "mode_name.json"
-        pitch_files   : List of files with pitch tracks extracted from the
-                        recording (i.e. single-column files with frequencies)
-        tonic_freqs   : List of annotated tonic frequencies of recordings
-        save_dir      : Where to save the resultant JSON files.
+        pitches       : List of pitch tracks or the list of files with
+                        stored pitch tracks (i.e. single-column
+                        lists/numpy arrays/files with frequencies)
+        tonics        : List of annotated tonic frequencies of recordings
+        modes         : Name of the modes of each training sample.
         --------------------------------------------------------------------"""
 
-        # To generate the model pitch distribution of a mode, pitch track of
-        # each recording is iteratively converted to cents, according to
-        # their respective annotated tonics. Then, these are appended to
-        # mode_track and a very long pitch track is generated, as if it is a
-        # single very long recording. The pitch distribution of this track
-        # is the mode's model distribution.
+        assert len(pitches) == len(modes) == len(tonics), \
+            'The inputs should have the same length!'
 
-        # Normalize the pitch tracks of the mode wrt the tonic frequency and
-        # concatenate
-        pitch_track = modefun.parse_pitch_track(pitch_files, multiple=True)
-        mode_track = []
-        for track, tonic in zip(pitch_track, tonic_freqs):
-            mode_track.extend(Converter.hz_to_cent(track, ref_freq=tonic))
+        # get the pitch tracks for each mode and convert them to cent unit
+        tmp_models = {m: {'sources': [], 'cent_pitch': []} for m in set(modes)}
+        for p, t, m, s in zip(pitches, tonics, modes, sources):
+            # parse the pitch track from txt file, list or numpy array
+            p = np.loadtxt(p)  # loadtxt converts lists to np.array too
+            p = p[:, 1] if p.ndim > 1 else p  # get the pitch stream
 
-        # generate the pitch distribution
-        pitch_distrib = PitchDistribution.from_cent_pitch(
-            mode_track, smooth_factor=self.smooth_factor,
-            step_size=self.step_size)
+            # convert to cent track and append to the mode data
+            tmp_models[m]['cent_pitch'].extend(Converter.hz_to_cent(p, t))
+            tmp_models[m]['sources'].append(s)
 
-        # convert to pitch class distribution, if specified
-        if self.feature_type == 'pcd':
-            pitch_distrib = pitch_distrib.to_pcd()
+        # compute the feature for each model from the normalized pitch tracks
+        for model in tmp_models.values():
+            model['feature'] = PitchDistribution.from_cent_pitch(
+                model.pop('cent_pitch', None),
+                smooth_factor=self.smooth_factor, step_size=self.step_size)
 
-        # save the model to a file, if requested
-        if save_dir:
-            if not os.path.exists(save_dir):
-                os.makedirs(save_dir)
-            pitch_distrib.save(os.path.join(save_dir, mode_name + '.json'))
+            # convert to pitch-class distribution if requested
+            if self.feature_type == 'pcd':
+                model['feature'].to_pcd()
 
-        return pitch_distrib
+        # make the models a list of dictionaries by collapsing the mode keys
+        # inside the values
+        models = []
+        for mode_name, model in tmp_models.items():
+            model['mode'] = mode_name
+            models.append(model)
+
+        return models
 
     def joint_estimate(self, pitch_file, mode_names, ref_freq=440.0, rank=1,
                        distance_method="bhat", mode_dir='./'):
