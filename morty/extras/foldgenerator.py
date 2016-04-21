@@ -81,18 +81,24 @@ class FoldGenerator(object):
 
             # accumulate the training and testing data in the fold
             temp_fold = {
+                # .train methods accept the inputs with the keys below. In
+                # this format we can call the method as *.train(**training)
                 'training': {'pitches': [], 'tonics': [], 'modes': [],
                              'sources': []},
-                'testing': {'pitches': [], 'tonics': [], 'modes': [],
-                            'sources': []}
+                # .test methods accept a single data point. Organize it as a
+                # list of dictionaries with the keys "pitch, tonic, mode,
+                # source"
+                'testing': []
             }
-            for lbl, indices in (('training', train_ids),
-                                 ('testing', test_ids)):
-                for id in indices:
-                    temp_fold[lbl]['pitches'].append(file_paths[id])
-                    temp_fold[lbl]['tonics'].append(tonics[id])
-                    temp_fold[lbl]['modes'].append(file_modes[id])
-                    temp_fold[lbl]['sources'].append(mbids[id])
+            for idx in train_ids:
+                temp_fold['training']['pitches'].append(file_paths[idx])
+                temp_fold['training']['tonics'].append(tonics[idx])
+                temp_fold['training']['modes'].append(file_modes[idx])
+                temp_fold['training']['sources'].append(mbids[idx])
+            for idx in test_ids:
+                temp_fold['testing'].append({
+                    'pitch': file_paths[idx], 'tonic': tonics[idx],
+                    'mode': file_modes[idx], 'source': mbids[idx]})
 
             folds.append(temp_fold)
 
