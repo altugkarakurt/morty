@@ -40,8 +40,36 @@ class AbstractClassifier(object):
                                          'models input does not match'
         self.models = models
 
+    def _parse_tonic_estimate_input(self, test_input):
+        if isinstance(test_input, PitchDistribution):  # pitch distribution
+            raise NotImplementedError
+        else:  # pitch track or file
+            # pitch or distribution
+            dummy_freq = 440.0
+            pitch_cent = self._parse_pitch_input(test_input, dummy_freq)
+            feature = self._cent_pitch_to_feature(pitch_cent)
+
+        return feature
+
+    def _parse_mode_estimate_input(self, *args):
+        assert len(args) < 3, 'Too many inputs.'
+
+        if isinstance(args[0], PitchDistribution):
+            feature = args[0]
+            if len(args) == 2:  # tonic given
+                feature.hz_to_cent(args[1])
+        else:  # pitch
+            if len(args) == 1:  # pitch given in cent units
+                pitch_cent = args[0]
+            else:  # tonic given. note: length can only be 2 since we have
+                # the input length assertion in the first line of the method
+                pitch_cent = self._parse_pitch_input(*args)
+            feature = self._cent_pitch_to_feature(pitch_cent)
+
+        return feature
+
     @staticmethod
-    def _parse_pitch(pitch_in, tonic_freq):
+    def _parse_pitch_input(pitch_in, tonic_freq):
         """
         Parses the pitch input from list, numpy array or file.
 
@@ -73,12 +101,19 @@ class AbstractClassifier(object):
                   distance_method='bhat', k_param=1, rank=1):
         assert est_tonic or mode is None, 'Nothing to estimate.'
 
-        shift_feature, stable_pitches, peak_idx = self._get_tonic_candidates(
-            test_feature, est_tonic)
-        train_features, train_modes = self._get_model_candidates(mode)
+        if est_tonic is True:
+            # find the tonic candidates of the input feature
+            test_feature, stable_pitches, peak_idx = self.\
+                _get_tonic_candidates(test_feature)
+        else:
+            # dummy assign the first index
+            stable_pitches = np.array([test_feature.ref_freq])
+            peak_idx = np.array([0])
+
+        training_features, training_modes = self._get_training_models(mode)
 
         dist_mat = self._generate_distance_matrix(
-            shift_feature, peak_idx, train_features,
+            test_feature, peak_idx, training_features,
             distance_method=distance_method)
 
         # sort results
@@ -86,73 +121,53 @@ class AbstractClassifier(object):
         sorted_stable_pitch_idx, sorted_mode_idx = np.unravel_index(
             sorted_idx, dist_mat.shape)
 
-        # convert from index to tonic frequency
+        # convert from sorted index to sorted tonic frequency and mode
         sorted_tonics = stable_pitches[sorted_stable_pitch_idx]
-
-        # convert from index to mode
-        sorted_modes = train_modes[sorted_mode_idx]
-        sorted_pair = [(t, m) for t, m in zip(sorted_tonics, sorted_modes)]
+        sorted_modes = training_modes[sorted_mode_idx]
+        sorted_pairs = [(t, m) for t, m in zip(sorted_tonics, sorted_modes)]
 
         # compute ranked estimations
         ranked_pairs = []
         for r in range(rank):
-            cand_pairs = self._knn(sorted_pair, k_param)
-            estimation, sorted_pair = self._break_knn_tie(
-                cand_pairs, sorted_pair)
+            cand_pairs = self._get_nearest_neighbors(sorted_pairs, k_param)
+            estimation, sorted_pairs = self._select_nearest_neighbor(
+                cand_pairs, sorted_pairs)
             ranked_pairs.append(estimation)
 
         return ranked_pairs
 
-    def _get_model_candidates(self, mode):
+    @staticmethod
+    def _get_tonic_candidates(test_feature):
+        # find the global minima and shift the distribution there so
+        # peak detection does not fail locate a peak in the boundary in
+        # octave-wrapped features. For features that are not
+        # octave-wrapped this step is harmless.
+        global_minima_idx = np.argmin(test_feature.vals)
+        shift_feature = test_feature.shift(global_minima_idx)
+
+        # get the peaks of the feature as the tonic candidate indices and
+        # compute the stable frequencies from the peak indices
+        peak_idx = shift_feature.detect_peaks()[0]
+        peaks_cent = shift_feature.bins[peak_idx]
+        freqs = Converter.cent_to_hz(peaks_cent, shift_feature.ref_freq)
+
+        # return the shifted feature, stable frequencies and their
+        # corresponding index in the shifted feature
+        return shift_feature, freqs, peak_idx
+
+    def _get_training_models(self, mode):
         if mode is None:
-            features = [m['feature'] for m in self.models]
+            training_features = [m['feature'] for m in self.models]
             feature_modes = np.array([m['mode'] for m in self.models])
         else:
-            features = [m['feature'] for m in self.models
-                             if m['mode'] == mode]
+            training_features = [m['feature'] for m in self.models
+                        if m['mode'] == mode]
             # create dummy array with annotated mode
-            feature_modes = np.array([mode for _ in range(len(features))])
-        return features, feature_modes
-
-    def _get_tonic_candidates(self, test_feature, est_tonic):
-        if est_tonic is True:  # find the tonic candidates of the input feature
-            # find the global minima and shift the distribution there so
-            # peak detection does not fail locate a peak in the boundary in
-            # octave-wrapped features. For features that are not
-            # octave-wrapped this step is harmless.
-            global_minima_idx = np.argmin(test_feature.vals)
-            shift_feature = test_feature.shift(global_minima_idx)
-
-            # get the peaks of the feature as the tonic candidate indices and
-            # compute the stable frequencies from the peak indices
-            peak_idx = shift_feature.detect_peaks()[0]
-            peaks_cent = shift_feature.bins[peak_idx]
-            freqs = Converter.cent_to_hz(peaks_cent, shift_feature.ref_freq)
-
-            # return the shifted feature, stable frequencies and their
-            # corresponding index in the shifted feature
-            return shift_feature, freqs, peak_idx
-        else:
-            # only try for the first feature index
-            return test_feature, np.array([test_feature.ref_freq]), \
-                   np.array([0])
+            feature_modes = np.array([mode for _ in range(len(training_features))])
+        return training_features, feature_modes
 
     @staticmethod
-    def _break_knn_tie(cand_pairs, sorted_pair):
-        # in case there are multiple candidates get the pair sorted earlier
-        for p in sorted_pair:
-            if p in cand_pairs:
-                estimated_pair = p
-
-                # pop the estimated pair from the sorte_pair list for ranking
-                sorted_pair = [pp for pp in sorted_pair if pp != p]
-
-                return estimated_pair, sorted_pair
-
-        assert False, 'No pair selected, this should be impossible!'
-
-    @staticmethod
-    def _knn(sorted_pair, k_param):
+    def _get_nearest_neighbors(sorted_pair, k_param):
         # parse mode/tonic pairs
         pairs = [(t, m) for t, m in sorted_pair[:k_param]]
 
@@ -164,29 +179,19 @@ class AbstractClassifier(object):
 
         return cand_pairs
 
-    def _parse_tonic_estimate_input(self, test_input):
-        if isinstance(test_input, PitchDistribution):  # pitch distribution
-            raise NotImplementedError
-        else:  # pitch track or file
-            # pitch or distribution
-            dummy_freq = 440.0
-            pitch_cent = self._parse_pitch(test_input, dummy_freq)
-            feature = self._cent_pitch_to_feature(pitch_cent)
+    @staticmethod
+    def _select_nearest_neighbor(cand_pairs, sorted_pair):
+        # in case there are multiple candidates get the pair sorted earlier
+        for p in sorted_pair:
+            if p in cand_pairs:
+                estimated_pair = p
 
-        return feature
+                # pop the estimated pair from the sorte_pair list for ranking
+                sorted_pair = [pp for pp in sorted_pair if pp != p]
 
-    def _parse_mode_estimate_input(self, *args):
-        if len(args) == 1:
-            # precomputed pitch distribution or cent track
-            raise NotImplementedError
-        elif len(args) == 2:
-            # (pitch, tonic) or (distribution, tonic)
-            pitch_cent = self._parse_pitch(*args)
-            feature = self._cent_pitch_to_feature(pitch_cent)
-        else:
-            raise ValueError("The input can be either ")
+                return estimated_pair, sorted_pair
 
-        return feature
+        assert False, 'No pair selected, this should be impossible!'
 
     @classmethod
     def _chk_estimate_kwargs(cls, **kwargs):
