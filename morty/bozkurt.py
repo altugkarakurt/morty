@@ -3,10 +3,11 @@ import numpy as np
 import os
 from converter import Converter
 from pitchdistribution import PitchDistribution
+from abstractclassifier import AbstractClassifier
 import modefunctions as modefun
 
 
-class Bozkurt(object):
+class Bozkurt(AbstractClassifier):
     """------------------------------------------------------------------------
     This is an implementation of the method proposed for tonic and makam
     estimation, in the following sources. This also includes some improvements
@@ -30,28 +31,13 @@ class Bozkurt(object):
     training tasks and the other does the estimation once the trainings are
     completed.
     ------------------------------------------------------------------------"""
+    _estimate_kwargs = ['distance_method', 'rank']
 
-    def __init__(self, step_size=7.5, smooth_factor=7.5, feature_type='pcd'):
-        """--------------------------------------------------------------------
-        These attributes are wrapped as an object since these are used in both
-
-        training and estimation stages and must be consistent in both processes
-        -----------------------------------------------------------------------
-        step_size       : Step size of the distribution bins
-        smooth_factor   : Standart deviation of the gaussian kernel used to
-                          smoothen the distributions. For further details,
-                          1see generate_pd() of ModeFunctions.
-        feature_type    : The feature type to be used in training and testing
-                          ("pd" for pitch distribution, "pcd" for pitch
-                          class distribution)
-        --------------------------------------------------------------------"""
-        self.smooth_factor = smooth_factor
-        self.step_size = step_size
-
-        assert feature_type in ['pd', 'pcd'], \
-            '"feature_type" can either take the value "pd" (pitch ' \
-            'distribution) or "pcd" (pitch class distribution).'
-        self.feature_type = feature_type
+    def __init__(self, step_size=7.5, smooth_factor=7.5, feature_type='pcd',
+                 models=None):
+        super(Bozkurt, self).__init__(
+            step_size=step_size, smooth_factor=smooth_factor,
+            feature_type=feature_type, models=models)
 
     def train(self, pitches, tonics, modes, sources=None):
         """--------------------------------------------------------------------
@@ -78,12 +64,12 @@ class Bozkurt(object):
         # get the pitch tracks for each mode and convert them to cent unit
         tmp_models = {m: {'sources': [], 'cent_pitch': []} for m in set(modes)}
         for p, t, m, s in zip(pitches, tonics, modes, sources):
-            # parse the pitch track from txt file, list or numpy array
-            p = np.loadtxt(p)  # loadtxt converts lists to np.array too
-            p = p[:, 1] if p.ndim > 1 else p  # get the pitch stream
+            # parse the pitch track from txt file, list or numpy array and
+            # normalize with respect to annotated tonic
+            pitch_cent = self._parse_pitch(p, t)
 
             # convert to cent track and append to the mode data
-            tmp_models[m]['cent_pitch'].extend(Converter.hz_to_cent(p, t))
+            tmp_models[m]['cent_pitch'].extend(pitch_cent)
             tmp_models[m]['sources'].append(s)
 
         # compute the feature for each model from the normalized pitch tracks
@@ -94,7 +80,7 @@ class Bozkurt(object):
 
             # convert to pitch-class distribution if requested
             if self.feature_type == 'pcd':
-                model['feature'].to_pcd()
+                model['feature'] = model['feature'].to_pcd()
 
         # make the models a list of dictionaries by collapsing the mode keys
         # inside the values
@@ -103,7 +89,7 @@ class Bozkurt(object):
             model['mode'] = mode_name
             models.append(model)
 
-        return models
+        self.models = models
 
     def joint_estimate(self, pitch_file, mode_names, ref_freq=440.0, rank=1,
                        distance_method="bhat", mode_dir='./'):
@@ -312,8 +298,7 @@ class Bozkurt(object):
             distance_vector[idx] = (np.amax(distance_vector) + 1)
         return tonic_ranked
 
-    def mode_estimate(self, pitch_file, mode_names='./', tonic_freq=None,
-                      rank=1, distance_method="bhat", mode_dir='./'):
+    def estimate_mode(self, *args, **kwargs):
         """--------------------------------------------------------------------
         Mode Estimation: The tonic of the recording is known and mode is to be
         estimated.
@@ -322,44 +307,16 @@ class Bozkurt(object):
         is not available. It can be ignored.
         -----------------------------------------------------------------------
         See joint_estimation() for details. The I/O of *_estimate() functions
-
         are identical.
         --------------------------------------------------------------------"""
-
-        # load pitch track
-
-        pitch_track = modefun.parse_pitch_track(pitch_file, multiple=False)
-
-        # list of json files per mode
-        models = [PitchDistribution.load(
-            os.path.join(mode_dir, mode + ".json")) for mode in mode_names]
-
-        # Pitch distribution of the input recording is generated
-        distrib = PitchDistribution.from_hz_pitch(
-            pitch_track, ref_freq=tonic_freq, smooth_factor=self.smooth_factor,
-            step_size=self.step_size)
-
-        # convert to PCD, if specified
-        distrib = distrib.to_pcd() if self.feature_type == 'pcd' else distrib
-
-        # Saved mode models are loaded and output variables are initiated
-        mode_ranked = [('', 0) for _ in range(rank)]
+        feature = self._parse_estimate_args(*args)
+        self._chk_estimate_kwargs(**kwargs)
 
         # Mode Estimation
-        # Distance vector is generated. Again, mode_estimate() of
-        # ModeFunctions handles the different approach required for
-        # PCD and PD. Since tonic is known, the distributions aren't
-        # shifted and are only compared to candidate mode models.
-        distance_vector = modefun.mode_estimate(
-            distrib, models, distance_method=distance_method)
+        estimations = self._estimate(
+            feature, est_tonic=False, mode=None, **kwargs)
 
-        for r in range(min(rank, len(mode_names))):
-            # Minima is found, corresponding mode candidate is our current
-            # mode estimate
-            idx = np.argmin(distance_vector)
-            mode_ranked[r] = mode_names[idx]
-            # Current minima is replaced with a value larger than maxima,
-            # so that we won't return the same estimate twice.
-            distance_vector[idx] = (np.amax(distance_vector) + 1)
+        # remove the dummy tonic estimation
+        modes_ranked = [e[1] for e in estimations]
 
-        return mode_ranked
+        return modes_ranked

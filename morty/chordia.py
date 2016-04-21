@@ -320,7 +320,6 @@ class Chordia(object):
         functions are identical.
         --------------------------------------------------------------------"""
         # load pitch track
-
         pitch_track = modefun.parse_pitch_track(pitch_file, multiple=False)
 
         # Pitch track is sliced into chunks.

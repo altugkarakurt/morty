@@ -51,7 +51,7 @@ def generate_distance_matrix(distrib, peak_idxs, mode_distribs,
     peak_idxs       : List of indices of distribution peaks
     mode_distribss  : List of candidate mode distributions
     method          : The distance method to be used. The available distances
-                    are listed in distance() function.
+                      are listed in distance() function.
     ------------------------------------------------------------------------"""
 
     result = np.zeros((len(peak_idxs), len(mode_distribs)))
