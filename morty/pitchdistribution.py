@@ -8,6 +8,7 @@ from scipy.integrate import simps
 import matplotlib.pyplot as plt
 from converter import Converter
 import numbers
+import copy
 
 
 class PitchDistribution(object):
@@ -32,7 +33,10 @@ class PitchDistribution(object):
         self.bins = np.array(pd_bins)  # force numpy array
         self.vals = np.array(pd_vals)  # force numpy array
         self.kernel_width = kernel_width
-        self.ref_freq = np.array(ref_freq)  # force numpy array
+        if ref_freq is None:
+            self.ref_freq = None
+        else:
+            self.ref_freq = np.array(ref_freq)  # force numpy array
 
         # Due to the floating point issues in Python, the step_size might not
         # be exactly equal to (for example) 7.5, but 7.4999... In such cases
@@ -255,7 +259,8 @@ class PitchDistribution(object):
 
         # Essentia normalizes the positions to 1, they are converted here
         # to actual index values to be used in bins.
-        peak_idxs = [int(round(bn * (len(self.bins) - 1))) for bn in peak_bins]
+        peak_idxs = np.array([int(round(bn * (len(self.bins) - 1)))
+                              for bn in peak_bins])
         if peak_idxs[0] == 0:
             peak_idxs = np.delete(peak_idxs, [len(peak_idxs) - 1])
             peak_vals = np.delete(peak_vals, [len(peak_vals) - 1])
@@ -309,37 +314,37 @@ class PitchDistribution(object):
         shift_idx : The number of samples that the distribution is to be
                     shifted
         --------------------------------------------------------------------"""
-        # If the shift index is non-zero, do the shifting procedure
-        if shift_idx:
+        # Shift only if the index is non-zero and the distribution is in
+        # cent units
+        if shift_idx and self.has_cent_bin():
+            # update bins and reference frequency
+            new_ref_freq = Converter.cent_to_hz(
+                self.bins[shift_idx] - self.bins[0],
+                ref_freq=self.ref_freq)
+
             # If distribution is a PCD, we do a circular shift
             if self.is_pcd():
                 shifted_vals = np.concatenate((self.vals[shift_idx:],
                                                self.vals[:shift_idx]))
-
-            # If distribution is a PD, it just shifts the values. In this case,
-            # pd_zero_pad() of ModeFunctions is always applied beforehand to
-            # make sure that no non-zero values are dropped.
             else:
-                # Shift towards left
-                if shift_idx > 0:
+                # If distribution is a PD, it just shifts the values. In this
+                # case, zero padding is always applied beforehand to make
+                # sure that no non-zero values are dropped.
+                if shift_idx > 0:  # Shift towards left
                     shifted_vals = np.concatenate((self.vals[shift_idx:],
                                                    np.zeros(shift_idx)))
-
-                # Shift towards right
-                else:
+                else:  # Shift towards right
                     shifted_vals = np.concatenate((np.zeros(abs(shift_idx)),
                                                    self.vals[:shift_idx]))
 
             return PitchDistribution(self.bins, shifted_vals,
                                      kernel_width=self.kernel_width,
-                                     ref_freq=self.ref_freq)
+                                     ref_freq=new_ref_freq)
 
         # If a zero sample shift is requested, a copy of the original
         # distribution is returned
         else:
-            return PitchDistribution(self.bins, self.vals,
-                                     kernel_width=self.kernel_width,
-                                     ref_freq=self.ref_freq)
+            return copy.deepcopy(self)
 
     def plot(self):
         plt.plot(self.bins, self.vals)
