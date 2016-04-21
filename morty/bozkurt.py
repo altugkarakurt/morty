@@ -300,23 +300,44 @@ class Bozkurt(AbstractClassifier):
 
     def estimate_mode(self, *args, **kwargs):
         """--------------------------------------------------------------------
-        Mode Estimation: The tonic of the recording is known and mode is to be
-        estimated.
-        To use this: est_mode should be True and est_tonic should be False. In
-        this case mode_name parameter isn't used since the mode annotation
-        is not available. It can be ignored.
-        -----------------------------------------------------------------------
-        See joint_estimation() for details. The I/O of *_estimate() functions
-        are identical.
+        Mode recognition: The tonic of the recording is known and the mode is
+        to be estimated.
+        :param args: precomputed feature, normalized pitch track in cents or
+                     pitch track in hertz and tonic frequency
+        :param distance_method: distance used in KNN
+        :param rank: number of estimations to return
+        :return: ranked mode estimations
         --------------------------------------------------------------------"""
-        feature = self._parse_estimate_args(*args)
+        test_feature = self._parse_mode_estimate_input(*args)
         self._chk_estimate_kwargs(**kwargs)
 
         # Mode Estimation
         estimations = self._estimate(
-            feature, est_tonic=False, mode=None, **kwargs)
+            test_feature, est_tonic=False, mode=None, **kwargs)
 
         # remove the dummy tonic estimation
         modes_ranked = [e[1] for e in estimations]
 
         return modes_ranked
+
+    def estimate_tonic(self, test_input, mode, distance_method='bhat', rank=1):
+        """--------------------------------------------------------------------
+        Tonic Identification: The mode of the recording is known and the
+        tonic is to be estimated.
+        :param test_input: - precomputed feature (PitchDistribution)
+                      - pitch track in hertz (list or numpy array)
+        :param mode:  - input mode
+        :param distance_method: distance used in KNN
+        :param rank: number of estimations to return
+        :return: ranked mode estimations
+        --------------------------------------------------------------------"""
+        test_feature = self._parse_tonic_estimate_input(test_input)
+
+        # Mode Estimation
+        estimations = self._estimate(test_feature, est_tonic=True, mode=mode,
+                                     distance_method='bhat', rank=1)
+
+        # remove the dummy tonic estimation
+        tonics_ranked = [e[0] for e in estimations]
+
+        return tonics_ranked
