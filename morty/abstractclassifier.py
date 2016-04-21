@@ -40,16 +40,15 @@ class AbstractClassifier(object):
                                          'models input does not match'
         self.models = models
 
-    def _parse_tonic_estimate_input(self, test_input):
+    def _parse_tonic_and_joint_estimate_input(self, test_input):
+        dummy_freq = 220.0
         if isinstance(test_input, PitchDistribution):  # pitch distribution
-            raise NotImplementedError
+            assert test_input.has_hz_bin(), 'The input distribution has a ' \
+                                            'reference frequency already.'
+            return test_input.hz_to_cent(dummy_freq)
         else:  # pitch track or file
-            # pitch or distribution
-            dummy_freq = 440.0
             pitch_cent = self._parse_pitch_input(test_input, dummy_freq)
-            feature = self._cent_pitch_to_feature(pitch_cent)
-
-        return feature
+            return self._cent_pitch_to_feature(pitch_cent)
 
     def _parse_mode_estimate_input(self, *args):
         assert len(args) < 3, 'Too many inputs.'
@@ -161,9 +160,10 @@ class AbstractClassifier(object):
             feature_modes = np.array([m['mode'] for m in self.models])
         else:
             training_features = [m['feature'] for m in self.models
-                        if m['mode'] == mode]
+                                 if m['mode'] == mode]
             # create dummy array with annotated mode
-            feature_modes = np.array([mode for _ in range(len(training_features))])
+            feature_modes = np.array(
+                [mode for _ in range(len(training_features))])
         return training_features, feature_modes
 
     @staticmethod
