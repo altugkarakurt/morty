@@ -74,20 +74,21 @@ class FoldGenerator(object):
         return folds
 
     @staticmethod
-    def _organize_folds(skf, file_paths, mbids, file_modes, tonics):
+    def _organize_folds(k_folds, file_paths, mbids, file_modes, tonics):
         folds = []
-        for ff, skf_fold in enumerate(skf):
-            train_ids, test_ids = skf_fold
+        for ff, k_fold in enumerate(k_folds):
+            train_ids, test_ids = k_fold
 
             # accumulate the training and testing data in the fold
-            fold = {'train': [], 'test': []}
-            for lbl, indices in (('train', train_ids), ('test', test_ids)):
+            temp_fold = {'training': [], 'testing': []}
+            for lbl, indices in (('training', train_ids),
+                                 ('testing', test_ids)):
                 for id in indices:
-                    fold[lbl].append({
+                    temp_fold[lbl].append({
                         'file': file_paths[id], 'mode': file_modes[id],
                         'tonic': tonics[id], 'mbid': mbids[id]})
 
-            folds.append(fold)
+            folds.append(temp_fold)
 
         return folds
 
