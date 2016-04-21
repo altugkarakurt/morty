@@ -80,13 +80,19 @@ class FoldGenerator(object):
             train_ids, test_ids = k_fold
 
             # accumulate the training and testing data in the fold
-            temp_fold = {'training': [], 'testing': []}
+            temp_fold = {
+                'training': {'pitches': [], 'tonics': [], 'modes': [],
+                             'sources': []},
+                'testing': {'pitches': [], 'tonics': [], 'modes': [],
+                            'sources': []}
+            }
             for lbl, indices in (('training', train_ids),
                                  ('testing', test_ids)):
                 for id in indices:
-                    temp_fold[lbl].append({
-                        'file': file_paths[id], 'mode': file_modes[id],
-                        'tonic': tonics[id], 'mbid': mbids[id]})
+                    temp_fold[lbl]['pitches'].append(file_paths[id])
+                    temp_fold[lbl]['tonics'].append(tonics[id])
+                    temp_fold[lbl]['modes'].append(file_modes[id])
+                    temp_fold[lbl]['sources'].append(mbids[id])
 
             folds.append(temp_fold)
 
