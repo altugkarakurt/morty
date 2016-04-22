@@ -10,6 +10,7 @@ import collections
 class AbstractClassifier(object):
     __metaclass__ = abc.ABCMeta
     _estimate_kwargs = abc.abstractproperty
+    _dummy_ref_freq = 220.0
 
     def __init__(self, step_size=7.5, smooth_factor=7.5, feature_type='pcd',
                  models=None):
@@ -41,14 +42,15 @@ class AbstractClassifier(object):
         self.models = models
 
     def _parse_tonic_and_joint_estimate_input(self, test_input):
-        dummy_freq = 220.0
         if isinstance(test_input, PitchDistribution):  # pitch distribution
             assert test_input.has_hz_bin(), 'The input distribution has a ' \
                                             'reference frequency already.'
-            return test_input.hz_to_cent(dummy_freq)
+            return test_input.hz_to_cent(self._dummy_ref_freq)
         else:  # pitch track or file
-            pitch_cent = self._parse_pitch_input(test_input, dummy_freq)
-            return self._cent_pitch_to_feature(pitch_cent)
+            pitch_cent = self._parse_pitch_input(test_input,
+                                                 self._dummy_ref_freq)
+            return self._cent_pitch_to_feature(pitch_cent,
+                                               self._dummy_ref_freq)
 
     def _parse_mode_estimate_input(self, *args):
         assert len(args) < 3, 'Too many inputs.'
@@ -60,10 +62,12 @@ class AbstractClassifier(object):
         else:  # pitch
             if len(args) == 1:  # pitch given in cent units
                 pitch_cent = args[0]
+                ref_freq = self._dummy_ref_freq
             else:  # tonic given. note: length can only be 2 since we have
                 # the input length assertion in the first line of the method
                 pitch_cent = self._parse_pitch_input(*args)
-            feature = self._cent_pitch_to_feature(pitch_cent)
+                ref_freq = args[1]
+            feature = self._cent_pitch_to_feature(pitch_cent, ref_freq)
 
         return feature
 
@@ -87,9 +91,9 @@ class AbstractClassifier(object):
         # normalize wrt tonic
         return Converter.hz_to_cent(p, tonic_freq)
 
-    def _cent_pitch_to_feature(self, pitch_cent):
+    def _cent_pitch_to_feature(self, pitch_cent, ref_freq):
         feature = PitchDistribution.from_cent_pitch(
-            pitch_cent, smooth_factor=self.smooth_factor,
+            pitch_cent, ref_freq=ref_freq, smooth_factor=self.smooth_factor,
             step_size=self.step_size)
         if self.feature_type == 'pcd':
             feature = feature.to_pcd()
@@ -199,32 +203,57 @@ class AbstractClassifier(object):
             'The input arguments are %s' % ', '.join(kwargs.keys())
 
     @classmethod
-    def _generate_distance_matrix(cls, distrib, peak_idxs, mode_distribs,
+    def _generate_distance_matrix(cls, distrib, peak_idxs, training_distribs,
                                   distance_method='bhat'):
         """--------------------------------------------------------------------
         Iteratively calculates the distance of the input distribution from each
         (mode candidate, tonic candidate) pair. This is a generic function,
         that is independent of distribution type or any other parameter value.
         -----------------------------------------------------------------------
-        distribs        : Input distribution that is to be estimated
-        peak_idxs       : List of indices of distribution peaks
-        mode_distribs   : List of candidate mode distributions
-        method          : The distance method to be used. The available
-                          distances are listed in distance() function.
+        distribs            : Input distribution that is to be estimated
+        peak_idxs           : List of indices of distribution peaks
+        training_distribs   : List of training distributions
+        method              : The distance method to be used. The available
+                              distances are listed in distance() function.
         --------------------------------------------------------------------"""
 
-        result = np.zeros((len(peak_idxs), len(mode_distribs)))
+        result = np.zeros((len(peak_idxs), len(training_distribs)))
 
         # Iterates over the peaks, i.e. the tonic candidates
         for i, cur_peak_idx in enumerate(peak_idxs):
             trial = distrib.shift(cur_peak_idx)
 
             # Iterates over mode candidates
-            for j, cur_mode_distrib in enumerate(mode_distribs):
-                assert trial.bin_unit == cur_mode_distrib.bin_unit, \
+            for j, td in enumerate(training_distribs):
+                assert trial.bin_unit == td.bin_unit, \
                     'The bin units of the compared distributions should match.'
+                assert trial.distrib_type() == td.distrib_type(), \
+                    'The features should be of the same type'
+
+                if trial.distrib_type() == 'pd':
+                    # compare in the overlapping region
+                    min_td_bin = np.min(td.bins)
+                    max_td_bin = np.max(td.bins)
+
+                    min_trial_bin = np.min(trial.bins)
+                    max_trial_bin = np.max(trial.bins)
+
+                    overlap = [max([min_td_bin, min_trial_bin]),
+                               min([max_td_bin, max_trial_bin])]
+
+                    trial_bool = (overlap[0] <= trial.bins) * \
+                                 (trial.bins <= overlap[1])
+                    trial_vals = trial.vals[trial_bool]
+
+                    td_bool = (overlap[0] <= td.bins) * \
+                              (td.bins <= overlap[1])
+                    td_vals = td.vals[td_bool]
+                else:
+                    trial_vals = trial.vals
+                    td_vals = td.vals
+
                 # Calls the distance function for each entry of the matrix
-                result[i][j] = cls._distance(trial.vals, cur_mode_distrib.vals,
+                result[i][j] = cls._distance(trial_vals, td_vals,
                                              method=distance_method)
         return np.array(result)
 
