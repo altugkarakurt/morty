@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from pitchdistribution import PitchDistribution
-from converter import Converter
+from morty.pitchdistribution import PitchDistribution
+from morty.converter import Converter
 
 
 class ClassifierInputParser(object):

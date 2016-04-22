@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-import numpy as np
-from converter import Converter
-from classifierinputparser import ClassifierInputParser
 import abc
-from knn import KNN
+
+import numpy as np
+
+from classifierinputparser import ClassifierInputParser
+from morty.classifiers.knn import KNN
+from morty.converter import Converter
 
 
 class AbstractClassifier(ClassifierInputParser):

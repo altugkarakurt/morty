@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from pitchdistribution import PitchDistribution
+from morty.pitchdistribution import PitchDistribution
 from abstractclassifier import AbstractClassifier
 
 
