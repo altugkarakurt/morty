@@ -11,7 +11,7 @@ class Evaluator(object):
     ----------------------------------------------------------------"""
 
     def __init__(self, tonic_tolerance=25):
-        self.tolerance = tonic_tolerance
+        self.tonic_tolerance = tonic_tolerance
         self.CENT_PER_OCTAVE = 1200
 
         # '+' symbol corresponds to quarter tone higher
@@ -26,20 +26,20 @@ class Evaluator(object):
             ('M7', 1075, 1125), ('M7+', 1125, 1175), ('P1', 1175, 1200)]
 
     @staticmethod
-    def mode_evaluate(mbid, estimated, annotated):
+    def evaluate_mode(estimated, annotated, source=None):
         mode_bool = annotated == estimated
-        return {'mbid': mbid, 'mode_eval': mode_bool,
+        return {'source': source, 'mode_eval': mode_bool,
                 'annotated_mode': annotated, 'estimated_mode': estimated}
 
-    def tonic_evaluate(self, mbid, estimated, annotated):
-        est_cent = Converter.hz_to_cent([estimated], annotated)[0]
+    def evaluate_tonic(self, estimated, annotated, source=None):
+        est_cent = Converter.hz_to_cent(estimated, annotated)
 
         # octave wrapping
         cent_diff = est_cent % self.CENT_PER_OCTAVE
 
         # check if the tonic is found correct
-        bool_tonic = min([cent_diff,
-                          self.CENT_PER_OCTAVE - cent_diff]) < self.tolerance
+        bool_tonic = min([cent_diff, self.CENT_PER_OCTAVE - cent_diff]) \
+                     < self.tonic_tolerance
 
         # convert the cent difference to symbolic interval (P5, m3 etc.)
         for i in self.INTERVAL_SYMBOLS:
@@ -54,14 +54,14 @@ class Evaluator(object):
         # values should be the same (very close)
         same_octave = (est_cent - cent_diff < 0.001)
 
-        return {'mbid': mbid, 'tonic_eval': bool_tonic,
+        return {'mbid': source, 'tonic_eval': bool_tonic,
                 'same_octave': same_octave, 'cent_diff': cent_diff,
                 'interval': interval, 'annotated_tonic': annotated,
                 'estimated_tonic': estimated}
 
-    def joint_evaluate(self, mbid, tonic_info, mode_info):
-        tonic_eval = self.tonic_evaluate(mbid, tonic_info[0], tonic_info[1])
-        mode_eval = self.mode_evaluate(mbid, mode_info[0], mode_info[1])
+    def evaluate_joint(self, tonic_info, mode_info, source=None):
+        tonic_eval = self.evaluate_tonic(tonic_info[0], tonic_info[1], source)
+        mode_eval = self.evaluate_mode(mode_info[0], mode_info[1], source)
 
         # merge the two evaluations
         joint_eval = tonic_eval.copy()

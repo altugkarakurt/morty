@@ -1,0 +1,94 @@
+# -*- coding: utf-8 -*-
+import numpy as np
+from pitchdistribution import PitchDistribution
+from converter import Converter
+
+
+class ClassifierInputParser(object):
+    _dummy_ref_freq = 220.0
+
+    def __init__(self, step_size=7.5, smooth_factor=7.5, feature_type='pcd',
+                 models=None):
+
+        """--------------------------------------------------------------------
+        These attributes are wrapped as an object since these are used in both
+        training and estimation stages and must be consistent in both processes
+        -----------------------------------------------------------------------
+        step_size       : Step size of the distribution bins
+        smooth_factor   : Standart deviation of the gaussian kernel used to
+                          smoothen the distributions. For further details,
+                          1see generate_pd() of ModeFunctions.
+        feature_type    : The feature type to be used in training and testing
+                          ("pd" for pitch distribution, "pcd" for pitch
+                          class distribution)
+        --------------------------------------------------------------------"""
+        self.smooth_factor = smooth_factor
+        self.step_size = step_size
+
+        assert feature_type in ['pd', 'pcd'], \
+            '"feature_type" can either take the value "pd" (pitch ' \
+            'distribution) or "pcd" (pitch class distribution).'
+        self.feature_type = feature_type
+
+        if models is not None:
+            assert all(m['feature'].distrib_type == feature_type
+                       for m in models), 'The feature_type input and type ' \
+                                         'of the distributions in the ' \
+                                         'models input does not match'
+        self.models = models
+
+    def _parse_tonic_and_joint_estimate_input(self, test_input):
+        if isinstance(test_input, PitchDistribution):  # pitch distribution
+            assert test_input.has_hz_bin(), 'The input distribution has a ' \
+                                            'reference frequency already.'
+            return test_input.hz_to_cent(self._dummy_ref_freq)
+        else:  # pitch track or file
+            pitch_cent = self._parse_pitch_input(test_input,
+                                                 self._dummy_ref_freq)
+            return self._cent_pitch_to_feature(pitch_cent,
+                                               self._dummy_ref_freq)
+
+    def _parse_mode_estimate_input(self, feature_in, tonic=None):
+        if isinstance(feature_in, PitchDistribution):
+            feature = feature_in
+            if tonic is not None:  # tonic given
+                feature.hz_to_cent(tonic)
+        else:  # pitch
+            if tonic is None:  # pitch given in cent units
+                pitch_cent = feature_in
+                ref_freq = self._dummy_ref_freq
+            else:  # tonic given.
+                pitch_cent = self._parse_pitch_input(feature_in, tonic)
+                ref_freq = tonic
+            feature = self._cent_pitch_to_feature(pitch_cent, ref_freq)
+
+        return feature
+
+    @staticmethod
+    def _parse_pitch_input(pitch_in, tonic_freq):
+        """
+        Parses the pitch input from list, numpy array or file.
+
+        If the input (or the file content) is a matrix, the method assumes the
+        columns represent timestamps, pitch and "other columns".
+        respectively. It only returns the second column in this case.
+
+        :param pitch_in: pitch input, which is a list, numpy array or filename
+        :param tonic_freq: the tonic frequency in Hz
+        :return: parsed pitch track (numpy array)
+        """
+        # parse the pitch track from txt file, list or numpy array
+        p = np.loadtxt(pitch_in)  # loadtxt converts lists to np.array too
+        p = p[:, 1] if p.ndim > 1 else p  # get the pitch stream
+
+        # normalize wrt tonic
+        return Converter.hz_to_cent(p, tonic_freq)
+
+    def _cent_pitch_to_feature(self, pitch_cent, ref_freq):
+        feature = PitchDistribution.from_cent_pitch(
+            pitch_cent, ref_freq=ref_freq, smooth_factor=self.smooth_factor,
+            step_size=self.step_size)
+        if self.feature_type == 'pcd':
+            feature = feature.to_pcd()
+
+        return feature
