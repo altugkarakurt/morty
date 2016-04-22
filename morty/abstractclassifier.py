@@ -100,6 +100,75 @@ class AbstractClassifier(object):
 
         return feature
 
+    def estimate_mode(self, *args, **kwargs):
+        """--------------------------------------------------------------------
+        Mode recognition: The tonic of the recording is known and the mode is
+        to be estimated.
+        :param args: - precomputed feature (PD or PCD in cents)
+                     - normalized pitch track (in cents)
+                     - precomputed feature (PD or PCD in Hz), tonic frequency
+                     - pitch track (in Hz), tonic frequency
+        :param kwargs: Input parameters. Possible keys are:
+                     - distance_method: distance used in KNN
+                     - rank: number of estimations to return
+        :return: ranked mode estimations
+        --------------------------------------------------------------------"""
+        test_feature = self._parse_mode_estimate_input(*args)
+        self._chk_estimate_kwargs(**kwargs)
+
+        # Mode Estimation
+        estimations = self._estimate(
+            test_feature, est_tonic=False, mode=None, **kwargs)
+
+        # remove the dummy tonic estimation
+        modes_ranked = [e[1] for e in estimations]
+
+        return modes_ranked
+
+    def estimate_tonic(self, test_input, mode, distance_method='bhat',
+                       rank=1):
+        """--------------------------------------------------------------------
+        Tonic Identification: The mode of the recording is known and the
+        tonic is to be estimated.
+        :param test_input: - precomputed feature (PD or PCD in Hz)
+                           - pitch track in Hz (list or numpy array)
+        :param mode: input mode label
+        :param distance_method: distance used in KNN
+        :param rank: number of estimations to return
+        :return: ranked mode estimations
+        --------------------------------------------------------------------"""
+        test_feature = self._parse_tonic_and_joint_estimate_input(
+            test_input)
+
+        # Mode Estimation
+        estimations = self._estimate(
+            test_feature, est_tonic=True, mode=mode,
+            distance_method=distance_method, rank=rank)
+
+        # remove the dummy tonic estimation
+        tonics_ranked = [e[0] for e in estimations]
+
+        return tonics_ranked
+
+    def estimate_joint(self, test_input, distance_method='bhat', rank=1):
+        """--------------------------------------------------------------------
+        Joint estimation: Estimate both the tonic and mode together
+        :param test_input: - precomputed feature (PD or PCD in Hz)
+                           - pitch track in Hz (list or numpy array)
+        :param distance_method: distance used in KNN
+        :param rank: number of estimations to return
+        :return: ranked mode and tonic estimations
+        --------------------------------------------------------------------"""
+        test_feature = self._parse_tonic_and_joint_estimate_input(
+            test_input)
+
+        # Mode Estimation
+        joint_estimations = self._estimate(
+            test_feature, est_tonic=True, mode=None,
+            distance_method=distance_method, rank=rank)
+
+        return joint_estimations
+
     def _estimate(self, test_feature, mode=None, est_tonic=True,
                   distance_method='bhat', k_param=1, rank=1):
         assert est_tonic or mode is None, 'Nothing to estimate.'
