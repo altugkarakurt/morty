@@ -28,31 +28,6 @@ class AbstractClassifier(ClassifierInputParser):
             step_size=step_size, smooth_factor=smooth_factor,
             feature_type=feature_type, models=models)
 
-    def estimate_mode(self, feature_in, tonic=None, distance_method='bhat',
-                      rank=1):
-        """--------------------------------------------------------------------
-        Mode recognition: The tonic of the recording is known and the mode is
-        to be estimated.
-        :param feature_in: - precomputed feature (PitchDistribution object)
-                           - pitch track (list or noumpy array)
-        :param tonic: tonic frequency (float). It is needed if the feature_in
-                      has not been normalized with respect to the tonic earlier
-        :param distance_method: distance used in KNN
-        :param rank: number of estimations to return
-        :return: ranked mode estimations
-        --------------------------------------------------------------------"""
-        test_feature = self._parse_mode_estimate_input(feature_in, tonic)
-
-        # Mode Estimation
-        estimations = self._estimate(
-            test_feature, est_tonic=False, mode=None,
-            distance_method=distance_method, rank=rank)
-
-        # remove the dummy tonic estimation
-        modes_ranked = [e[1] for e in estimations]
-
-        return modes_ranked
-
     def estimate_tonic(self, test_input, mode, distance_method='bhat',
                        rank=1):
         """--------------------------------------------------------------------
@@ -77,6 +52,31 @@ class AbstractClassifier(ClassifierInputParser):
         tonics_ranked = [e[0] for e in estimations]
 
         return tonics_ranked
+
+    def estimate_mode(self, feature_in, tonic=None, distance_method='bhat',
+                      rank=1):
+        """--------------------------------------------------------------------
+        Mode recognition: The tonic of the recording is known and the mode is
+        to be estimated.
+        :param feature_in: - precomputed feature (PitchDistribution object)
+                           - pitch track (list or noumpy array)
+        :param tonic: tonic frequency (float). It is needed if the feature_in
+                      has not been normalized with respect to the tonic earlier
+        :param distance_method: distance used in KNN
+        :param rank: number of estimations to return
+        :return: ranked mode estimations
+        --------------------------------------------------------------------"""
+        test_feature = self._parse_mode_estimate_input(feature_in, tonic)
+
+        # Mode Estimation
+        estimations = self._estimate(
+            test_feature, est_tonic=False, mode=None,
+            distance_method=distance_method, rank=rank)
+
+        # remove the dummy tonic estimation
+        modes_ranked = [e[1] for e in estimations]
+
+        return modes_ranked
 
     def estimate_joint(self, test_input, distance_method='bhat', rank=1):
         """--------------------------------------------------------------------
@@ -125,7 +125,7 @@ class AbstractClassifier(ClassifierInputParser):
         sorted_modes = training_modes[sorted_mode_idx]
         sorted_pairs = [(t, m) for t, m in zip(sorted_tonics, sorted_modes)]
 
-        # compute ranked estimations
+        # compute ranked estimations3
         ranked_pairs = []
         for r in range(rank):
             cand_pairs = KNN.get_nearest_neighbors(sorted_pairs, k_param)
