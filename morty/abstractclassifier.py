@@ -49,7 +49,7 @@ class AbstractClassifier(ClassifierInputParser):
             distance_method=distance_method, rank=rank)
 
         # remove the dummy tonic estimation
-        tonics_ranked = [e[0] for e in estimations]
+        tonics_ranked = [(e[0][0], e[1]) for e in estimations]
 
         return tonics_ranked
 
@@ -74,7 +74,7 @@ class AbstractClassifier(ClassifierInputParser):
             distance_method=distance_method, rank=rank)
 
         # remove the dummy tonic estimation
-        modes_ranked = [e[1] for e in estimations]
+        modes_ranked = [(e[0][1], e[1]) for e in estimations]
 
         return modes_ranked
 
@@ -117,15 +117,17 @@ class AbstractClassifier(ClassifierInputParser):
 
         # sort results
         sorted_idx = np.argsort(dist_mat, axis=None)
+        sorted_dists = np.sort(dist_mat, axis=None)
         sorted_tonic_cand_idx, sorted_mode_idx = np.unravel_index(
             sorted_idx, dist_mat.shape)
 
         # convert from sorted index to sorted tonic frequency and mode
         sorted_tonics = tonic_cands[sorted_tonic_cand_idx]
         sorted_modes = training_modes[sorted_mode_idx]
-        sorted_pairs = [(t, m) for t, m in zip(sorted_tonics, sorted_modes)]
+        sorted_pairs = [((t, m), d) for t, m, d in
+                        zip(sorted_tonics, sorted_modes, sorted_dists)]
 
-        # compute ranked estimations3
+        # compute ranked estimations
         ranked_pairs = []
         for r in range(rank):
             cand_pairs = KNN.get_nearest_neighbors(sorted_pairs, k_param)

@@ -99,7 +99,7 @@ class KNN(object):
     @staticmethod
     def get_nearest_neighbors(sorted_pair, k_param):
         # parse mode/tonic pairs
-        pairs = [(t, m) for t, m in sorted_pair[:k_param]]
+        pairs = [pair for pair, dist in sorted_pair[:k_param]]
 
         # find the most common pairs
         counter = collections.Counter(pairs)
@@ -113,11 +113,11 @@ class KNN(object):
     def select_nearest_neighbor(cand_pairs, sorted_pair):
         # in case there are multiple candidates get the pair sorted earlier
         for p in sorted_pair:
-            if p in cand_pairs:
+            if p[0] in cand_pairs:
                 estimated_pair = p
 
                 # pop the estimated pair from the sorte_pair list for ranking
-                sorted_pair = [pp for pp in sorted_pair if pp != p]
+                sorted_pair = [pp for pp in sorted_pair if pp[0] != p[0]]
                 return estimated_pair, sorted_pair
 
         assert False, 'No pair selected, this should be impossible!'
