@@ -2,9 +2,10 @@
 
 import numpy as np
 
-from classifierinputparser import ClassifierInputParser
-from morty.classifiers.knn import KNN
-from morty.converter import Converter
+from .classifierinputparser import ClassifierInputParser
+from .knn import KNN
+from ..converter import Converter
+from ..pitchdistribution import PitchDistribution
 
 
 class KNNClassifier(ClassifierInputParser):
@@ -21,10 +22,124 @@ class KNNClassifier(ClassifierInputParser):
         feature_type    : The feature type to be used in training and testing
                           ("pd" for pitch distribution, "pcd" for pitch
                           class distribution)
+        models          : Pre-trained models per mode
         --------------------------------------------------------------------"""
         super(KNNClassifier, self).__init__(
             step_size=step_size, smooth_factor=smooth_factor,
             feature_type=feature_type, models=models)
+
+    def train(self, pitches, tonics, modes, sources=None, model_type='multi'):
+        if model_type=='single':
+            return self._train_single_distrib__per_mode(
+                pitches, tonics, modes, sources=sources)
+        elif model_type == 'multi':
+            return self._train_single_distrib__per_mode(
+                pitches, tonics, modes, sources=sources)
+        else:
+            raise ValueError("Unknown training model")
+
+    def _train_single_distrib__per_mode(self, pitches, tonics, modes,
+                                        sources=None):
+        """--------------------------------------------------------------------
+        For the mode trainings, the requirements are a set of recordings with
+        annotated tonics for each mode under consideration. This function only
+        expects the recordings' pitch tracks and corresponding tonics as lists.
+        The two lists should be indexed in parallel, so the tonic of ith pitch
+        track in the pitch track list should be the ith element of tonic list.
+        Once training is completed for a mode, the model would be generated
+        as a PitchDistribution object and saved in a JSON file. For loading
+        these objects and other relevant information about the data structure,
+        see the PitchDistribution class.
+        -----------------------------------------------------------------------
+        pitches       : List of pitch tracks or the list of files with
+                        stored pitch tracks (i.e. single-column
+                        lists/numpy arrays/files with frequencies)
+        tonics        : List of annotated tonic frequencies of recordings
+        modes         : Name of the modes of each training sample.
+        --------------------------------------------------------------------"""
+
+        assert len(pitches) == len(modes) == len(tonics), \
+            'The inputs should have the same length!'
+
+        # get the pitch tracks for each mode and convert them to cent unit
+        tmp_models = {m: {'sources': [], 'cent_pitch': []} for m in
+                      set(modes)}
+        for p, t, m, s in zip(pitches, tonics, modes, sources):
+            # parse the pitch track from txt file, list or numpy array and
+            # normalize with respect to annotated tonic
+            pitch_cent = self._parse_pitch_input(p, t)
+
+            # convert to cent track and append to the mode data
+            tmp_models[m]['cent_pitch'].extend(pitch_cent)
+            tmp_models[m]['sources'].append(s)
+
+        # compute the feature for each model from the normalized pitch tracks
+        for model in tmp_models.values():
+            model['feature'] = PitchDistribution.from_cent_pitch(
+                model.pop('cent_pitch', None),
+                smooth_factor=self.smooth_factor, step_size=self.step_size)
+
+            # convert to pitch-class distribution if requested
+            if self.feature_type == 'pcd':
+                model['feature'] = model['feature'].to_pcd()
+
+        # make the models a list of dictionaries by collapsing the mode keys
+        # inside the values
+        models = []
+        for mode_name, model in tmp_models.items():
+            model['mode'] = mode_name
+            models.append(model)
+
+        self.models = models
+
+    def _train_multi_distrib_per_mode(self, pitches, tonics, modes,
+                                      sources=None):
+        """--------------------------------------------------------------------
+        For the mode trainings, the requirements are a set of recordings with
+        annotated tonics for each mode under consideration. This function only
+        expects the recordings' pitch tracks and corresponding tonics as lists.
+        The two lists should be indexed in parallel, so the tonic of ith pitch
+        track in the pitch track list should be the ith element of tonic list.
+
+        Each pitch track would be sliced into chunks of size chunk_size and
+        their pitch distributions are generated. Then, each of such chunk
+        distributions are appended to a list. This list represents the mode
+        by sample points as much as the number of chunks. So, the result is
+        a list of PitchDistribution objects, i.e. list of structured
+        dictionaries and this is what is saved.
+        -----------------------------------------------------------------------
+        mode_name     : Name of the mode to be trained. This is only used for
+                        naming the resultant JSON file, in the form
+                        "mode_name.json"
+        pitch_files   : List of pitch tracks (i.e. 1-D list of frequencies)
+        tonic_freqs   : List of annotated tonics of recordings
+        feature       : Whether the model should be octave wrapped (Pitch Class
+                        Distribution: PCD) or not (Pitch Distribution: PD)
+        save_dir      : Where to save the resultant JSON files.
+        --------------------------------------------------------------------"""
+        assert len(pitches) == len(modes) == len(tonics), \
+            'The inputs should have the same length!'
+
+        # get the pitch tracks for each mode and convert them to cent unit
+        models = []
+        for p, t, m, s in zip(pitches, tonics, modes, sources):
+            # parse the pitch track from txt file, list or numpy array and
+            # normalize with respect to annotated tonic
+            pitch_cent = self._parse_pitch_input(p, t)
+            feature = PitchDistribution.from_cent_pitch(
+                pitch_cent, smooth_factor=self.smooth_factor,
+                step_size=self.step_size)
+
+            # convert to pitch-class distribution if requested
+            if self.feature_type == 'pcd':
+                feature = feature.to_pcd()
+
+            model = {'source': s, 'tonic': t, 'mode': m,
+                     'feature': feature}
+            # convert to cent track and append to the mode data
+            models.append(model)
+
+        self.models = models
 
     def identify_tonic(self, test_input, mode, distance_method='bhat',
                        rank=1):
