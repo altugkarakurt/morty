@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 from predominantmelodymakam.predominantmelodymakam \
     import PredominantMelodyMakam
+from pitchfilter.pitchfilter import PitchFilter
 from fileoperations.fileoperations import get_filenames_in_dir
 import os
 import numpy as np
-import math
 
 
 class PitchExtractor(object):
-    extractor = PredominantMelodyMakam()
+    extractor = PredominantMelodyMakam(filter_pitch=False)  # call the
+    # Python implementation of pitch_filter explicitly
+    filter = PitchFilter()
     DECIMAL = 1
 
     @classmethod
@@ -37,11 +39,12 @@ class PitchExtractor(object):
             if os.path.isfile(pf):  # already exists
                 print("   > Already exist; skipped.")
             else:
+                # extract and filter
                 results = cls.extractor.run(af)
+                pitch_track = cls.filter.run(results['pitch'])
 
-                pitch_track = np.array(results['pitch'])[:, [0, 1]]
-                pitch_track = (np.around([i * math.pow(10, cls.DECIMAL)
-                                          for i in pitch_track[:, 1]]) / 100.0)
-
+                # save compact
+                pitch_track = np.array(pitch_track)[:, 1]
                 decimal_str = '%.' + str(cls.DECIMAL) + 'f'
+
                 np.savetxt(pf, pitch_track, fmt=decimal_str)
