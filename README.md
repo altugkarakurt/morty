@@ -20,7 +20,7 @@ In our context, these models are used in three similar computational tasks:
 - **Tonic Identification:** Given an audio performance with known mode, the pitch histogram computed from the performance is shifted and compared with the model of the mode. The shift that produces the highest similarity will indicate the estimated tonic.
 - **Joint Estimation:** Given an audio performance with unknown tonic and mode, the pitch histogram computed from the performance is shifted and compared with the model of each mode. The most similar shift and the mode of the matching model yields the estimated tonic and the mode jointly.
 
-For indepth eplanation of the concept and the methodologies, please refer to the papers.
+For an indepth eplanation of the concept and the methodologies, please refer to the papers.
 
 ### Usage
 This project expects the predominant melody of the audio performances as the input and generates pitch distributions (PD) or pitch class distributions (PCD) from them. These distributions are used as the features for the training and the estimation.
@@ -49,18 +49,14 @@ If you want to be able to edit files and have the changes be reflected, then ins
 
 The algorithm uses several modules in Essentia. Follow the [instructions](essentia.upf.edu/documentation/installing.html) to install the library.
 
-For the functionalities in extras package, you can install the optional dependencies as:
+For the functionalities in the extras package, you can install the optional dependencies as:
 
     pip install -r optional_requirements
 
 ### Explanation of Classes
 - *PitchDistribution* is the class, which holds the pitch distribution. It also includes save and load functions to make the pitch distributions accessible for later use.
 
-- *Bozkurt* class implements the methods proposed in (A. C. Gedik, B. Bozkurt, 2010) and (B. Bozkurt, 2008).
-
-- *Chordia* class implements the method proposed in (P. Chordia and S. Şentürk, 2013).
-
-- *modefunctions* module includes the low-level functions related to mode and tonic recognition. These functions are generic and common in both Bozkurt and Chordia methods. They aren't expected to be used directly; instead they are called by the higher level wrapper functions in BozkurtEstimation and ChordiaEstimation.
+- *KNNClassifier* class implements and generalizes the methods proposed in (A. C. Gedik, B. Bozkurt, 2010) and (B. Bozkurt, 2008) and (P. Chordia and S. Şentürk, 2013).
 
 ### References
 
