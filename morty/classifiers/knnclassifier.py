@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import abc
 
 import numpy as np
 
@@ -8,10 +7,7 @@ from morty.classifiers.knn import KNN
 from morty.converter import Converter
 
 
-class AbstractClassifier(ClassifierInputParser):
-    __metaclass__ = abc.ABCMeta
-    _input_parser = ClassifierInputParser
-
+class KNNClassifier(ClassifierInputParser):
     def __init__(self, step_size=7.5, smooth_factor=7.5, feature_type='pcd',
                  models=None):
         """--------------------------------------------------------------------
@@ -26,11 +22,11 @@ class AbstractClassifier(ClassifierInputParser):
                           ("pd" for pitch distribution, "pcd" for pitch
                           class distribution)
         --------------------------------------------------------------------"""
-        super(AbstractClassifier, self).__init__(
+        super(KNNClassifier, self).__init__(
             step_size=step_size, smooth_factor=smooth_factor,
             feature_type=feature_type, models=models)
 
-    def estimate_tonic(self, test_input, mode, distance_method='bhat',
+    def identify_tonic(self, test_input, mode, distance_method='bhat',
                        rank=1):
         """--------------------------------------------------------------------
         Tonic Identification: The mode of the recording is known and the
@@ -55,8 +51,17 @@ class AbstractClassifier(ClassifierInputParser):
 
         return tonics_ranked
 
-    def estimate_mode(self, feature_in, tonic=None, distance_method='bhat',
-                      rank=1):
+    def estimate_tonic(self, test_input, mode, distance_method='bhat',
+                       rank=1):
+        """
+        Alias of "identify_tonic" method. See the documentation of
+        "identify_tonic" for more information.
+        """
+        return self.identify_tonic(
+            test_input, mode, distance_method=distance_method, rank=rank)
+
+    def recognize_mode(self, feature_in, tonic=None, distance_method='bhat',
+                       rank=1):
         """--------------------------------------------------------------------
         Mode recognition: The tonic of the recording is known and the mode is
         to be estimated.
@@ -79,6 +84,13 @@ class AbstractClassifier(ClassifierInputParser):
         modes_ranked = [(e[0][1], e[1]) for e in estimations]
 
         return modes_ranked
+
+    def estimate_mode(self, feature_in, tonic=None, distance_method='bhat',
+                      rank=1):
+
+        return self.recognize_mode(
+            feature_in, tonic=tonic, distance_method=distance_method,
+            rank=rank)
 
     def estimate_joint(self, test_input, distance_method='bhat', rank=1):
         """--------------------------------------------------------------------

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from morty.pitchdistribution import PitchDistribution
-from abstractclassifier import AbstractClassifier
+from knnclassifier import KNNClassifier
 
 
-class Chordia(AbstractClassifier):
+class Chordia(KNNClassifier):
     """---------------------------------------------------------------------
     This is an implementation of the method proposed for tonic and raag
     estimation, in the following paper. This also includes some extra features

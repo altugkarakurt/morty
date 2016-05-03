@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from morty.pitchdistribution import PitchDistribution
-from abstractclassifier import AbstractClassifier
+from knnclassifier import KNNClassifier
 
 
-class Bozkurt(AbstractClassifier):
+class Bozkurt(KNNClassifier):
     """------------------------------------------------------------------------
     This is an implementation of the method proposed for tonic and makam
     estimation, in the following sources. This also includes some improvements
