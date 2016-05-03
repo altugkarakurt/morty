@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from converter import Converter
 import numbers
 import copy
+import pickle
 
 
 class PitchDistribution(object):
@@ -171,53 +172,6 @@ class PitchDistribution(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
-    @staticmethod
-    def load(file_name):
-        """--------------------------------------------------------------------
-        Loads a PitchDistribution object from JSON file.
-        -----------------------------------------------------------------------
-        file_name    : The filename of the JSON file
-        --------------------------------------------------------------------
-        """
-        try:
-            distrib = json.load(open(file_name, 'r'))
-        except IOError:  # json string
-            distrib = json.loads(file_name)
-
-        distrib = distrib[0] if(not type(distrib) == dict) else distrib
-
-        return PitchDistribution.from_dict(distrib)
-
-    @staticmethod
-    def from_dict(distrib_dict):
-        return PitchDistribution(distrib_dict['bins'], distrib_dict['vals'],
-                                 kernel_width=distrib_dict['kernel_width'],
-                                 ref_freq=distrib_dict['ref_freq'])
-
-    def to_dict(self):
-        pdict = self.__dict__
-        for key in pdict.keys():
-            try:
-                # convert to list from np array
-                pdict[key] = pdict[key].tolist()
-            except AttributeError:
-                pass
-
-        return pdict
-
-    def save(self, fpath=None):
-        """--------------------------------------------------------------------
-        Saves the PitchDistribution object to a JSON file.
-        -----------------------------------------------------------------------
-        fpath    : The file path of the JSON file to be created.
-        --------------------------------------------------------------------"""
-        dist_json = self.to_dict()
-
-        if fpath is None:
-            json.dumps(dist_json, indent=4)
-        else:
-            json.dump(dist_json, open(fpath, 'w'), indent=4)
-
     def is_pcd(self):
         """--------------------------------------------------------------------
         The boolean flag of whether the instance is PCD or not.
@@ -373,3 +327,63 @@ class PitchDistribution(object):
             plt.xlabel('Normalized Frequency (cent), ref = ' +
                        str(self.ref_freq))
         plt.ylabel('Occurence')
+
+    @staticmethod
+    def from_pickle(input_str):
+        try:  # file given
+            return pickle.load(open(input_str, 'rb'))
+        except IOError:  # string given
+            return pickle.loads(input_str, 'rb')
+
+    def to_pickle(self, file_name=None):
+        if file_name is None:
+            return pickle.dumps(self)
+        else:
+            pickle.dump(self, open(file_name, 'wb'))
+
+    @staticmethod
+    def from_json(file_name):
+        """--------------------------------------------------------------------
+        Loads a PitchDistribution object from JSON file.
+        -----------------------------------------------------------------------
+        file_name    : The filename of the JSON file
+        --------------------------------------------------------------------
+        """
+        try:
+            distrib = json.load(open(file_name, 'r'))
+        except IOError:  # json string
+            distrib = json.loads(file_name)
+
+        distrib = distrib[0] if (not type(distrib) == dict) else distrib
+
+        return PitchDistribution.from_dict(distrib)
+
+    def to_json(self, file_name=None):
+        """--------------------------------------------------------------------
+        Saves the PitchDistribution object to a JSON file.
+        -----------------------------------------------------------------------
+        file_name    : The file path of the JSON file to be created.
+        --------------------------------------------------------------------"""
+        dist_json = self.to_dict()
+
+        if file_name is None:
+            return json.dumps(dist_json, indent=4)
+        else:
+            json.dump(dist_json, open(file_name, 'w'), indent=4)
+
+    @staticmethod
+    def from_dict(distrib_dict):
+        return PitchDistribution(distrib_dict['bins'], distrib_dict['vals'],
+                                 kernel_width=distrib_dict['kernel_width'],
+                                 ref_freq=distrib_dict['ref_freq'])
+
+    def to_dict(self):
+        pdict = self.__dict__
+        for key in pdict.keys():
+            try:
+                # convert to list from np array
+                pdict[key] = pdict[key].tolist()
+            except AttributeError:
+                pass
+
+        return pdict

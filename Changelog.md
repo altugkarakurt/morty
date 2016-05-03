@@ -1,13 +1,12 @@
 #### morty v1.1.0
  - Merged the classes Bozkurt and Chordia into a generic KNNClassifier class
- - Rewritten the input parsing, training and estimation methods in
- KNNClassifier
+ - Rewritten the input parsing, training and estimation methods in KNNClassifier
  - Created a separate KNN class for computing the nearest neighbors
- - Added 'min_peak_ratio' parameter to 'detect_peaks' method in the
- PitchDistribution class
+ - Added 'min_peak_ratio' parameter to 'detect_peaks' method in the PitchDistribution class
  - Added Jensen–Shannon distance to KNN._distance
  - Refactored pitch extraction in extras and moved pitch slicing method there
  - Refactored all 'smooth_factor' parameters to 'kernel_width' for consistency
+ - Removed save and load from PitchDistribution and created the methods to_json, from_json, to_pickle and from_pickle
 
 #### morty v1.0.0
  - First stable release
