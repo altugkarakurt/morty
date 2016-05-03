@@ -4,7 +4,7 @@ import essentia.standard as std
 import numpy as np
 import json
 import scipy.stats
-from scipy.integrate import simps
+import scipy.integrate
 import matplotlib.pyplot as plt
 from converter import Converter
 import numbers
@@ -238,7 +238,7 @@ class PitchDistribution(object):
         if norm_type is None:  # nothing, keep the occurences (histogram)
             normval = 1
         elif norm_type == 'area':  # area under the curve using simpsons rule
-            normval = simps(self.vals, dx=self.step_size)
+            normval = scipy.integrate.simps(self.vals, dx=self.step_size)
         elif norm_type == 'sum':  # sum normalization
             normval = np.sum(self.vals)
         elif norm_type == 'max':  # max number becomes 1
@@ -280,7 +280,7 @@ class PitchDistribution(object):
                 peak_vals = peak_vals[1:]
 
         # remove peaks lower than the min_peak_ratio
-        peak_bool = peak_vals/max(peak_vals) >= min_peak_ratio
+        peak_bool = peak_vals / max(peak_vals) >= min_peak_ratio
 
         return peak_inds[peak_bool], peak_vals[peak_bool]
 
@@ -301,10 +301,10 @@ class PitchDistribution(object):
             pcd_vals = np.zeros(len(pcd_bins))
 
             # Octave wrapping
-            for bin, val in zip(self.bins, self.vals):
-                idx = int((bin % 1200) / self.step_size)
+            for bb, vv in zip(self.bins, self.vals):
+                idx = int((bb % 1200) / self.step_size)
                 idx = idx if idx != 160 else 0
-                pcd_vals[idx] += val
+                pcd_vals[idx] += vv
 
             # Initializes the PitchDistribution object and returns it.
             return PitchDistribution(pcd_bins, pcd_vals,

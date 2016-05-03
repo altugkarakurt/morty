@@ -22,9 +22,9 @@ class NeuralClassifier(object):
         pitch_tracks = self.parse_pitch_input(pitch_files, multiple=True)
         cent_tracks = [Converter.hz_to_cent(k, ref_freq=tonic_freqs[idx])
                        for idx, k in enumerate(pitch_tracks)]
-        pcd_vals = [PitchDistribution.from_cent_pitch(track,
-                                                      tonic_freqs[idx], self.kernel_width,
-                                                      self.step_size).to_pcd().vals
+        pcd_vals = [PitchDistribution.from_cent_pitch(
+            track, tonic_freqs[idx], self.kernel_width,
+            self.step_size).to_pcd().vals
                     for idx, track in enumerate(cent_tracks)]
         self.train_from_pcds(mode_labels, pcd_vals, learn_rate, save_dir)
 

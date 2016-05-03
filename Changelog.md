@@ -5,6 +5,7 @@
  - Created a separate KNN class for computing the nearest neighbors
  - Added 'min_peak_ratio' parameter to 'detect_peaks' method in the
  PitchDistribution class
+ - Added Jensen–Shannon distance to KNN._distance
  - Refactored pitch extraction in extras and moved pitch slicing method there
  - Refactored all 'smooth_factor' parameters to 'kernel_width' for consistency
 
