@@ -38,10 +38,11 @@ class Evaluator(object):
         cent_diff = est_cent % self.CENT_PER_OCTAVE
 
         # check if the tonic is found correct
-        bool_tonic = min([cent_diff, self.CENT_PER_OCTAVE - cent_diff]) \
-                     < self.tonic_tolerance
+        bool_tonic = (min([cent_diff, self.CENT_PER_OCTAVE - cent_diff]) <
+                      self.tonic_tolerance)
 
         # convert the cent difference to symbolic interval (P5, m3 etc.)
+        interval = None
         for i in self.INTERVAL_SYMBOLS:
             if i[1] <= cent_diff < i[2]:
                 interval = i[0]

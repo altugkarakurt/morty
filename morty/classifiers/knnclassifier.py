@@ -29,7 +29,7 @@ class KNNClassifier(ClassifierInputParser):
             feature_type=feature_type, models=models)
 
     def train(self, pitches, tonics, modes, sources=None, model_type='multi'):
-        if model_type=='single':
+        if model_type == 'single':
             return self._train_single_distrib__per_mode(
                 pitches, tonics, modes, sources=sources)
         elif model_type == 'multi':
