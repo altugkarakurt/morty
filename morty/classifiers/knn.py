@@ -32,8 +32,10 @@ class KNN(object):
                 assert trial.distrib_type() == td.distrib_type(), \
                     'The features should be of the same type'
 
-                if trial.distrib_type() == 'pd':
-                    # compare in the overlapping region
+                if trial.is_pcd():
+                    trial_vals = trial.vals
+                    td_vals = td.vals
+                else:  # PD, compare in the overlapping region
                     min_td_bin = np.min(td.bins)
                     max_td_bin = np.max(td.bins)
 
@@ -50,9 +52,6 @@ class KNN(object):
                     td_bool = (overlap[0] <= td.bins) * \
                               (td.bins <= overlap[1])
                     td_vals = td.vals[td_bool]
-                else:
-                    trial_vals = trial.vals
-                    td_vals = td.vals
 
                 # Calls the distance function for each entry of the matrix
                 result[i][j] = cls._distance(trial_vals, td_vals,

@@ -291,25 +291,22 @@ class PitchDistribution(object):
         -----------------------------------------------------------------------
         pD: PitchDistribution object. Its attributes include everything we need
         --------------------------------------------------------------------"""
-        if self.is_pcd():
-            return PitchDistribution(self.bins, self.vals,
-                                     kernel_width=self.kernel_width,
-                                     ref_freq=self.ref_freq)
-        else:
-            # Initializations
-            pcd_bins = np.arange(0, 1200, self.step_size)
-            pcd_vals = np.zeros(len(pcd_bins))
+        assert not self.is_pcd(), 'The object is already a PCD'
 
-            # Octave wrapping
-            for bb, vv in zip(self.bins, self.vals):
-                idx = int((bb % 1200) / self.step_size)
-                idx = idx if idx != 160 else 0
-                pcd_vals[idx] += vv
+        # Initializations
+        pcd_bins = np.arange(0, 1200, self.step_size)
+        pcd_vals = np.zeros(len(pcd_bins))
 
-            # Initializes the PitchDistribution object and returns it.
-            return PitchDistribution(pcd_bins, pcd_vals,
-                                     kernel_width=self.kernel_width,
-                                     ref_freq=self.ref_freq)
+        # Octave wrapping
+        for bb, vv in zip(self.bins, self.vals):
+            idx = int((bb % 1200) / self.step_size)
+            idx = idx if idx != 160 else 0
+            pcd_vals[idx] += vv
+
+        # Initializes the PitchDistribution object and returns it.
+        return PitchDistribution(pcd_bins, pcd_vals,
+                                 kernel_width=self.kernel_width,
+                                 ref_freq=self.ref_freq)
 
     def hz_to_cent(self, ref_freq):
         if self.has_hz_bin():

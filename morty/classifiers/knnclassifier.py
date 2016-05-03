@@ -30,16 +30,16 @@ class KNNClassifier(ClassifierInputParser):
 
     def train(self, pitches, tonics, modes, sources=None, model_type='multi'):
         if model_type == 'single':
-            return self._train_single_distrib__per_mode(
+            return self._train_single_distrib_per_mode(
                 pitches, tonics, modes, sources=sources)
         elif model_type == 'multi':
-            return self._train_single_distrib__per_mode(
+            return self._train_multi_distrib_per_mode(
                 pitches, tonics, modes, sources=sources)
         else:
             raise ValueError("Unknown training model")
 
-    def _train_single_distrib__per_mode(self, pitches, tonics, modes,
-                                        sources=None):
+    def _train_single_distrib_per_mode(self, pitches, tonics, modes,
+                                       sources=None):
         """--------------------------------------------------------------------
         For the mode trainings, the requirements are a set of recordings with
         annotated tonics for each mode under consideration. This function only
@@ -141,8 +141,8 @@ class KNNClassifier(ClassifierInputParser):
 
         self.models = models
 
-    def identify_tonic(self, test_input, mode, distance_method='bhat',
-                       rank=1):
+    def identify_tonic(self, test_input, mode, min_peak_ratio=0.1,
+                       distance_method='bhat', rank=1):
         """--------------------------------------------------------------------
         Tonic Identification: The mode of the recording is known and the
         tonic is to be estimated.
@@ -151,6 +151,8 @@ class KNNClassifier(ClassifierInputParser):
         :param mode: input mode label
         :param distance_method: distance used in KNN
         :param rank: number of estimations to return
+        :param min_peak_ratio: The minimum ratio between the max peak value and
+                               the value of a detected peak
         :return: ranked mode estimations
         --------------------------------------------------------------------"""
         test_feature = self._parse_tonic_and_joint_estimate_input(
@@ -158,22 +160,23 @@ class KNNClassifier(ClassifierInputParser):
 
         # Mode Estimation
         estimations = self._estimate(
-            test_feature, est_tonic=True, mode=mode,
-            distance_method=distance_method, rank=rank)
+            test_feature, est_tonic=True, mode=mode, rank=rank,
+            distance_method=distance_method, min_peak_ratio=min_peak_ratio)
 
         # remove the dummy tonic estimation
         tonics_ranked = [(e[0][0], e[1]) for e in estimations]
 
         return tonics_ranked
 
-    def estimate_tonic(self, test_input, mode, distance_method='bhat',
-                       rank=1):
+    def estimate_tonic(self, test_input, mode, min_peak_ratio=0.1,
+                       distance_method='bhat', rank=1):
         """
         Alias of "identify_tonic" method. See the documentation of
         "identify_tonic" for more information.
         """
         return self.identify_tonic(
-            test_input, mode, distance_method=distance_method, rank=rank)
+            test_input, mode, distance_method=distance_method, rank=rank,
+            min_peak_ratio=min_peak_ratio)
 
     def recognize_mode(self, feature_in, tonic=None, distance_method='bhat',
                        rank=1):
@@ -192,8 +195,8 @@ class KNNClassifier(ClassifierInputParser):
 
         # Mode Estimation
         estimations = self._estimate(
-            test_feature, est_tonic=False, mode=None,
-            distance_method=distance_method, rank=rank)
+            test_feature, est_tonic=False, mode=None, rank=rank,
+            distance_method=distance_method)
 
         # remove the dummy tonic estimation
         modes_ranked = [(e[0][1], e[1]) for e in estimations]
@@ -207,13 +210,16 @@ class KNNClassifier(ClassifierInputParser):
             feature_in, tonic=tonic, distance_method=distance_method,
             rank=rank)
 
-    def estimate_joint(self, test_input, distance_method='bhat', rank=1):
+    def estimate_joint(self, test_input, min_peak_ratio=0.1,
+                       distance_method='bhat', rank=1):
         """--------------------------------------------------------------------
         Joint estimation: Estimate both the tonic and mode together
         :param test_input: - precomputed feature (PD or PCD in Hz)
                            - pitch track in Hz (list or numpy array)
         :param distance_method: distance used in KNN
         :param rank: number of estimations to return
+        :param min_peak_ratio: The minimum ratio between the max peak value and
+                               the value of a detected peak
         :return: ranked mode and tonic estimations
         --------------------------------------------------------------------"""
         test_feature = self._parse_tonic_and_joint_estimate_input(
@@ -221,19 +227,20 @@ class KNNClassifier(ClassifierInputParser):
 
         # Mode Estimation
         joint_estimations = self._estimate(
-            test_feature, est_tonic=True, mode=None,
-            distance_method=distance_method, rank=rank)
+            test_feature, est_tonic=True, mode=None, rank=rank,
+            distance_method=distance_method, min_peak_ratio=min_peak_ratio)
 
         return joint_estimations
 
     def _estimate(self, test_feature, mode=None, est_tonic=True,
-                  distance_method='bhat', k_param=1, rank=1):
+                  min_peak_ratio=0.1, distance_method='bhat', k_param=1,
+                  rank=1):
         assert est_tonic or mode is None, 'Nothing to estimate.'
 
         if est_tonic is True:
             # find the tonic candidates of the input feature
-            test_feature, tonic_cands, peak_idx = self.\
-                _get_tonic_candidates(test_feature)
+            test_feature, tonic_cands, peak_idx = self._get_tonic_candidates(
+                test_feature, min_peak_ratio=min_peak_ratio)
         else:
             # dummy assign the first index
             tonic_cands = np.array([test_feature.ref_freq])
@@ -267,7 +274,7 @@ class KNNClassifier(ClassifierInputParser):
         return ranked_pairs
 
     @staticmethod
-    def _get_tonic_candidates(test_feature):
+    def _get_tonic_candidates(test_feature, min_peak_ratio=0.1):
         # find the global minima and shift the distribution there so
         # peak detection does not fail locate a peak in the boundary in
         # octave-wrapped features. For features that are not
@@ -277,7 +284,7 @@ class KNNClassifier(ClassifierInputParser):
 
         # get the peaks of the feature as the tonic candidate indices and
         # compute the stable frequencies from the peak indices
-        peak_idx = shift_feature.detect_peaks()[0]
+        peak_idx = shift_feature.detect_peaks(min_peak_ratio=min_peak_ratio)[0]
         peaks_cent = shift_feature.bins[peak_idx]
         freqs = Converter.cent_to_hz(peaks_cent, shift_feature.ref_freq)
 

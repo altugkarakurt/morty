@@ -9,7 +9,6 @@ class ClassifierInputParser(object):
 
     def __init__(self, step_size=7.5, kernel_width=7.5, feature_type='pcd',
                  models=None):
-
         """--------------------------------------------------------------------
         These attributes are wrapped as an object since these are used in both
         training and estimation stages and must be consistent in both processes
