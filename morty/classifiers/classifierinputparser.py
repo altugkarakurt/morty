@@ -7,7 +7,7 @@ from morty.converter import Converter
 class ClassifierInputParser(object):
     _dummy_ref_freq = 220.0
 
-    def __init__(self, step_size=7.5, smooth_factor=7.5, feature_type='pcd',
+    def __init__(self, step_size=7.5, kernel_width=7.5, feature_type='pcd',
                  models=None):
 
         """--------------------------------------------------------------------
@@ -15,14 +15,13 @@ class ClassifierInputParser(object):
         training and estimation stages and must be consistent in both processes
         -----------------------------------------------------------------------
         step_size       : Step size of the distribution bins
-        smooth_factor   : Standart deviation of the gaussian kernel used to
-                          smoothen the distributions. For further details,
-                          1see generate_pd() of ModeFunctions.
+        kernel_width    : Standart deviation of the gaussian kernel used to
+                          smoothen the distributions.
         feature_type    : The feature type to be used in training and testing
                           ("pd" for pitch distribution, "pcd" for pitch
                           class distribution)
         --------------------------------------------------------------------"""
-        self.smooth_factor = smooth_factor
+        self.kernel_width = kernel_width
         self.step_size = step_size
 
         assert feature_type in ['pd', 'pcd'], \
@@ -86,7 +85,7 @@ class ClassifierInputParser(object):
 
     def _cent_pitch_to_feature(self, pitch_cent, ref_freq):
         feature = PitchDistribution.from_cent_pitch(
-            pitch_cent, ref_freq=ref_freq, smooth_factor=self.smooth_factor,
+            pitch_cent, ref_freq=ref_freq, kernel_width=self.kernel_width,
             step_size=self.step_size)
         if self.feature_type == 'pcd':
             feature = feature.to_pcd()

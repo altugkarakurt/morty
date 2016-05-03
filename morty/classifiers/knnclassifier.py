@@ -9,14 +9,14 @@ from ..pitchdistribution import PitchDistribution
 
 
 class KNNClassifier(ClassifierInputParser):
-    def __init__(self, step_size=7.5, smooth_factor=7.5, feature_type='pcd',
+    def __init__(self, step_size=7.5, kernel_width=7.5, feature_type='pcd',
                  models=None):
         """--------------------------------------------------------------------
         These attributes are wrapped as an object since these are used in both
         training and estimation stages and must be consistent in both processes
         -----------------------------------------------------------------------
         step_size       : Step size of the distribution bins
-        smooth_factor   : Standart deviation of the gaussian kernel used to
+        kernel_width   : Standart deviation of the gaussian kernel used to
                           smoothen the distributions. For further details,
                           1see generate_pd() of ModeFunctions.
         feature_type    : The feature type to be used in training and testing
@@ -25,7 +25,7 @@ class KNNClassifier(ClassifierInputParser):
         models          : Pre-trained models per mode
         --------------------------------------------------------------------"""
         super(KNNClassifier, self).__init__(
-            step_size=step_size, smooth_factor=smooth_factor,
+            step_size=step_size, kernel_width=kernel_width,
             feature_type=feature_type, models=models)
 
     def train(self, pitches, tonics, modes, sources=None, model_type='multi'):
@@ -77,7 +77,7 @@ class KNNClassifier(ClassifierInputParser):
         for model in tmp_models.values():
             model['feature'] = PitchDistribution.from_cent_pitch(
                 model.pop('cent_pitch', None),
-                smooth_factor=self.smooth_factor, step_size=self.step_size)
+                kernel_width=self.kernel_width, step_size=self.step_size)
 
             # convert to pitch-class distribution if requested
             if self.feature_type == 'pcd':
@@ -127,7 +127,7 @@ class KNNClassifier(ClassifierInputParser):
             # normalize with respect to annotated tonic
             pitch_cent = self._parse_pitch_input(p, t)
             feature = PitchDistribution.from_cent_pitch(
-                pitch_cent, smooth_factor=self.smooth_factor,
+                pitch_cent, kernel_width=self.kernel_width,
                 step_size=self.step_size)
 
             # convert to pitch-class distribution if requested

@@ -3,7 +3,7 @@ import essentia
 import essentia.standard as std
 import numpy as np
 import json
-from scipy.stats import norm
+import scipy.stats
 from scipy.integrate import simps
 import matplotlib.pyplot as plt
 from converter import Converter
@@ -59,7 +59,7 @@ class PitchDistribution(object):
             return ValueError(err_str)
 
     @staticmethod
-    def from_cent_pitch(cent_track, ref_freq=440.0, smooth_factor=7.5,
+    def from_cent_pitch(cent_track, ref_freq=440.0, kernel_width=7.5,
                         step_size=7.5, norm_type='sum'):
         """--------------------------------------------------------------------
         Given the pitch track in the unit of cents, generates the Pitch
@@ -72,17 +72,17 @@ class PitchDistribution(object):
                         cents.
                         This number isn't used in the computations, but is to
                         be recorded in the PitchDistribution object.
-        smooth_factor:  The standard deviation of the gaussian kernel, used in
+        kernel_width:  The standard deviation of the gaussian kernel, used in
                         Kernel Density Estimation. If 0, a histogram is given
         step_size:      The step size of the Pitch Distribution bins.
         --------------------------------------------------------------------"""
 
         # Some extra interval is added to the beginning and end since the
-        # superposed Gaussian for smooth_factor would introduce some tails in
-        # the ends. These vanish after 3 sigmas(=smooth_factor).
+        # superposed Gaussian for kernel_width would introduce some tails in
+        # the ends. These vanish after 3 sigmas(=kernel_width).
 
         # The limits are also quantized to be a multiple of chosen step-size
-        # smooth_factor = standard deviation of the gaussian kernel
+        # kernel_width = standard deviation of the gaussian kernel
         # parse the cent_track
         cent_track = np.copy(cent_track)
         if cent_track.ndim > 1:  # pitch is given as [time, pitch, (conf)]
@@ -118,26 +118,26 @@ class PitchDistribution(object):
         # initialize the distribution
         pd = PitchDistribution(pd_bins, pd_vals, kernel_width=0,
                                ref_freq=ref_freq)
-        pd.smoothen(smooth_factor=smooth_factor)
+        pd.smoothen(kernel_width=kernel_width)
 
         # normalize
         pd.normalize(norm_type=norm_type)
 
         return pd
 
-    def smoothen(self, smooth_factor=7.5):
-        if smooth_factor > 0:
+    def smoothen(self, kernel_width=7.5):
+        if kernel_width > 0:
             # smooth the histogram
-            normal_dist = norm(loc=0, scale=smooth_factor)
+            normal_dist = scipy.stats.norm(loc=0, scale=kernel_width)
             xn = np.concatenate(
-                [np.arange(0, - 5 * smooth_factor, -self.step_size)[::-1],
-                 np.arange(self.step_size, 5 * smooth_factor, self.step_size)])
+                [np.arange(0, - 5 * kernel_width, -self.step_size)[::-1],
+                 np.arange(self.step_size, 5 * kernel_width, self.step_size)])
             sampled_norm = normal_dist.pdf(xn)
             assert len(sampled_norm) > 1, \
                 "the smoothing factor is too small compared to the step " \
                 "size, such that the convolution kernel returns a single " \
                 "point Gaussian. Either increase the value to at least " \
-                "(step size/3) or assign smooth factor to 0, for no smoothing."
+                "(step size/3) or assign kernel width to 0, for no smoothing."
             # convolution generates tails
             extra_num_bins = len(sampled_norm) / 2
 
@@ -148,11 +148,11 @@ class PitchDistribution(object):
                            extra_num_bins * self.step_size + self.step_size,
                            self.step_size)))
             self.vals = np.convolve(self.vals, sampled_norm)
-            self.kernel_width = (smooth_factor if self.kernel_width == 0 else
-                                 self.kernel_width * smooth_factor)
+            self.kernel_width = (kernel_width if self.kernel_width == 0 else
+                                 self.kernel_width * kernel_width)
 
     @staticmethod
-    def from_hz_pitch(hz_track, ref_freq=440.0, smooth_factor=7.5,
+    def from_hz_pitch(hz_track, ref_freq=440.0, kernel_width=7.5,
                       step_size=7.5, norm_type='sum'):
         hz_track = np.copy(hz_track)
         if hz_track.ndim > 1:  # pitch is given as [time, pitch, (conf)] array
@@ -165,7 +165,7 @@ class PitchDistribution(object):
         cent_track = Converter.hz_to_cent(hz_track, ref_freq, min_freq=20.0)
 
         return PitchDistribution.from_cent_pitch(
-            cent_track, ref_freq=ref_freq, smooth_factor=smooth_factor,
+            cent_track, ref_freq=ref_freq, kernel_width=kernel_width,
             step_size=step_size, norm_type=norm_type)
 
     def __eq__(self, other):
