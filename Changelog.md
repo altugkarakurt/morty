@@ -3,6 +3,8 @@
  - Rewritten the input parsing, training and estimation methods in
  KNNClassifier
  - Created a separate KNN class for computing the nearest neighbors
+ - Added 'min_peak_ratio' parameter to 'detect_peaks' method in the
+ PitchDistribution class
  - Refactored pitch extraction in extras and moved pitch slicing method there
  - Refactored all 'smooth_factor' parameters to 'kernel_width' for consistency
 

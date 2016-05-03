@@ -248,23 +248,41 @@ class PitchDistribution(object):
 
         self.vals = self.vals / normval
 
-    def detect_peaks(self):
+    def detect_peaks(self, min_peak_ratio=0.1):
         """--------------------------------------------------------------------
         Finds the peak indices of the distribution. These are treated as tonic
         candidates in higher order functions.
+        min_peak_ratio: The minimum ratio between the max peak value and the
+                        value of a detected peak
         --------------------------------------------------------------------"""
+        assert 1 >= min_peak_ratio >= 0, \
+            'min_peak_ratio should be between 0 (keep all peaks) and ' \
+            '1 (keep only the highest peak)'
+
         # Peak detection is handled by Essentia
         detector = std.PeakDetection()
         peak_bins, peak_vals = detector(essentia.array(self.vals))
 
         # Essentia normalizes the positions to 1, they are converted here
         # to actual index values to be used in bins.
-        peak_idxs = np.array([int(round(bn * (len(self.bins) - 1)))
+        peak_inds = np.array([int(round(bn * (len(self.bins) - 1)))
                               for bn in peak_bins])
-        if peak_idxs[0] == 0:
-            peak_idxs = np.delete(peak_idxs, [len(peak_idxs) - 1])
-            peak_vals = np.delete(peak_vals, [len(peak_vals) - 1])
-        return peak_idxs, peak_vals
+
+        # if the object is pcd and there is a peak at zeroth index,
+        # there will be another in the last index. Since a pcd is circular
+        # remove the lower value
+        if self.is_pcd() and peak_inds[0] == 0:
+            if peak_vals[0] >= peak_vals[-1]:
+                peak_inds = peak_inds[:-1]
+                peak_vals = peak_vals[:-1]
+            else:
+                peak_inds = peak_inds[1:]
+                peak_vals = peak_vals[1:]
+
+        # remove peaks lower than the min_peak_ratio
+        peak_bool = peak_vals/max(peak_vals) >= min_peak_ratio
+
+        return peak_inds[peak_bool], peak_vals[peak_bool]
 
     def to_pcd(self):
         """--------------------------------------------------------------------
