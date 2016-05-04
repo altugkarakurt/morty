@@ -84,9 +84,13 @@ class KNN(object):
             return spdistance.minkowski(vals_1, vals_2, 3)
         elif method == 'bhat':  # bhattacharrya distance
             return -np.log(np.sum(np.sqrt(vals_1 * vals_2)))
+        elif method == 'jeffrey':  # Jeffrey's divergence
+            return (np.sum(vals_1 * np.log(vals_1 / vals_2)) +
+                    np.sum(vals_2 * np.log(vals_2 / vals_1)))
         elif method == 'js':  # Jensen–Shannon distance
-            return np.sqrt(np.mean(np.sum(vals_1 * np.log(vals_1 / vals_2)) +
-                                   np.sum(vals_2 * np.log(vals_2 / vals_1))))
+            return np.sqrt(
+                np.sum(vals_1 * np.log(2 * vals_1 / (vals_1 + vals_2))) * 0.5 +
+                np.sum(vals_2 * np.log(2 * vals_2 / (vals_1 + vals_2))) * 0.5)
         # Since correlation and intersection are actually similarity measures,
         # we take their inverse to be able to use them as distances. In other
         # words, max. similarity would give the min. inverse and we are always

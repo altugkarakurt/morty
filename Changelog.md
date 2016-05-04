@@ -1,3 +1,6 @@
+#### morty v1.2.0
+ - Corrected Jensen–Shannon distance and added Jeffrey's divergence
+
 #### morty v1.1.0
  - Merged the classes Bozkurt and Chordia into a generic KNNClassifier class
  - Rewritten the input parsing, training and estimation methods in KNNClassifier
