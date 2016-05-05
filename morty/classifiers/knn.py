@@ -17,7 +17,7 @@ class KNN(object):
         peak_idxs           : List of indices of distribution peaks
         training_distribs   : List of training distributions
         method              : The distance method to be used. The available
-                              distances are listed in distance() function.
+                              distances are listed in _distance() method.
         --------------------------------------------------------------------"""
         result = np.zeros((len(peak_idxs), len(training_distribs)))
 
@@ -116,13 +116,13 @@ class KNN(object):
         return cand_pairs
 
     @staticmethod
-    def select_nearest_neighbor(cand_pairs, sorted_pair):
+    def classify(cand_pairs, sorted_pair):
         # in case there are multiple candidates get the pair sorted earlier
         for p in sorted_pair:
             if p[0] in cand_pairs:
                 estimated_pair = p
 
-                # pop the estimated pair from the sorte_pair list for ranking
+                # pop the estimated pair from the sorted_pair list for ranking
                 sorted_pair = [pp for pp in sorted_pair if pp[0] != p[0]]
                 return estimated_pair, sorted_pair
 
