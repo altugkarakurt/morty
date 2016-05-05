@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import division
 import essentia
 import essentia.standard as std
 import numpy as np
@@ -77,6 +78,7 @@ class PitchDistribution(object):
                         Kernel Density Estimation. If 0, a histogram is given
         step_size:      The step size of the Pitch Distribution bins.
         --------------------------------------------------------------------"""
+        assert step_size > 0, 'The step size should have a positive value'
 
         # Some extra interval is added to the beginning and end since the
         # superposed Gaussian for kernel_width would introduce some tails in
@@ -114,7 +116,7 @@ class PitchDistribution(object):
         # Generates the histogram and bins (i.e. the midpoints of edges)
         pd_vals, pd_edges = np.histogram(cent_track, bins=pd_edges,
                                          density=False)
-        pd_bins = np.convolve(pd_edges, [0.5, 0.5])[1:-1]
+        pd_bins = np.convolve(pd_edges, [0.5, 0.5])[1:-1]  # the bin centers
 
         # initialize the distribution
         pd = PitchDistribution(pd_bins, pd_vals, kernel_width=0,

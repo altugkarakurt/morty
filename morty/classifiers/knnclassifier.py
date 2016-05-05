@@ -10,7 +10,7 @@ from ..pitchdistribution import PitchDistribution
 
 class KNNClassifier(InputParser):
     def __init__(self, step_size=7.5, kernel_width=7.5, feature_type='pcd',
-                 models=None):
+                 model=None):
         """--------------------------------------------------------------------
         These attributes are wrapped as an object since these are used in both
         training and estimation stages and must be consistent in both processes
@@ -22,11 +22,11 @@ class KNNClassifier(InputParser):
         feature_type    : The feature type to be used in training and testing
                           ("pd" for pitch distribution, "pcd" for pitch
                           class distribution)
-        models          : Pre-trained models per mode
+        model           : Pre-trained model
         --------------------------------------------------------------------"""
         super(KNNClassifier, self).__init__(
             step_size=step_size, kernel_width=kernel_width,
-            feature_type=feature_type, models=models)
+            feature_type=feature_type, models=model)
 
     def train(self, pitches, tonics, modes, sources=None, model_type='multi'):
         if model_type == 'single':
