@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import division
 from scipy.spatial import distance as spdistance
 import collections
 import numpy as np
@@ -95,10 +96,11 @@ class KNN(object):
         # we take their inverse to be able to use them as distances. In other
         # words, max. similarity would give the min. inverse and we are always
         # looking for minimum distances.
-        elif method == 'intersection':
-            return len(vals_1) / (np.sum(np.minimum(vals_1, vals_2)))
-        elif method == 'corr':
-            return 1.0 - np.correlate(vals_1, vals_2)
+        elif method == 'inv_intersect':
+            return (np.minimum(np.size(vals_1), np.size(vals_2)) /
+                    np.sum(np.minimum(vals_1, vals_2)))
+        elif method == 'inv_corr':
+            return 1.0 / np.correlate(vals_1, vals_2)
         else:
             return 0
 
