@@ -93,14 +93,11 @@ class KNN(object):
                 np.sum(vals_1 * np.log(2 * vals_1 / (vals_1 + vals_2))) * 0.5 +
                 np.sum(vals_2 * np.log(2 * vals_2 / (vals_1 + vals_2))) * 0.5)
         # Since correlation and intersection are actually similarity measures,
-        # we take their inverse to be able to use them as distances. In other
-        # words, max. similarity would give the min. inverse and we are always
-        # looking for minimum distances.
-        elif method == 'inv_intersect':
-            return (np.minimum(np.size(vals_1), np.size(vals_2)) /
-                    np.sum(np.minimum(vals_1, vals_2)))
-        elif method == 'inv_corr':
-            return 1.0 / np.correlate(vals_1, vals_2)
+        # we convert them to dissimilarities
+        elif method == 'dis_intersect':
+            return 1.0 - np.sum(np.minimum(vals_1, vals_2)) / np.size(vals_1)
+        elif method == 'dis_corr':
+            return 1.0 - np.correlate(vals_1, vals_2)
         else:
             return 0
 
