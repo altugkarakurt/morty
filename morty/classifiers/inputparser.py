@@ -4,7 +4,7 @@ from morty.pitchdistribution import PitchDistribution
 from morty.converter import Converter
 
 
-class ClassifierInputParser(object):
+class InputParser(object):
     _dummy_ref_freq = 220.0
 
     def __init__(self, step_size=7.5, kernel_width=7.5, feature_type='pcd',

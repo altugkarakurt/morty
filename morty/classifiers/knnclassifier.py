@@ -2,13 +2,13 @@
 
 import numpy as np
 
-from .classifierinputparser import ClassifierInputParser
+from .inputparser import InputParser
 from .knn import KNN
 from ..converter import Converter
 from ..pitchdistribution import PitchDistribution
 
 
-class KNNClassifier(ClassifierInputParser):
+class KNNClassifier(InputParser):
     def __init__(self, step_size=7.5, kernel_width=7.5, feature_type='pcd',
                  models=None):
         """--------------------------------------------------------------------
