@@ -93,7 +93,7 @@ class KNN(object):
                 np.sum(vals_1 * np.log(2 * vals_1 / (vals_1 + vals_2))) * 0.5 +
                 np.sum(vals_2 * np.log(2 * vals_2 / (vals_1 + vals_2))) * 0.5)
         # Since correlation and intersection are actually similarity measures,
-        # we convert them to dissimilarities
+        # we convert them to dissimilarities, by taking 1 - similarity
         elif method == 'dis_intersect':
             return 1.0 - np.sum(np.minimum(vals_1, vals_2)) / np.size(vals_1)
         elif method == 'dis_corr':
