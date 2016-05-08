@@ -111,7 +111,7 @@ class FoldGenerator(object):
         tonics = []
         for m in mbids:
             for a in annotations:
-                if a['mbid'] == m:
+                if m in a['mbid']:  # a['mbid'] is a MusicBrainz link
                     tonics.append(a['tonic'])
 
         return file_modes, mbids, tonics
