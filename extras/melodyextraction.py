@@ -33,7 +33,6 @@ if idx:  # if index is given
     txtfiles = [txtfiles[idx]]
 
 for ii, mp3 in enumerate(audio_files):
-    print(' ')
     print("{0:d}: {1:s}".format(ii + 1, os.path.basename(mp3)))
 
     if os.path.isfile(txtfiles[ii]):  # already exists
