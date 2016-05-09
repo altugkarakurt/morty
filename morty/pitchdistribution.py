@@ -172,7 +172,17 @@ class PitchDistribution(object):
             step_size=step_size, norm_type=norm_type)
 
     def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        eq_bool = True
+        self_dict = self.__dict__
+        other_dict = other.__dict__
+
+        # numpy array need to be compared with np.allclose
+        eq_bool = eq_bool and np.allclose(self_dict.pop("vals", None),
+                                          other_dict.pop("vals", None))
+        eq_bool = eq_bool and np.allclose(self_dict.pop("bins", None),
+                                          other_dict.pop("bins", None))
+
+        return eq_bool and self_dict == other_dict
 
     def is_pcd(self):
         """--------------------------------------------------------------------
@@ -356,7 +366,7 @@ class PitchDistribution(object):
         except IOError:  # json string
             distrib = json.loads(file_name)
 
-        distrib = distrib[0] if (not type(distrib) == dict) else distrib
+        distrib = distrib if isinstance(distrib, dict) else distrib[0]
 
         return PitchDistribution.from_dict(distrib)
 
