@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-
 import numpy as np
+import pickle
+import json
+import copy
 
 from .inputparser import InputParser
 from .knn import KNN
@@ -307,3 +309,50 @@ class KNNClassifier(InputParser):
             feature_modes = np.array(
                 [mode for _ in range(len(training_features))])
         return training_features, feature_modes
+
+    def model_from_pickle(self, input_str):
+        try:  # file given
+            self.model = pickle.load(open(input_str, 'rb'))
+        except IOError:  # string given
+            self.model = pickle.loads(input_str, 'rb')
+
+    def model_to_pickle(self, file_name=None):
+        if file_name is None:
+            return pickle.dumps(self.model)
+        else:
+            pickle.dump(self.model, open(file_name, 'wb'))
+
+    def model_from_json(self, file_name):
+        """--------------------------------------------------------------------
+        Loads a the training model from JSON file.
+        -----------------------------------------------------------------------
+        file_name    : The filename of the JSON file
+        --------------------------------------------------------------------
+        """
+        try:
+            temp_model = json.load(open(file_name, 'r'))
+        except IOError:  # json string
+            temp_model = json.loads(file_name)
+
+        for tm in temp_model:
+            tm['feature'] = tm['feature'] if isinstance(tm['feature'], dict) \
+                else tm['feature'][0]
+            tm['feature'] = PitchDistribution.from_dict(tm['feature'])
+
+        self.model = temp_model
+
+    def model_to_json(self, file_name=None):
+        """--------------------------------------------------------------------
+        Saves the training model to a JSON file.
+        -----------------------------------------------------------------------
+        file_name    : The file path of the JSON file to be created. None to
+                       return a json string
+        --------------------------------------------------------------------"""
+        temp_model = copy.deepcopy(self.model)
+        for tm in temp_model:
+            tm['feature'] = tm['feature'].to_dict()
+
+        if file_name is None:
+            return json.dumps(temp_model, indent=4)
+        else:
+            json.dump(temp_model, open(file_name, 'w'), indent=4)
