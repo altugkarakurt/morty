@@ -32,8 +32,8 @@ class InputParser(object):
             assert all(m['feature'].distrib_type == feature_type
                        for m in model), 'The feature_type input and type ' \
                                          'of the distributions in the ' \
-                                         'models input does not match'
-        self.models = model
+                                         'model input does not match'
+        self.model = model
 
     def _parse_tonic_and_joint_estimate_input(self, test_input):
         if isinstance(test_input, PitchDistribution):  # pitch distribution

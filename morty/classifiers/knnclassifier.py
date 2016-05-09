@@ -62,7 +62,7 @@ class KNNClassifier(InputParser):
             'The inputs should have the same length!'
 
         # get the pitch tracks for each mode and convert them to cent unit
-        tmp_models = {m: {'sources': [], 'cent_pitch': []} for m in
+        tmp_model = {m: {'sources': [], 'cent_pitch': []} for m in
                       set(modes)}
         for p, t, m, s in zip(pitches, tonics, modes, sources):
             # parse the pitch track from txt file, list or numpy array and
@@ -70,27 +70,27 @@ class KNNClassifier(InputParser):
             pitch_cent = self._parse_pitch_input(p, t)
 
             # convert to cent track and append to the mode data
-            tmp_models[m]['cent_pitch'].extend(pitch_cent)
-            tmp_models[m]['sources'].append(s)
+            tmp_model[m]['cent_pitch'].extend(pitch_cent)
+            tmp_model[m]['sources'].append(s)
 
         # compute the feature for each model from the normalized pitch tracks
-        for model in tmp_models.values():
-            model['feature'] = PitchDistribution.from_cent_pitch(
-                model.pop('cent_pitch', None),
+        for data_point in tmp_model.values():
+            data_point['feature'] = PitchDistribution.from_cent_pitch(
+                data_point.pop('cent_pitch', None),
                 kernel_width=self.kernel_width, step_size=self.step_size)
 
             # convert to pitch-class distribution if requested
             if self.feature_type == 'pcd':
-                model['feature'] = model['feature'].to_pcd()
+                data_point['feature'] = data_point['feature'].to_pcd()
 
-        # make the models a list of dictionaries by collapsing the mode keys
+        # make the model a list of dictionaries by collapsing the mode keys
         # inside the values
-        models = []
-        for mode_name, model in tmp_models.items():
-            model['mode'] = mode_name
-            models.append(model)
+        model = []
+        for mode_name, data_point in tmp_model.items():
+            data_point['mode'] = mode_name
+            model.append(data_point)
 
-        self.models = models
+        self.model = model
 
     def _train_multi_distrib_per_mode(self, pitches, tonics, modes,
                                       sources=None):
@@ -121,7 +121,7 @@ class KNNClassifier(InputParser):
             'The inputs should have the same length!'
 
         # get the pitch tracks for each mode and convert them to cent unit
-        models = []
+        model = []
         for p, t, m, s in zip(pitches, tonics, modes, sources):
             # parse the pitch track from txt file, list or numpy array and
             # normalize with respect to annotated tonic
@@ -134,12 +134,12 @@ class KNNClassifier(InputParser):
             if self.feature_type == 'pcd':
                 feature = feature.to_pcd()
 
-            model = {'source': s, 'tonic': t, 'mode': m,
+            data_point = {'source': s, 'tonic': t, 'mode': m,
                      'feature': feature}
             # convert to cent track and append to the mode data
-            models.append(model)
+            model.append(data_point)
 
-        self.models = models
+        self.model = model
 
     def identify_tonic(self, test_input, mode, min_peak_ratio=0.1,
                        distance_method='bhat', k_neighbor=1, rank=1):
@@ -251,7 +251,7 @@ class KNNClassifier(InputParser):
             tonic_cands = np.array([test_feature.ref_freq])
             peak_idx = np.array([0])
 
-        training_features, training_modes = self._get_training_models(mode)
+        training_features, training_modes = self._get_training_model(mode)
         dist_mat = KNN.generate_distance_matrix(
             test_feature, peak_idx, training_features,
             distance_method=distance_method)
@@ -296,12 +296,12 @@ class KNNClassifier(InputParser):
         # corresponding index in the shifted feature
         return shift_feature, freqs, peak_idx
 
-    def _get_training_models(self, mode):
+    def _get_training_model(self, mode):
         if mode is None:
-            training_features = [m['feature'] for m in self.models]
-            feature_modes = np.array([m['mode'] for m in self.models])
+            training_features = [m['feature'] for m in self.model]
+            feature_modes = np.array([m['mode'] for m in self.model])
         else:
-            training_features = [m['feature'] for m in self.models
+            training_features = [m['feature'] for m in self.model
                                  if m['mode'] == mode]
             # create dummy array with annotated mode
             feature_modes = np.array(
