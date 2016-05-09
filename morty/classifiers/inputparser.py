@@ -8,13 +8,13 @@ class InputParser(object):
     _dummy_ref_freq = 220.0
 
     def __init__(self, step_size=7.5, kernel_width=7.5, feature_type='pcd',
-                 models=None):
+                 model=None):
         """--------------------------------------------------------------------
         These attributes are wrapped as an object since these are used in both
         training and estimation stages and must be consistent in both processes
         -----------------------------------------------------------------------
         step_size       : Step size of the distribution bins
-        kernel_width    : Standart deviation of the gaussian kernel used to
+        kernel_width    : Standard deviation of the gaussian kernel used to
                           smoothen the distributions.
         feature_type    : The feature type to be used in training and testing
                           ("pd" for pitch distribution, "pcd" for pitch
@@ -28,12 +28,12 @@ class InputParser(object):
             'distribution) or "pcd" (pitch class distribution).'
         self.feature_type = feature_type
 
-        if models is not None:
+        if model is not None:
             assert all(m['feature'].distrib_type == feature_type
-                       for m in models), 'The feature_type input and type ' \
+                       for m in model), 'The feature_type input and type ' \
                                          'of the distributions in the ' \
                                          'models input does not match'
-        self.models = models
+        self.models = model
 
     def _parse_tonic_and_joint_estimate_input(self, test_input):
         if isinstance(test_input, PitchDistribution):  # pitch distribution

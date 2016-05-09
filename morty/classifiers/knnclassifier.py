@@ -26,7 +26,7 @@ class KNNClassifier(InputParser):
         --------------------------------------------------------------------"""
         super(KNNClassifier, self).__init__(
             step_size=step_size, kernel_width=kernel_width,
-            feature_type=feature_type, models=model)
+            feature_type=feature_type, model=model)
 
     def train(self, pitches, tonics, modes, sources=None, model_type='multi'):
         if model_type == 'single':
