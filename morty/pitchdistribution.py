@@ -87,7 +87,7 @@ class PitchDistribution(object):
         # The limits are also quantized to be a multiple of chosen step-size
         # kernel_width = standard deviation of the gaussian kernel
         # parse the cent_track
-        cent_track = np.copy(cent_track)
+        cent_track = np.loadtxt(cent_track)  # keeps array, if already loaded
         if cent_track.ndim > 1:  # pitch is given as [time, pitch, (conf)]
             cent_track = cent_track[:, 1]
 
@@ -136,11 +136,13 @@ class PitchDistribution(object):
                 [np.arange(0, - 5 * kernel_width, -self.step_size)[::-1],
                  np.arange(self.step_size, 5 * kernel_width, self.step_size)])
             sampled_norm = normal_dist.pdf(xn)
-            assert len(sampled_norm) > 1, \
-                "the smoothing factor is too small compared to the step " \
-                "size, such that the convolution kernel returns a single " \
-                "point Gaussian. Either increase the value to at least " \
-                "(step size/3) or assign kernel width to 0, for no smoothing."
+            if len(sampled_norm) <= 1:
+                raise ValueError(
+                    "the smoothing factor is too small compared to the step "
+                    "size, such that the convolution kernel returns a single "
+                    "point Gaussian. Either increase the value to at least "
+                    "(step size/3) or assign kernel width to 0, for no "
+                    "smoothing.")
             # convolution generates tails
             extra_num_bins = len(sampled_norm) / 2
 
@@ -157,7 +159,7 @@ class PitchDistribution(object):
     @staticmethod
     def from_hz_pitch(hz_track, ref_freq=440.0, kernel_width=7.5,
                       step_size=7.5, norm_type='sum'):
-        hz_track = np.copy(hz_track)
+        hz_track = np.loadtxt(hz_track)  # keeps array, if already loaded
         if hz_track.ndim > 1:  # pitch is given as [time, pitch, (conf)] array
             hz_track = hz_track[:, 1]
 
