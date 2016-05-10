@@ -308,18 +308,12 @@ class PitchDistribution(object):
             if self.is_pcd():
                 shifted_vals = np.concatenate((self.vals[shift_idx:],
                                                self.vals[:shift_idx]))
-            else:
-                # If distribution is a PD, it just shifts the values. In this
-                # case, zero padding is always applied beforehand to make
-                # sure that no non-zero values are dropped.
-                if shift_idx > 0:  # Shift towards left
-                    shifted_vals = np.concatenate((self.vals[shift_idx:],
-                                                   np.zeros(shift_idx)))
-                else:  # Shift towards right
-                    shifted_vals = np.concatenate((np.zeros(abs(shift_idx)),
-                                                   self.vals[:shift_idx]))
+                shifted_bins = self.bins
+            else:  # If distribution is a PD, shift the bins.
+                shifted_vals = self.vals
+                shifted_bins = self.bins - (self.step_size * shift_idx)
 
-            return PitchDistribution(self.bins, shifted_vals,
+            return PitchDistribution(shifted_bins, shifted_vals,
                                      kernel_width=self.kernel_width,
                                      ref_freq=new_ref_freq)
 
