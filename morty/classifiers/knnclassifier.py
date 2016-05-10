@@ -64,8 +64,7 @@ class KNNClassifier(InputParser):
             'The inputs should have the same length!'
 
         # get the pitch tracks for each mode and convert them to cent unit
-        tmp_model = {m: {'sources': [], 'cent_pitch': []} for m in
-                      set(modes)}
+        tmp_model = {m: {'sources': [], 'cent_pitch': []} for m in set(modes)}
         for p, t, m, s in zip(pitches, tonics, modes, sources):
             # parse the pitch track from txt file, list or numpy array and
             # normalize with respect to annotated tonic
@@ -137,7 +136,7 @@ class KNNClassifier(InputParser):
                 feature = feature.to_pcd()
 
             data_point = {'source': s, 'tonic': t, 'mode': m,
-                     'feature': feature}
+                          'feature': feature}
             # convert to cent track and append to the mode data
             model.append(data_point)
 
@@ -158,10 +157,9 @@ class KNNClassifier(InputParser):
         :param rank: number of estimations to return
         :return: ranked mode estimations
         --------------------------------------------------------------------"""
-        test_feature = self._parse_tonic_and_joint_estimate_input(
-            test_input)
+        test_feature = self._parse_tonic_and_joint_estimate_input(test_input)
 
-        # Mode Estimation
+        # Tonic Estimation
         estimations = self._estimate(
             test_feature, est_tonic=True, mode=mode,
             min_peak_ratio=min_peak_ratio, distance_method=distance_method,
