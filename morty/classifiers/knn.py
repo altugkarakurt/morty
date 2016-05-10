@@ -102,13 +102,13 @@ class KNN(object):
             return 0
 
     @staticmethod
-    def get_nearest_neighbors(sorted_pair, k_param):
+    def get_nearest_neighbors(sorted_pair, k_neighbor):
         # parse mode/tonic pairs
-        pairs = [pair for pair, dist in sorted_pair[:k_param]]
+        pairs = [pair for pair, dist in sorted_pair[:k_neighbor]]
 
         # find the most common pairs
         counter = collections.Counter(pairs)
-        most_commons = counter.most_common(k_param)
+        most_commons = counter.most_common(k_neighbor)
         max_cnt = most_commons[0][1]
         cand_pairs = [c[0] for c in most_commons if c[1] == max_cnt]
 

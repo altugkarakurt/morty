@@ -40,10 +40,7 @@ class PitchDistribution(object):
         else:
             self.ref_freq = np.array(ref_freq)  # force numpy array
 
-        # Due to the floating point issues in Python, the step_size might not
-        # be exactly equal to (for example) 7.5, but 7.4999... In such cases
-        # the bin generation of pitch distributions include 1200 cents too
-        # and chaos reigns. We fix it here.
+        # get step_size to one decimal point
         temp_ss = self.bins[1] - self.bins[0]
         self.step_size = temp_ss if temp_ss == (round(temp_ss * 10) / 10) \
             else round(temp_ss * 10) / 10
@@ -144,7 +141,7 @@ class PitchDistribution(object):
                     "(step size/3) or assign kernel width to 0, for no "
                     "smoothing.")
             # convolution generates tails
-            extra_num_bins = len(sampled_norm) / 2
+            extra_num_bins = np.floor(len(sampled_norm) / 2)
 
             self.bins = np.concatenate(
                 (np.arange(self.bins[0] - extra_num_bins * self.step_size,
@@ -153,6 +150,8 @@ class PitchDistribution(object):
                            extra_num_bins * self.step_size + self.step_size,
                            self.step_size)))
             self.vals = np.convolve(self.vals, sampled_norm)
+            assert len(self.bins) == len(self.vals), 'Lengths of bins and ' \
+                                                     'vals are different.'
             self.kernel_width = (kernel_width if self.kernel_width == 0 else
                                  self.kernel_width * kernel_width)
 
@@ -203,7 +202,7 @@ class PitchDistribution(object):
         return self.bin_unit in ['cent', 'Cent', 'cents', 'Cents']
 
     def normalize(self, norm_type='sum'):
-        if norm_type is None:  # nothing, keep the occurences (histogram)
+        if norm_type is None:  # nothing, keep the occurrences (histogram)
             normval = 1
         elif norm_type == 'area':  # area under the curve using simpsons rule
             normval = scipy.integrate.simps(self.vals, dx=self.step_size)
