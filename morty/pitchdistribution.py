@@ -192,6 +192,9 @@ class PitchDistribution(object):
         return (max(self.bins) == (1200 - self.step_size) and
                 min(self.bins) == 0)
 
+    def is_pdf(self):
+        return np.isclose(np.sum(self.vals), 1)
+
     def distrib_type(self):
         return 'pcd' if self.is_pcd() else 'pd'
 
@@ -299,28 +302,38 @@ class PitchDistribution(object):
         # Shift only if the index is non-zero and the distribution is in
         # cent units
         if shift_idx and self.has_cent_bin():
-            # update bins and reference frequency
-            new_ref_freq = Converter.cent_to_hz(
+            # update reference frequency
+            self.ref_freq = Converter.cent_to_hz(
                 self.bins[shift_idx] - self.bins[0],
                 ref_freq=self.ref_freq)
 
             # If distribution is a PCD, we do a circular shift
             if self.is_pcd():
-                shifted_vals = np.concatenate((self.vals[shift_idx:],
-                                               self.vals[:shift_idx]))
-                shifted_bins = self.bins
+                self.vals = np.concatenate((self.vals[shift_idx:],
+                                            self.vals[:shift_idx]))
             else:  # If distribution is a PD, shift the bins.
-                shifted_vals = self.vals
-                shifted_bins = self.bins - (self.step_size * shift_idx)
+                self.bins -= self.step_size * shift_idx
 
-            return PitchDistribution(shifted_bins, shifted_vals,
-                                     kernel_width=self.kernel_width,
-                                     ref_freq=new_ref_freq)
+    def merge(self, distribution):
+        """
+        Merges the distribution with another distribution
+        :param distribution: input distribution (PD or PCD)
+        """
+        assert self.bin_unit == distribution.bin_unit, \
+            'The bin units of the compared distributions should match.'
+        assert self.distrib_type() == distribution.distrib_type(), \
+            'The features should be of the same type'
 
-        # If a zero sample shift is requested, a copy of the original
-        # distribution is returned
-        else:
-            return copy.deepcopy(self)
+        import pdb
+        pdb.set_trace()
+
+        # find the max and min bins
+
+        # initialize bin and val
+
+        # add the vals in the distributions to the corresponding bins
+
+        # update self
 
     def plot(self):
         plt.plot(self.bins, self.vals)

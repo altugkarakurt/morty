@@ -3,11 +3,12 @@ from __future__ import division
 from scipy.spatial import distance as spdistance
 import collections
 import numpy as np
+import copy
 
 
 class KNN(object):
     @classmethod
-    def generate_distance_matrix(cls, distrib, peak_idxs, training_distribs,
+    def generate_distance_matrix(cls, distrib, peak_idx, training_distribs,
                                  distance_method='bhat'):
         """--------------------------------------------------------------------
         Iteratively calculates the distance of the input distribution from each
@@ -15,16 +16,21 @@ class KNN(object):
         that is independent of distribution type or any other parameter value.
         -----------------------------------------------------------------------
         distribs            : Input distribution that is to be estimated
-        peak_idxs           : List of indices of distribution peaks
+        peak_idx            : List of indices of distribution peaks
         training_distribs   : List of training distributions
         method              : The distance method to be used. The available
                               distances are listed in _distance() method.
         --------------------------------------------------------------------"""
-        result = np.zeros((len(peak_idxs), len(training_distribs)))
+        result = np.zeros((len(peak_idx), len(training_distribs)))
+        trial = copy.deepcopy(distrib)
+
+        # convert the shifts from absolute wrt the reference distribution to
+        # relative wrt the previous shift
+        shift_idx = np.diff(np.insert(peak_idx, 0, 0))
 
         # Iterates over the peaks, i.e. the tonic candidates
-        for i, cur_peak_idx in enumerate(peak_idxs):
-            trial = distrib.shift(cur_peak_idx)
+        for i, cur_peak_idx in enumerate(shift_idx):
+            trial.shift(cur_peak_idx)
 
             # Iterates over mode candidates
             for j, td in enumerate(training_distribs):

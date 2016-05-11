@@ -283,8 +283,9 @@ class KNNClassifier(InputParser):
         # peak detection does not fail locate a peak in the boundary in
         # octave-wrapped features. For features that are not
         # octave-wrapped this step is harmless.
-        global_minima_idx = np.argmin(test_feature.vals)
-        shift_feature = test_feature.shift(global_minima_idx)
+        shift_feature = copy.deepcopy(test_feature)
+        global_minima_idx = np.argmin(shift_feature.vals)
+        shift_feature.shift(global_minima_idx)
 
         # get the peaks of the feature as the tonic candidate indices and
         # compute the stable frequencies from the peak indices
