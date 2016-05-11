@@ -63,17 +63,17 @@ class KNN(object):
                     td_vals = td.vals[td_bool]
 
                 # Calls the distance function for each entry of the matrix
-                result[i][j] = cls._distance(trial_vals, td_vals,
-                                             method=distance_method)
+                result[i][j] = cls._compute_measure(trial_vals, td_vals,
+                                                    method=distance_method)
         return np.array(result)
 
     @staticmethod
-    def _distance(vals_1, vals_2, method='bhat'):
+    def _compute_measure(vals_1, vals_2, method='bhat'):
         """--------------------------------------------------------------------
-         Calculates the distance between two 1-D lists of values. This
-         function is called with pitch distribution values, while generating
-         distance matrices. The function is symmetric, the two inpıt lists
-         are interchangable.
+         Computes the distance or dissimilairty between two 1-D lists of
+         values. This function is called with pitch distribution values,
+         while generating matrices. The function is symmetric, the two input
+         lists are interchangable.
          ----------------------------------------------------------------------
          vals_1, vals_2 : The input value lists.
          method         : The choice of distance method
@@ -85,9 +85,9 @@ class KNN(object):
          intersection : Intersection
          corr         : Correlation
          -------------------------------------------------------------------"""
-        if method == 'euclidean':
+        if method in ['euclidean', 'l2']:
             return spdistance.euclidean(vals_1, vals_2)
-        elif method == 'manhattan':
+        elif method in ['manhattan', 'l1']:
             return spdistance.minkowski(vals_1, vals_2, 1)
         elif method == 'l3':
             return spdistance.minkowski(vals_1, vals_2, 3)
