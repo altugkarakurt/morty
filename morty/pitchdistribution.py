@@ -9,7 +9,6 @@ import scipy.integrate
 import matplotlib.pyplot as plt
 from converter import Converter
 import numbers
-import copy
 import pickle
 
 
@@ -273,10 +272,11 @@ class PitchDistribution(object):
             idx = idx if idx != 160 else 0
             pcd_vals[idx] += vv
 
-        # Initializes the PitchDistribution object and returns it.
-        return PitchDistribution(pcd_bins, pcd_vals,
-                                 kernel_width=self.kernel_width,
-                                 ref_freq=self.ref_freq)
+        self.bins = pcd_bins
+        self.vals = pcd_vals
+
+        assert len(pcd_bins) == len(pcd_vals), 'Lengths of bins and vals ' \
+                                               'are different.'
 
     def hz_to_cent(self, ref_freq):
         if self.has_hz_bin():

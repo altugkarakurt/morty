@@ -87,6 +87,6 @@ class InputParser(object):
             pitch_cent, ref_freq=ref_freq, kernel_width=self.kernel_width,
             step_size=self.step_size)
         if self.feature_type == 'pcd':
-            feature = feature.to_pcd()
+            feature.to_pcd()
 
         return feature

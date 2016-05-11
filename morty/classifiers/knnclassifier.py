@@ -82,7 +82,7 @@ class KNNClassifier(InputParser):
 
             # convert to pitch-class distribution if requested
             if self.feature_type == 'pcd':
-                data_point['feature'] = data_point['feature'].to_pcd()
+                data_point['feature'].to_pcd()
 
         # make the model a list of dictionaries by collapsing the mode keys
         # inside the values
@@ -133,7 +133,7 @@ class KNNClassifier(InputParser):
 
             # convert to pitch-class distribution if requested
             if self.feature_type == 'pcd':
-                feature = feature.to_pcd()
+                feature.to_pcd()
 
             data_point = {'source': s, 'tonic': t, 'mode': m,
                           'feature': feature}
