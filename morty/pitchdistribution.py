@@ -314,26 +314,41 @@ class PitchDistribution(object):
             else:  # If distribution is a PD, shift the bins.
                 self.bins -= self.step_size * shift_idx
 
-    def merge(self, distribution):
+    def merge(self, distrib):
         """
         Merges the distribution with another distribution
-        :param distribution: input distribution (PD or PCD)
+        :param distrib: input distribution (PD or PCD)
         """
-        assert self.bin_unit == distribution.bin_unit, \
+        assert self.bin_unit == distrib.bin_unit, \
             'The bin units of the compared distributions should match.'
-        assert self.distrib_type() == distribution.distrib_type(), \
+        assert self.distrib_type() == distrib.distrib_type(), \
             'The features should be of the same type'
-
-        import pdb
-        pdb.set_trace()
+        assert self.step_size == distrib.step_size, \
+            'The step_sizes should be the same'
+        assert self.is_pdf() == distrib.is_pdf(), \
+            'The normalization should be the same'
 
         # find the max and min bins
+        min_bin = np.min([np.min(self.bins), np.min(distrib.bins[0])])
+        max_bin = np.max([np.max(self.bins[-1]), np.max(distrib.bins[-1])])
 
-        # initialize bin and val
+        # initialize the bins and vals
+        bins = np.arange(min_bin, max_bin + self.step_size/2.0, self.step_size)
+        assert 0 in bins, 'Zero should be in the bins'
+        vals = np.zeros(len(bins))
 
         # add the vals in the distributions to the corresponding bins
+        for dd in (self, distrib):
+            bin_bool = np.logical_and(bins >= np.min(dd.bins),
+                                      bins <= np.max(dd.bins))
+            vals[bin_bool] += dd.vals
 
         # update self
+        is_pdf = self.is_pdf()  # record if pdf
+        self.bins = bins
+        self.vals = vals
+        if is_pdf:
+            self.normalize()
 
     def plot(self):
         plt.plot(self.bins, self.vals)

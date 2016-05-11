@@ -38,6 +38,8 @@ class KNN(object):
                     'The bin units of the compared distributions should match.'
                 assert trial.distrib_type() == td.distrib_type(), \
                     'The features should be of the same type'
+                assert trial.step_size == td.step_size, \
+                    'The step_sizes should be the same'
 
                 if trial.is_pcd():
                     trial_vals = trial.vals
