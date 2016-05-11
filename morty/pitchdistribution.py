@@ -217,7 +217,7 @@ class PitchDistribution(object):
 
         self.vals = self.vals / normval
 
-    def detect_peaks(self, min_peak_ratio=0.1):
+    def detect_peaks(self, min_peak_ratio=0.15):
         """--------------------------------------------------------------------
         Finds the peak indices of the distribution. These are treated as tonic
         candidates in higher order functions.
