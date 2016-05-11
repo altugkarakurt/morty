@@ -315,11 +315,12 @@ class KNNClassifier(InputParser):
         except IOError:  # string given
             self.model = pickle.loads(input_str, 'rb')
 
-    def model_to_pickle(self, file_name=None):
+    @staticmethod
+    def model_to_pickle(model, file_name=None):
         if file_name is None:
-            return pickle.dumps(self.model)
+            return pickle.dumps(model)
         else:
-            pickle.dump(self.model, open(file_name, 'wb'))
+            pickle.dump(model, open(file_name, 'wb'))
 
     def model_from_json(self, file_name):
         """--------------------------------------------------------------------
@@ -340,16 +341,22 @@ class KNNClassifier(InputParser):
 
         self.model = temp_model
 
-    def model_to_json(self, file_name=None):
+    @staticmethod
+    def model_to_json(model, file_name=None):
         """--------------------------------------------------------------------
         Saves the training model to a JSON file.
         -----------------------------------------------------------------------
+        model        : Training model
         file_name    : The file path of the JSON file to be created. None to
                        return a json string
         --------------------------------------------------------------------"""
-        temp_model = copy.deepcopy(self.model)
+        temp_model = copy.deepcopy(model)
         for tm in temp_model:
-            tm['feature'] = tm['feature'].to_dict()
+            try:
+                tm['feature'] = tm['feature'].to_dict()
+            except AttributeError:  # already a dict
+                assert isinstance(tm['feature'], dict), \
+                    'The feature should have been a dict'
 
         if file_name is None:
             return json.dumps(temp_model, indent=4)
