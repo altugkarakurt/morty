@@ -226,8 +226,7 @@ class KNNClassifier(InputParser):
         :param rank: number of estimations to return
         :return: ranked mode and tonic estimations
         --------------------------------------------------------------------"""
-        test_feature = self._parse_tonic_and_joint_estimate_input(
-            test_input)
+        test_feature = self._parse_tonic_and_joint_estimate_input(test_input)
 
         # Mode Estimation
         joint_estimations = self._estimate(

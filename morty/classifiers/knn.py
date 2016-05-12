@@ -62,9 +62,16 @@ class KNN(object):
                               (td.bins <= overlap[1])
                     td_vals = td.vals[td_bool]
 
-                # Calls the distance function for each entry of the matrix
-                result[i][j] = cls._compute_measure(trial_vals, td_vals,
-                                                    method=distance_method)
+                if any([td_vals.size == 0, trial_vals.size == 0]):
+                    # no overlapping, only in pd
+                    assert not trial.is_pcd(), \
+                        'The distributions should have been pitch ' \
+                        'distribution to become non-overlapping'
+                    result[i][j] = 0
+                else:
+                    # Calls the distance function for each entry of the matrix
+                    result[i][j] = cls._compute_measure(trial_vals, td_vals,
+                                                        method=distance_method)
         return np.array(result)
 
     @staticmethod
@@ -85,10 +92,10 @@ class KNN(object):
          intersection : Intersection
          corr         : Correlation
          -------------------------------------------------------------------"""
-        if method in ['euclidean', 'l2']:
-            return spdistance.euclidean(vals_1, vals_2)
-        elif method in ['manhattan', 'l1']:
+        if method in ['manhattan', 'l1']:
             return spdistance.minkowski(vals_1, vals_2, 1)
+        elif method in ['euclidean', 'l2']:
+            return spdistance.euclidean(vals_1, vals_2)
         elif method == 'l3':
             return spdistance.minkowski(vals_1, vals_2, 3)
         elif method == 'bhat':  # bhattacharrya distance
