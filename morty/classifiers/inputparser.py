@@ -2,6 +2,7 @@
 import numpy as np
 from morty.pitchdistribution import PitchDistribution
 from morty.converter import Converter
+import copy
 
 
 class InputParser(object):
@@ -39,7 +40,8 @@ class InputParser(object):
         if isinstance(test_input, PitchDistribution):  # pitch distribution
             assert test_input.has_hz_bin(), 'The input distribution has a ' \
                                             'reference frequency already.'
-            return test_input.hz_to_cent(self._dummy_ref_freq)
+            test_input.hz_to_cent(self._dummy_ref_freq)
+            return test_input
         else:  # pitch track or file
             pitch_cent = self._parse_pitch_input(test_input,
                                                  self._dummy_ref_freq)
