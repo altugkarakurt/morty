@@ -29,7 +29,7 @@ class InputParser(object):
         self.feature_type = feature_type
 
         if model is not None:
-            assert all(m['feature'].distrib_type == feature_type
+            assert all(m['feature'].distrib_type() == feature_type
                        for m in model), 'The feature_type input and type ' \
                                         'of the distributions in the ' \
                                         'model input does not match'
