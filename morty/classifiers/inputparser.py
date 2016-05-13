@@ -2,7 +2,6 @@
 import numpy as np
 from morty.pitchdistribution import PitchDistribution
 from morty.converter import Converter
-import copy
 
 
 class InputParser(object):

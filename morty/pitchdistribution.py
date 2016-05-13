@@ -333,7 +333,8 @@ class PitchDistribution(object):
         max_bin = np.max([np.max(self.bins[-1]), np.max(distrib.bins[-1])])
 
         # initialize the bins and vals
-        bins = np.arange(min_bin, max_bin + self.step_size/2.0, self.step_size)
+        bins = np.arange(min_bin, max_bin + self.step_size / 2.0,
+                         self.step_size)
         assert 0 in bins, 'Zero should be in the bins'
         vals = np.zeros(len(bins))
 
