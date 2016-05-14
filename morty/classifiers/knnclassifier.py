@@ -267,9 +267,13 @@ class KNNClassifier(InputParser):
         sorted_pairs = [((t, m), d) for t, m, d in
                         zip(sorted_tonics, sorted_modes, sorted_dists)]
 
+        # there might be enough options to get estimations up to the
+        # requested rank. Max is the number of unique sortd pairs
+        max_rank = len(set(sp[0] for sp in sorted_pairs))
+
         # compute ranked estimations
         ranked_pairs = []
-        for r in range(rank):
+        for r in range(min(rank, max_rank)):
             cand_pairs = KNN.get_nearest_neighbors(sorted_pairs, k_neighbor)
             estimation, sorted_pairs = KNN.classify(cand_pairs, sorted_pairs)
             ranked_pairs.append(estimation)
