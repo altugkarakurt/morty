@@ -20,10 +20,10 @@ In our context, these models are used in three similar computational tasks:
 - **Tonic Identification:** Given an audio performance with known mode, the pitch histogram computed from the performance is shifted and compared with the model of the mode. The shift that produces the highest similarity will indicate the estimated tonic.
 - **Joint Estimation:** Given an audio performance with unknown tonic and mode, the pitch histogram computed from the performance is shifted and compared with the model of each mode. The most similar shift and the mode of the matching model yields the estimated tonic and the mode jointly.
 
-For indepth eplanation of the concept and the methodologies, please refer to the papers.
+For indepth explanation of the concept and the methodologies, please refer to the papers.
 
 ### Usage
-This project expects the predominant melody of the audio performances as the input and generates pitch distributions (PD) or pitch class distributions (PCD) from them. These distributions are used as the features for the training and the estimation.
+This algorithms expect the predominant melody of the audio performances as the input and generates pitch distributions (PD) or pitch class distributions (PCD) from them. These distributions are used as the features for the training and the estimation.
 
 The algorithms can be used for both **estimating tonic and mode of a piece**. When either of these two is available and this information could be fed into the algorithm, and hence the estimation would be more accurate.
 
