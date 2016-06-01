@@ -1,6 +1,12 @@
 #### morty v1.2.0
  - Corrected Jensen–Shannon distance and added Jeffrey's divergence
  - Converted intersection and cross-correlation to dissimilarities
+ - Fixed the division by int problems by importing future division
+ - Added merge method to PitchDistribution
+ - Fixed the bin number mismatch in smoothen method in PitchDistribution
+ - Changed minimum peak threshold
+ - Refactored several variables and classes
+ - Several bug fixes in unit conversion, distance matrix generation, ranking etc.
 
 #### morty v1.1.0
  - Merged the classes Bozkurt and Chordia into a generic KNNClassifier class
