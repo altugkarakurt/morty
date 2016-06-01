@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
+from __future__ import division
 import essentia
 import essentia.standard as std
 import numpy as np
 import json
-from scipy.stats import norm
-from scipy.integrate import simps
+import scipy.stats
+import scipy.integrate
 import matplotlib.pyplot as plt
 from converter import Converter
 import numbers
+import pickle
 
 
 class PitchDistribution(object):
@@ -32,12 +34,12 @@ class PitchDistribution(object):
         self.bins = np.array(pd_bins)  # force numpy array
         self.vals = np.array(pd_vals)  # force numpy array
         self.kernel_width = kernel_width
-        self.ref_freq = np.array(ref_freq)  # force numpy array
+        if ref_freq is None:
+            self.ref_freq = None
+        else:
+            self.ref_freq = np.array(ref_freq)  # force numpy array
 
-        # Due to the floating point issues in Python, the step_size might not
-        # be exactly equal to (for example) 7.5, but 7.4999... In such cases
-        # the bin generation of pitch distributions include 1200 cents too
-        # and chaos reigns. We fix it here.
+        # get step_size to one decimal point
         temp_ss = self.bins[1] - self.bins[0]
         self.step_size = temp_ss if temp_ss == (round(temp_ss * 10) / 10) \
             else round(temp_ss * 10) / 10
@@ -55,7 +57,7 @@ class PitchDistribution(object):
             return ValueError(err_str)
 
     @staticmethod
-    def from_cent_pitch(cent_track, ref_freq=440.0, smooth_factor=7.5,
+    def from_cent_pitch(cent_track, ref_freq=440.0, kernel_width=7.5,
                         step_size=7.5, norm_type='sum'):
         """--------------------------------------------------------------------
         Given the pitch track in the unit of cents, generates the Pitch
@@ -68,19 +70,20 @@ class PitchDistribution(object):
                         cents.
                         This number isn't used in the computations, but is to
                         be recorded in the PitchDistribution object.
-        smooth_factor:  The standard deviation of the gaussian kernel, used in
+        kernel_width:  The standard deviation of the gaussian kernel, used in
                         Kernel Density Estimation. If 0, a histogram is given
         step_size:      The step size of the Pitch Distribution bins.
         --------------------------------------------------------------------"""
+        assert step_size > 0, 'The step size should have a positive value'
 
         # Some extra interval is added to the beginning and end since the
-        # superposed Gaussian for smooth_factor would introduce some tails in
-        # the ends. These vanish after 3 sigmas(=smooth_factor).
+        # superposed Gaussian for kernel_width would introduce some tails in
+        # the ends. These vanish after 3 sigmas(=kernel_width).
 
         # The limits are also quantized to be a multiple of chosen step-size
-        # smooth_factor = standard deviation of the gaussian kernel
+        # kernel_width = standard deviation of the gaussian kernel
         # parse the cent_track
-        cent_track = np.copy(cent_track)
+        cent_track = np.loadtxt(cent_track)  # keeps array, if already loaded
         if cent_track.ndim > 1:  # pitch is given as [time, pitch, (conf)]
             cent_track = cent_track[:, 1]
 
@@ -109,33 +112,35 @@ class PitchDistribution(object):
         # Generates the histogram and bins (i.e. the midpoints of edges)
         pd_vals, pd_edges = np.histogram(cent_track, bins=pd_edges,
                                          density=False)
-        pd_bins = np.convolve(pd_edges, [0.5, 0.5])[1:-1]
+        pd_bins = np.convolve(pd_edges, [0.5, 0.5])[1:-1]  # the bin centers
 
         # initialize the distribution
         pd = PitchDistribution(pd_bins, pd_vals, kernel_width=0,
                                ref_freq=ref_freq)
-        pd.smoothen(smooth_factor=smooth_factor)
+        pd.smoothen(kernel_width=kernel_width)
 
         # normalize
         pd.normalize(norm_type=norm_type)
 
         return pd
 
-    def smoothen(self, smooth_factor=7.5):
-        if smooth_factor > 0:
+    def smoothen(self, kernel_width=7.5):
+        if kernel_width > 0:
             # smooth the histogram
-            normal_dist = norm(loc=0, scale=smooth_factor)
+            normal_dist = scipy.stats.norm(loc=0, scale=kernel_width)
             xn = np.concatenate(
-                [np.arange(0, - 5 * smooth_factor, -self.step_size)[::-1],
-                 np.arange(self.step_size, 5 * smooth_factor, self.step_size)])
+                [np.arange(0, - 5 * kernel_width, -self.step_size)[::-1],
+                 np.arange(self.step_size, 5 * kernel_width, self.step_size)])
             sampled_norm = normal_dist.pdf(xn)
-            assert len(sampled_norm) > 1, \
-                "the smoothing factor is too small compared to the step " \
-                "size, such that the convolution kernel returns a single " \
-                "point Gaussian. Either increase the value to at least " \
-                "(step size/3) or assign smooth factor to 0, for no smoothing."
+            if len(sampled_norm) <= 1:
+                raise ValueError(
+                    "the smoothing factor is too small compared to the step "
+                    "size, such that the convolution kernel returns a single "
+                    "point Gaussian. Either increase the value to at least "
+                    "(step size/3) or assign kernel width to 0, for no "
+                    "smoothing.")
             # convolution generates tails
-            extra_num_bins = len(sampled_norm) / 2
+            extra_num_bins = np.floor(len(sampled_norm) / 2)
 
             self.bins = np.concatenate(
                 (np.arange(self.bins[0] - extra_num_bins * self.step_size,
@@ -144,13 +149,15 @@ class PitchDistribution(object):
                            extra_num_bins * self.step_size + self.step_size,
                            self.step_size)))
             self.vals = np.convolve(self.vals, sampled_norm)
-            self.kernel_width = (smooth_factor if self.kernel_width == 0 else
-                                 self.kernel_width * smooth_factor)
+            assert len(self.bins) == len(self.vals), 'Lengths of bins and ' \
+                                                     'vals are different.'
+            self.kernel_width = (kernel_width if self.kernel_width == 0 else
+                                 self.kernel_width * kernel_width)
 
     @staticmethod
-    def from_hz_pitch(hz_track, ref_freq=440.0, smooth_factor=7.5,
+    def from_hz_pitch(hz_track, ref_freq=440.0, kernel_width=7.5,
                       step_size=7.5, norm_type='sum'):
-        hz_track = np.copy(hz_track)
+        hz_track = np.loadtxt(hz_track)  # keeps array, if already loaded
         if hz_track.ndim > 1:  # pitch is given as [time, pitch, (conf)] array
             hz_track = hz_track[:, 1]
 
@@ -161,58 +168,21 @@ class PitchDistribution(object):
         cent_track = Converter.hz_to_cent(hz_track, ref_freq, min_freq=20.0)
 
         return PitchDistribution.from_cent_pitch(
-            cent_track, ref_freq=ref_freq, smooth_factor=smooth_factor,
+            cent_track, ref_freq=ref_freq, kernel_width=kernel_width,
             step_size=step_size, norm_type=norm_type)
 
     def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        eq_bool = True
+        self_dict = self.__dict__
+        other_dict = other.__dict__
 
-    @staticmethod
-    def load(file_name):
-        """--------------------------------------------------------------------
-        Loads a PitchDistribution object from JSON file.
-        -----------------------------------------------------------------------
-        file_name    : The filename of the JSON file
-        --------------------------------------------------------------------
-        """
-        try:
-            distrib = json.load(open(file_name, 'r'))
-        except IOError:  # json string
-            distrib = json.loads(file_name)
+        # numpy array need to be compared with np.allclose
+        eq_bool = eq_bool and np.allclose(self_dict.pop("vals", None),
+                                          other_dict.pop("vals", None))
+        eq_bool = eq_bool and np.allclose(self_dict.pop("bins", None),
+                                          other_dict.pop("bins", None))
 
-        distrib = distrib[0] if(not type(distrib) == dict) else distrib
-
-        return PitchDistribution.from_dict(distrib)
-
-    @staticmethod
-    def from_dict(distrib_dict):
-        return PitchDistribution(distrib_dict['bins'], distrib_dict['vals'],
-                                 kernel_width=distrib_dict['kernel_width'],
-                                 ref_freq=distrib_dict['ref_freq'])
-
-    def to_dict(self):
-        pdict = self.__dict__
-        for key in pdict.keys():
-            try:
-                # convert to list from np array
-                pdict[key] = pdict[key].tolist()
-            except AttributeError:
-                pass
-
-        return pdict
-
-    def save(self, fpath=None):
-        """--------------------------------------------------------------------
-        Saves the PitchDistribution object to a JSON file.
-        -----------------------------------------------------------------------
-        fpath    : The file path of the JSON file to be created.
-        --------------------------------------------------------------------"""
-        dist_json = self.to_dict()
-
-        if fpath is None:
-            json.dumps(dist_json, indent=4)
-        else:
-            json.dump(dist_json, open(fpath, 'w'), indent=4)
+        return eq_bool and self_dict == other_dict
 
     def is_pcd(self):
         """--------------------------------------------------------------------
@@ -220,6 +190,9 @@ class PitchDistribution(object):
         --------------------------------------------------------------------"""
         return (max(self.bins) == (1200 - self.step_size) and
                 min(self.bins) == 0)
+
+    def is_pdf(self):
+        return np.isclose(np.sum(self.vals), 1)
 
     def distrib_type(self):
         return 'pcd' if self.is_pcd() else 'pd'
@@ -231,10 +204,10 @@ class PitchDistribution(object):
         return self.bin_unit in ['cent', 'Cent', 'cents', 'Cents']
 
     def normalize(self, norm_type='sum'):
-        if norm_type is None:  # nothing, keep the occurences (histogram)
+        if norm_type is None:  # nothing, keep the occurrences (histogram)
             normval = 1
         elif norm_type == 'area':  # area under the curve using simpsons rule
-            normval = simps(self.vals, dx=self.step_size)
+            normval = scipy.integrate.simps(self.vals, dx=self.step_size)
         elif norm_type == 'sum':  # sum normalization
             normval = np.sum(self.vals)
         elif norm_type == 'max':  # max number becomes 1
@@ -244,22 +217,41 @@ class PitchDistribution(object):
 
         self.vals = self.vals / normval
 
-    def detect_peaks(self):
+    def detect_peaks(self, min_peak_ratio=0.15):
         """--------------------------------------------------------------------
         Finds the peak indices of the distribution. These are treated as tonic
         candidates in higher order functions.
+        min_peak_ratio: The minimum ratio between the max peak value and the
+                        value of a detected peak
         --------------------------------------------------------------------"""
+        assert 1 >= min_peak_ratio >= 0, \
+            'min_peak_ratio should be between 0 (keep all peaks) and ' \
+            '1 (keep only the highest peak)'
+
         # Peak detection is handled by Essentia
         detector = std.PeakDetection()
         peak_bins, peak_vals = detector(essentia.array(self.vals))
 
         # Essentia normalizes the positions to 1, they are converted here
         # to actual index values to be used in bins.
-        peak_idxs = [int(round(bn * (len(self.bins) - 1))) for bn in peak_bins]
-        if peak_idxs[0] == 0:
-            peak_idxs = np.delete(peak_idxs, [len(peak_idxs) - 1])
-            peak_vals = np.delete(peak_vals, [len(peak_vals) - 1])
-        return peak_idxs, peak_vals
+        peak_inds = np.array([int(round(bn * (len(self.bins) - 1)))
+                              for bn in peak_bins])
+
+        # if the object is pcd and there is a peak at zeroth index,
+        # there will be another in the last index. Since a pcd is circular
+        # remove the lower value
+        if self.is_pcd() and peak_inds[0] == 0:
+            if peak_vals[0] >= peak_vals[-1]:
+                peak_inds = peak_inds[:-1]
+                peak_vals = peak_vals[:-1]
+            else:
+                peak_inds = peak_inds[1:]
+                peak_vals = peak_vals[1:]
+
+        # remove peaks lower than the min_peak_ratio
+        peak_bool = peak_vals / max(peak_vals) >= min_peak_ratio
+
+        return peak_inds[peak_bool], peak_vals[peak_bool]
 
     def to_pcd(self):
         """--------------------------------------------------------------------
@@ -268,25 +260,23 @@ class PitchDistribution(object):
         -----------------------------------------------------------------------
         pD: PitchDistribution object. Its attributes include everything we need
         --------------------------------------------------------------------"""
-        if self.is_pcd():
-            return PitchDistribution(self.bins, self.vals,
-                                     kernel_width=self.kernel_width,
-                                     ref_freq=self.ref_freq)
-        else:
-            # Initializations
-            pcd_bins = np.arange(0, 1200, self.step_size)
-            pcd_vals = np.zeros(len(pcd_bins))
+        assert not self.is_pcd(), 'The object is already a PCD'
 
-            # Octave wrapping
-            for bin, val in zip(self.bins, self.vals):
-                idx = int((bin % 1200) / self.step_size)
-                idx = idx if idx != 160 else 0
-                pcd_vals[idx] += val
+        # Initializations
+        pcd_bins = np.arange(0, 1200, self.step_size)
+        pcd_vals = np.zeros(len(pcd_bins))
 
-            # Initializes the PitchDistribution object and returns it.
-            return PitchDistribution(pcd_bins, pcd_vals,
-                                     kernel_width=self.kernel_width,
-                                     ref_freq=self.ref_freq)
+        # Octave wrapping
+        for bb, vv in zip(self.bins, self.vals):
+            idx = int((bb % 1200) / self.step_size)
+            idx = idx if idx != 160 else 0
+            pcd_vals[idx] += vv
+
+        self.bins = pcd_bins
+        self.vals = pcd_vals
+
+        assert len(pcd_bins) == len(pcd_vals), 'Lengths of bins and vals ' \
+                                               'are different.'
 
     def hz_to_cent(self, ref_freq):
         if self.has_hz_bin():
@@ -309,37 +299,57 @@ class PitchDistribution(object):
         shift_idx : The number of samples that the distribution is to be
                     shifted
         --------------------------------------------------------------------"""
-        # If the shift index is non-zero, do the shifting procedure
-        if shift_idx:
+        # Shift only if the index is non-zero and the distribution is in
+        # cent units
+        if shift_idx and self.has_cent_bin():
+            # update reference frequency
+            self.ref_freq = Converter.cent_to_hz(
+                self.bins[shift_idx] - self.bins[0],
+                ref_freq=self.ref_freq)
+
             # If distribution is a PCD, we do a circular shift
             if self.is_pcd():
-                shifted_vals = np.concatenate((self.vals[shift_idx:],
-                                               self.vals[:shift_idx]))
+                self.vals = np.concatenate((self.vals[shift_idx:],
+                                            self.vals[:shift_idx]))
+            else:  # If distribution is a PD, shift the bins.
+                self.bins -= self.step_size * shift_idx
 
-            # If distribution is a PD, it just shifts the values. In this case,
-            # pd_zero_pad() of ModeFunctions is always applied beforehand to
-            # make sure that no non-zero values are dropped.
-            else:
-                # Shift towards left
-                if shift_idx > 0:
-                    shifted_vals = np.concatenate((self.vals[shift_idx:],
-                                                   np.zeros(shift_idx)))
+    def merge(self, distrib):
+        """
+        Merges the distribution with another distribution
+        :param distrib: input distribution (PD or PCD)
+        """
+        assert self.bin_unit == distrib.bin_unit, \
+            'The bin units of the compared distributions should match.'
+        assert self.distrib_type() == distrib.distrib_type(), \
+            'The features should be of the same type'
+        assert self.step_size == distrib.step_size, \
+            'The step_sizes should be the same'
+        assert self.is_pdf() == distrib.is_pdf(), \
+            'The normalization should be the same'
 
-                # Shift towards right
-                else:
-                    shifted_vals = np.concatenate((np.zeros(abs(shift_idx)),
-                                                   self.vals[:shift_idx]))
+        # find the max and min bins
+        min_bin = np.min([np.min(self.bins), np.min(distrib.bins[0])])
+        max_bin = np.max([np.max(self.bins[-1]), np.max(distrib.bins[-1])])
 
-            return PitchDistribution(self.bins, shifted_vals,
-                                     kernel_width=self.kernel_width,
-                                     ref_freq=self.ref_freq)
+        # initialize the bins and vals
+        bins = np.arange(min_bin, max_bin + self.step_size / 2.0,
+                         self.step_size)
+        assert 0 in bins, 'Zero should be in the bins'
+        vals = np.zeros(len(bins))
 
-        # If a zero sample shift is requested, a copy of the original
-        # distribution is returned
-        else:
-            return PitchDistribution(self.bins, self.vals,
-                                     kernel_width=self.kernel_width,
-                                     ref_freq=self.ref_freq)
+        # add the vals in the distributions to the corresponding bins
+        for dd in (self, distrib):
+            bin_bool = np.logical_and(bins >= np.min(dd.bins),
+                                      bins <= np.max(dd.bins))
+            vals[bin_bool] += dd.vals
+
+        # update self
+        is_pdf = self.is_pdf()  # record if pdf
+        self.bins = bins
+        self.vals = vals
+        if is_pdf:
+            self.normalize()
 
     def plot(self):
         plt.plot(self.bins, self.vals)
@@ -353,3 +363,63 @@ class PitchDistribution(object):
             plt.xlabel('Normalized Frequency (cent), ref = ' +
                        str(self.ref_freq))
         plt.ylabel('Occurence')
+
+    @staticmethod
+    def from_pickle(input_str):
+        try:  # file given
+            return pickle.load(open(input_str, 'rb'))
+        except IOError:  # string given
+            return pickle.loads(input_str, 'rb')
+
+    def to_pickle(self, file_name=None):
+        if file_name is None:
+            return pickle.dumps(self)
+        else:
+            pickle.dump(self, open(file_name, 'wb'))
+
+    @staticmethod
+    def from_json(file_name):
+        """--------------------------------------------------------------------
+        Loads a PitchDistribution object from JSON file.
+        -----------------------------------------------------------------------
+        file_name    : The filename of the JSON file
+        --------------------------------------------------------------------
+        """
+        try:
+            distrib = json.load(open(file_name, 'r'))
+        except IOError:  # json string
+            distrib = json.loads(file_name)
+
+        distrib = distrib if isinstance(distrib, dict) else distrib[0]
+
+        return PitchDistribution.from_dict(distrib)
+
+    def to_json(self, file_name=None):
+        """--------------------------------------------------------------------
+        Saves the PitchDistribution object to a JSON file.
+        -----------------------------------------------------------------------
+        file_name    : The file path of the JSON file to be created.
+        --------------------------------------------------------------------"""
+        dist_json = self.to_dict()
+
+        if file_name is None:
+            return json.dumps(dist_json, indent=4)
+        else:
+            json.dump(dist_json, open(file_name, 'w'), indent=4)
+
+    @staticmethod
+    def from_dict(distrib_dict):
+        return PitchDistribution(distrib_dict['bins'], distrib_dict['vals'],
+                                 kernel_width=distrib_dict['kernel_width'],
+                                 ref_freq=distrib_dict['ref_freq'])
+
+    def to_dict(self):
+        pdict = self.__dict__
+        for key in pdict.keys():
+            try:
+                # convert to list from np array
+                pdict[key] = pdict[key].tolist()
+            except AttributeError:
+                pass
+
+        return pdict

@@ -1,3 +1,4 @@
+from __future__ import division
 import numpy as np
 _NUM_CENTS_IN_OCTAVE = 1200.0
 
@@ -16,7 +17,7 @@ class Converter(object):
         # but also logarithm of 0 is problematic.
         assert min_freq >= 0.0, 'min_freq cannot be less than 0'
 
-        hz_track = np.array(hz_track)
+        hz_track = np.array(hz_track).astype(float)
 
         # change values less than the min_freq to nan
         hz_track[hz_track <= min_freq] = np.nan
@@ -31,6 +32,6 @@ class Converter(object):
         cent_track  : The 1-D array of cent values
         ref_freq    : Reference frequency for cent conversion
         --------------------------------------------------------------------"""
-        cent_track = np.array(cent_track)
+        cent_track = np.array(cent_track).astype(float)
 
         return 2 ** (cent_track / _NUM_CENTS_IN_OCTAVE) * ref_freq
