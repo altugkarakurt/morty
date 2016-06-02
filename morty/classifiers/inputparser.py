@@ -2,6 +2,9 @@
 import numpy as np
 from morty.pitchdistribution import PitchDistribution
 from morty.converter import Converter
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class InputParser(object):
@@ -77,7 +80,11 @@ class InputParser(object):
         :return: parsed pitch track (numpy array)
         """
         # parse the pitch track from txt file, list or numpy array
-        p = np.loadtxt(pitch_in)  # loadtxt converts lists to np.array too
+        try:
+            p = np.loadtxt(pitch_in)
+        except ValueError:
+            logger.debug('pitch_in is already a numpy array')
+
         p = p[:, 1] if p.ndim > 1 else p  # get the pitch stream
 
         # normalize wrt tonic
