@@ -1,5 +1,7 @@
 ### morty
-**MO**de **R**ecognition and **T**onic **Y**dentification Toolbox
+**MO**de **R**ecognition and **T**onic **Y**dentification Toolbox, as presented in:
+
+    Karakurt, A., Şentürk S., & Serra X. (2016).  MORTY: A Toolbox for Mode Recognition and Tonic Identification. 3rd International Digital Libraries for Musicology Workshop. 
 
 ### Introduction
 **morty** is a toolbox for mode recognition and tonic identification in audio performances of "modal" music cultures. The toolbox is based on well-studied pitch histogram analysis. It implements two state of the art methods applied to Ottoman-Turkish makam music (A. C. Gedik and B.Bozkurt, 2010) and Hindustani music (P. Chordia and S. Şentürk, 2013). Moreover, it contains our implementation of a multi-layer perceptron neural network for mode recognition.
