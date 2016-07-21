@@ -1,3 +1,6 @@
+[![GitHub version](https://badge.fury.io/gh/altugkarakurt%2Fmorty.svg)](https://badge.fury.io/gh/altugkarakurt%2Fmorty) 
+[![Build Status](https://travis-ci.org/altugkarakurt/morty.svg?branch=master)](https://travis-ci.org/altugkarakurt/morty) [![Code Climate](https://codeclimate.com/github/altugkarakurt/ModeTonicEstimation/badges/gpa.svg)](https://codeclimate.com/github/altugkarakurt/ModeTonicEstimation) 
+
 ### morty
 **MO**de **R**ecognition and **T**onic **Y**dentification Toolbox:
 
