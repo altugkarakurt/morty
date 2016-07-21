@@ -9,7 +9,7 @@
 
 Please cite the publication below, if you use the toolbox in your work:
 
-> Karakurt, A., Şentürk S., & Serra X. (2016).  [MORTY: A Toolbox for Mode Recognition and Tonic Identification](http://mtg.upf.edu/node/3538). 3rd International Digital Libraries for Musicology Workshop. New York, NY
+> Karakurt, A., Şentürk S., & Serra X. (2016).  [MORTY: A Toolbox for Mode Recognition and Tonic Identification](http://mtg.upf.edu/node/3538). 3rd International Digital Libraries for Musicology Workshop. New York, USA
 
 The main purpose of the toolbox is to provide a quick access to automatic tonic identification and mode recognition implementations for music cultures, for which these tasks have not been addressed and provide a baseline for novel methodologies to be compared against. Therefore, the implementations are designed such that there is no "computational-bias" towards a particular culture yet any culture-specific optimization can be easily introduced in the context of the implemented methodologies. 
 
