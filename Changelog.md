@@ -1,3 +1,7 @@
+#### morty v1.2.1
+ - Removed the experimental neural networks from the master branch
+ - Updated the readme to include the DLFM paper
+
 #### morty v1.2.0
  - Corrected Jensen–Shannon distance and added Jeffrey's divergence
  - Converted intersection and cross-correlation to dissimilarities
