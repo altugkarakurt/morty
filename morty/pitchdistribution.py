@@ -282,13 +282,18 @@ class PitchDistribution(object):
         --------------------------------------------------------------------"""
         assert not self.is_pcd(), 'The object is already a PCD'
 
+        has_hz_bin = self.has_hz_bin()  # remember the bin unit for later
+        if self.has_hz_bin():
+            self.hz_to_cent(self.bins[0])
+
         # Initializations
         pcd_bins = np.arange(0, 1200, self.step_size)
         pcd_vals = np.zeros(len(pcd_bins))
 
         # Octave wrapping
         for bb, vv in zip(self.bins, self.vals):
-            idx = int((bb % 1200) / self.step_size)
+
+            idx = int(round((bb % 1200) / self.step_size))
             idx = idx if idx != 160 else 0
             pcd_vals[idx] += vv
 
@@ -297,6 +302,10 @@ class PitchDistribution(object):
 
         assert len(pcd_bins) == len(pcd_vals), 'Lengths of bins and vals ' \
                                                'are different.'
+
+        # convert the unit back to what is was
+        if has_hz_bin:
+            self.cent_to_hz()
 
     def hz_to_cent(self, ref_freq):
         if self.has_hz_bin():
