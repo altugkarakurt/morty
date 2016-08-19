@@ -1,6 +1,7 @@
 #### morty v1.2.1
  - Removed the experimental neural networks from the master branch
  - Updated the readme to include the DLFM paper
+ - Fixed PCD conversion and PCD checking when the input distribution's bins are in Hz
 
 #### morty v1.2.0
  - Corrected Jensen–Shannon distance and added Jeffrey's divergence
