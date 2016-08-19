@@ -4,6 +4,7 @@ import essentia
 import essentia.standard as std
 import numpy as np
 import json
+import copy
 import scipy.stats
 import scipy.integrate
 import matplotlib.pyplot as plt
@@ -199,8 +200,16 @@ class PitchDistribution(object):
         """--------------------------------------------------------------------
         The boolean flag of whether the instance is PCD or not.
         --------------------------------------------------------------------"""
-        return (max(self.bins) == (1200 - self.step_size) and
-                min(self.bins) == 0)
+        if self.has_cent_bin():  # cent bins; compare directly
+            return np.isclose(max(self.bins) - min(self.bins),
+                              1200 - self.step_size)
+        else:
+            dummy_d = copy.deepcopy(self)
+
+            dummy_d.hz_to_cent(dummy_d.bins[0])
+
+            return np.isclose(max(dummy_d.bins) - min(dummy_d.bins),
+                              1200 - dummy_d.step_size)
 
     def is_pdf(self):
         return np.isclose(np.sum(self.vals), 1)
