@@ -186,7 +186,7 @@ class KNNClassifier(InputParser):
         Mode recognition: The tonic of the recording is known and the mode is
         to be estimated.
         :param feature_in: - precomputed feature (PitchDistribution object)
-                           - pitch track (list or noumpy array)
+                           - pitch track (list or numpy array)
         :param tonic: tonic frequency (float). It is needed if the feature_in
                       has not been normalized with respect to the tonic earlier
         :param distance_method: distance used in KNN
