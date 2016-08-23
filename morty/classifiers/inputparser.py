@@ -3,6 +3,7 @@ import numpy as np
 from morty.pitchdistribution import PitchDistribution
 from morty.converter import Converter
 import logging
+import copy
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -42,8 +43,9 @@ class InputParser(object):
         if isinstance(test_input, PitchDistribution):  # pitch distribution
             assert test_input.has_hz_bin(), 'The input distribution has a ' \
                                             'reference frequency already.'
-            test_input.hz_to_cent(self._dummy_ref_freq)
-            return test_input
+            input_copy = copy.deepcopy(test_input)
+            input_copy.hz_to_cent(self._dummy_ref_freq)
+            return input_copy
         else:  # pitch track or file
             pitch_cent = self._parse_pitch_input(test_input,
                                                  self._dummy_ref_freq)
@@ -52,7 +54,7 @@ class InputParser(object):
 
     def _parse_mode_estimate_input(self, feature_in, tonic=None):
         if isinstance(feature_in, PitchDistribution):
-            feature = feature_in
+            feature = copy.deepcopy(feature_in)
             if tonic is not None:  # tonic given
                 feature.hz_to_cent(tonic)
         else:  # pitch
