@@ -311,6 +311,14 @@ class PitchDistribution(object):
         if self.has_hz_bin():
             self.bins = Converter.hz_to_cent(self.bins, ref_freq)
             self.ref_freq = ref_freq
+
+            # make sure all the bins stay between 0 - 1200 for PCDs
+            if self.is_pcd():
+                self.bins = np.mod(self.bins, 1200)
+
+                idx = np.argsort(self.bins)
+                self.bins = self.bins[idx]
+                self.vals = self.vals[idx]
         else:
             raise ValueError('The bin unit should be "hz".')
 
