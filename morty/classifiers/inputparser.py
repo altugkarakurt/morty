@@ -85,7 +85,8 @@ class InputParser(object):
         try:
             p = np.loadtxt(pitch_in)
         except ValueError:
-            logger.debug('pitch_in is already a numpy array')
+            logger.debug('pitch_in is not a filename')
+            p = np.array(pitch_in)
 
         p = p[:, 1] if p.ndim > 1 else p  # get the pitch stream
 
