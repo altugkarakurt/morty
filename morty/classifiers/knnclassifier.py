@@ -11,7 +11,7 @@ from ..pitchdistribution import PitchDistribution
 
 
 class KNNClassifier(InputParser):
-    def __init__(self, step_size=7.5, kernel_width=7.5, feature_type='pcd',
+    def __init__(self, step_size=7.5, kernel_width=15.0, feature_type='pcd',
                  model=None):
         """--------------------------------------------------------------------
         These attributes are wrapped as an object since these are used in both
@@ -143,7 +143,7 @@ class KNNClassifier(InputParser):
         self.model = model
 
     def identify_tonic(self, test_input, mode, min_peak_ratio=0.1,
-                       distance_method='bhat', k_neighbor=1, rank=1):
+                       distance_method='bhat', k_neighbor=15, rank=1):
         """--------------------------------------------------------------------
         Tonic Identification: The mode of the recording is known and the
         tonic is to be estimated.
@@ -181,7 +181,7 @@ class KNNClassifier(InputParser):
             distance_method=distance_method, k_neighbor=k_neighbor, rank=rank)
 
     def recognize_mode(self, feature_in, tonic=None, distance_method='bhat',
-                       k_neighbor=1, rank=1):
+                       k_neighbor=15, rank=1):
         """--------------------------------------------------------------------
         Mode recognition: The tonic of the recording is known and the mode is
         to be estimated.
@@ -207,14 +207,14 @@ class KNNClassifier(InputParser):
         return modes_ranked
 
     def estimate_mode(self, feature_in, tonic=None, distance_method='bhat',
-                      k_neighbor=1, rank=1):
+                      k_neighbor=15, rank=1):
 
         return self.recognize_mode(
             feature_in, tonic=tonic, distance_method=distance_method,
             k_neighbor=k_neighbor, rank=rank)
 
     def estimate_joint(self, test_input, min_peak_ratio=0.1,
-                       distance_method='bhat', k_neighbor=1, rank=1):
+                       distance_method='bhat', k_neighbor=15, rank=1):
         """--------------------------------------------------------------------
         Joint estimation: Estimate both the tonic and mode together
         :param test_input: - precomputed feature (PD or PCD in Hz)
@@ -237,7 +237,7 @@ class KNNClassifier(InputParser):
         return joint_estimations
 
     def _estimate(self, test_feature, mode=None, est_tonic=True,
-                  min_peak_ratio=0.1, distance_method='bhat', k_neighbor=1,
+                  min_peak_ratio=0.1, distance_method='bhat', k_neighbor=15,
                   rank=1):
         assert est_tonic or mode is None, 'Nothing to estimate.'
 
