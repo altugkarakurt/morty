@@ -43,14 +43,16 @@ class PitchDistribution(object):
         else:
             self.ref_freq = np.array(ref_freq)  # force numpy array
 
+    @property
+    def step_size(self):
         # get step size in cents
-        if self.has_hz_bin:
+        if self.has_hz_bin():
             temp_ss = Converter.hz_to_cent(self.bins[1], self.bins[0])
         else:  # has_cent_bin
             temp_ss = self.bins[1] - self.bins[0]
 
         # TEMPORARY FIX: round step_size to one decimal point
-        self.step_size = temp_ss if temp_ss == (round(temp_ss * 10) / 10) \
+        return temp_ss if temp_ss == (round(temp_ss * 10) / 10) \
             else round(temp_ss * 10) / 10
 
     @property
