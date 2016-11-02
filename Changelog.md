@@ -1,3 +1,6 @@
+#### morty v1.3.0-dev
+ - Added bar method to PitchDistribution
+
 #### morty v1.2.1
  - Removed the experimental neural networks from the master branch
  - Updated the readme to include the DLFM paper

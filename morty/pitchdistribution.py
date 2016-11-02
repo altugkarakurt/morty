@@ -397,6 +397,13 @@ class PitchDistribution(object):
 
     def plot(self):
         plt.plot(self.bins, self.vals)
+        self.label_figure()
+
+    def bar(self):
+        plt.bar(self.bins, self.vals)
+        self.label_figure()
+
+    def label_figure(self):
         if self.is_pcd():
             plt.title('Pitch class distribution')
         else:
