@@ -406,13 +406,15 @@ class PitchDistribution(object):
     def label_figure(self):
         if self.is_pcd():
             plt.title('Pitch class distribution')
+            ref_freq_str = 'Hz x 2^n'
         else:
             plt.title('Pitch distribution')
+            ref_freq_str = 'Hz'
         if self.has_hz_bin():
             plt.xlabel('Frequency (Hz)')
         else:
-            plt.xlabel('Normalized Frequency (cent), ref = ' +
-                       str(self.ref_freq))
+            plt.xlabel('Normalized Frequency (cent), ref = {0}{1}'.format(
+                str(self.ref_freq), ref_freq_str))
         plt.ylabel('Occurence')
 
     @staticmethod
