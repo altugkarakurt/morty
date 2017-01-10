@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from copy import deepcopy
+import scipy.ndimage as ndimage
+
 
 class TDMS(object):
     def __init__(self, pd_bins, pd_vals, kernel_width=7.5, ref_freq=440.0):
@@ -32,7 +34,7 @@ class TDMS(object):
 
     @staticmethod
     def from_cent_pitch(cent_track, tau, ref_freq=440.0, kernel_width=7.5,
-                        step_size=7.5, alpha=1, norm_type=, sampling_freq=44100):
+                        step_size=7.5, alpha=1, norm_type="sum", sampling_freq=44100):
         """--------------------------------------------------------------------
         TODO
         -----------------------------------------------------------------------
@@ -54,18 +56,18 @@ class TDMS(object):
         eta = int(1200.0 / step_size)
 
         # Handling B(x)
-        x = np.floor(np.mod((eta/1200)*cent_track, 1200*np.ones_like(cent_track)))
+        x = np.floor(np.mod((eta / 1200) * cent_track, 1200 * np.ones_like(cent_track)))
 
         x1 = deepcopy(x[delay:len(x)])
-        x2 = deepcopy(x[0:len(x)-delay])
+        x2 = deepcopy(x[0:len(x) - delay])
         surface = np.array([[sum(np.logical_and((x1 == i), (x2 == j)))
                             for i in range(eta)] for j in range(eta)])
 
         # Power compression
-        surface = np.power(surface, alpha)
+        surface = 1.0 * np.power(surface, alpha)
 
         # Gaussian smoothing
-        surface = ndimage.gaussian_filter(mtx, kernel_width)
+        surface = ndimage.gaussian_filter(surface, kernel_width)
 
         # Normalization
         if norm_type == 'sum':  # sum normalization
