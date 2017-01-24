@@ -10,7 +10,7 @@ class Evaluator(object):
     being reported.
     ----------------------------------------------------------------"""
 
-    def __init__(self, tonic_tolerance=25):
+    def __init__(self, tonic_tolerance=20):
         self.tonic_tolerance = tonic_tolerance
         self.CENT_PER_OCTAVE = 1200
 
