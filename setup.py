@@ -4,7 +4,7 @@ from setuptools import setup
 
 
 setup(name='morty',
-      version='v1.3.0-dev',
+      version='v1.3.0',
       author='Altug Karakurt',
       author_email='altugkarakurt AT gmail DOT com',
       license='agpl 3.0',

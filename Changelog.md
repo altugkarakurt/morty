@@ -1,5 +1,7 @@
-#### morty v1.3.0-dev
+#### morty v1.3.0
  - Added bar method to PitchDistribution
+ - Improved PitchDistribution.plot 
+ - Changed the default tonic deviation threshold from 25 cents to 20 cents (see: commit 7b385c)
 
 #### morty v1.2.1
  - Removed the experimental neural networks from the master branch
