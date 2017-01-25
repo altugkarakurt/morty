@@ -413,7 +413,7 @@ class PitchDistribution(object):
         if self.has_hz_bin():
             plt.xlabel('Frequency (Hz)')
         else:
-            plt.xlabel('Normalized Frequency (cent), ref = {0}{1}'.format(
+            plt.xlabel('Normalized Frequency (cents), ref = {0}{1}'.format(
                 str(self.ref_freq), ref_freq_str))
         plt.ylabel('Occurence')
 
