@@ -400,7 +400,7 @@ class PitchDistribution(object):
         self.label_figure()
 
     def bar(self):
-        plt.bar(self.bins, self.vals)
+        plt.bar(self.bins, self.vals, width=1, align='center')
         self.label_figure()
 
     def label_figure(self):
