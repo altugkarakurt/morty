@@ -1,5 +1,5 @@
 [![GitHub version](https://badge.fury.io/gh/altugkarakurt%2Fmorty.svg)](https://badge.fury.io/gh/altugkarakurt%2Fmorty) 
-[![Build Status](https://travis-ci.org/altugkarakurt/morty.svg?branch=master)](https://travis-ci.org/altugkarakurt/morty) [![Code Climate](https://codeclimate.com/github/altugkarakurt/ModeTonicEstimation/badges/gpa.svg)](https://codeclimate.com/github/altugkarakurt/ModeTonicEstimation) 
+[![Build Status](https://travis-ci.org/altugkarakurt/morty.svg?branch=master)](https://travis-ci.org/altugkarakurt/morty) [![Code Climate](https://codeclimate.com/github/altugkarakurt/ModeTonicEstimation/badges/gpa.svg)](https://codeclimate.com/github/altugkarakurt/ModeTonicEstimation) [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-ff69b4.svg)](http://www.gnu.org/licenses/agpl-3.0)
 
 ### morty
 **MO**de **R**ecognition and **T**onic **Y**dentification Toolbox:
