@@ -400,8 +400,11 @@ class PitchDistribution(object):
         self.label_figure()
 
     def bar(self):
-        plt.bar(self.bins, self.vals, width=self.step_size, align='center')
+        bars = plt.bar(self.bins, self.vals, width=self.step_size,
+                       align='center')
         self.label_figure()
+
+        return bars
 
     def label_figure(self):
         if self.is_pcd():
